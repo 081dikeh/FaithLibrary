@@ -81,7 +81,10 @@ export function UploadForm() {
         is_public:   form.is_public,
         file_url:    publicUrl,
       })
-      if (dbErr) throw dbErr
+      if (dbErr) {
+        console.error('DB insert error:', JSON.stringify(dbErr))
+        throw new Error(dbErr.message + (dbErr.details ? ' — ' + dbErr.details : '') + (dbErr.hint ? ' — Hint: ' + dbErr.hint : ''))
+      }
 
       setProgress(100); setStatus('success')
       setTimeout(() => router.push('/dashboard'), 1400)

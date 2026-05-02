@@ -1,8 +1,8 @@
-// middleware.ts
+// proxy.ts
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -28,7 +28,7 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const protectedRoutes = ['/upload', '/dashboard', '/edit']
+  const protectedRoutes = ['/upload', '/dashboard', '/edit', '/settings']
   const isProtected = protectedRoutes.some(r =>
     request.nextUrl.pathname.startsWith(r)
   )
@@ -37,7 +37,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Redirect logged-in users away from auth pages
   const authRoutes = ['/login', '/signup']
   const isAuthPage = authRoutes.some(r =>
     request.nextUrl.pathname.startsWith(r)

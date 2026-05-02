@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/Navbar'
 import { PDFViewerClient } from '@/components/PDFViewerClient'
-import { Download, Calendar, Tag, Eye, Share2, Music2, ArrowLeft, Globe, Lock } from 'lucide-react'
+import { ShareButton, ShareButtonFull } from '@/components/ShareButtons'
+import { Download, Calendar, Tag, Eye, Music2, ArrowLeft, Globe, Lock } from 'lucide-react'
 import type { FileRecord } from '@/lib/types'
 
 interface ViewPageProps {
@@ -49,7 +50,7 @@ export default async function ViewPage({ params }: ViewPageProps) {
               style={{padding:'0.4rem 0.875rem', fontSize:'0.8rem'}}>
               <Download size={13} /> Download
             </a>
-            <ShareBtn title={f.title} />
+            <ShareButton title={f.title} />
           </div>
         </div>
       </div>
@@ -160,45 +161,10 @@ export default async function ViewPage({ params }: ViewPageProps) {
             >
               <Download size={15} /> Download Score
             </a>
-            <ShareBtnFull title={f.title} />
+            <ShareButtonFull title={f.title} />
           </div>
         </aside>
       </div>
     </div>
-  )
-}
-
-/* ── Share buttons ── */
-function ShareBtn({ title }: { title: string }) {
-  return (
-    <button
-      onClick={() => {
-        if (typeof navigator !== 'undefined') {
-          if (navigator.share) navigator.share({ title, url: window.location.href })
-          else navigator.clipboard.writeText(window.location.href)
-        }
-      }}
-      className="btn-icon text-[#8D6E63]" style={{padding:'0.4rem', borderRadius:'10px'}}
-      aria-label="Share"
-    >
-      <Share2 size={16} />
-    </button>
-  )
-}
-
-function ShareBtnFull({ title }: { title: string }) {
-  return (
-    <button
-      onClick={() => {
-        if (typeof navigator !== 'undefined') {
-          if (navigator.share) navigator.share({ title, url: window.location.href })
-          else navigator.clipboard.writeText(window.location.href)
-        }
-      }}
-      className="btn btn-secondary w-full"
-      style={{justifyContent:'center', padding:'0.7rem'}}
-    >
-      <Share2 size={15} /> Share Score
-    </button>
   )
 }
