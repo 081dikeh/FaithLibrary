@@ -4,19 +4,19 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { Search, Upload, LayoutDashboard, LogOut, Menu, X, Settings } from 'lucide-react'
+import { Search, Upload, LayoutDashboard, LogOut, Menu, X, Settings, Layers } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 
 export function Navbar() {
-  const pathname = usePathname()
-  const router = useRouter()
-  const supabase = createClient()
+  const pathname  = usePathname()
+  const router    = useRouter()
+  const supabase  = createClient()
   const searchRef = useRef<HTMLInputElement>(null)
 
-  const [user, setUser] = useState<User | null>(null)
-  const [menuOpen, setMenuOpen] = useState(false)
-  const [scrolled, setScrolled] = useState(false)
+  const [user, setUser]           = useState<User | null>(null)
+  const [menuOpen, setMenuOpen]   = useState(false)
+  const [scrolled, setScrolled]   = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -70,7 +70,7 @@ export function Navbar() {
       `}>
         {/* Main bar */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-15 sm:h-16" style={{ height: '60px' }}>
+          <div className="flex items-center justify-between h-15 sm:h-16" style={{height:'60px'}}>
 
             {/* ── Logo ── */}
             <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
@@ -88,10 +88,11 @@ export function Navbar() {
             <div className="hidden md:flex items-center gap-0.5">
               {navLinks.map(link => (
                 <Link key={link.href} href={link.href}
-                  className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${pathname === link.href
+                  className={`px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+                    pathname === link.href
                       ? 'bg-[#5D4037] text-[#F5F5F5]'
                       : 'text-[#D7CCC8] hover:text-[#F5F5F5] hover:bg-[#5D4037]/50'
-                    }`}>
+                  }`}>
                   {link.label}
                 </Link>
               ))}
@@ -101,7 +102,7 @@ export function Navbar() {
             <div className="hidden md:flex items-center gap-1.5">
               <button onClick={() => setSearchOpen(v => !v)} aria-label="Search"
                 className="btn-icon text-[#D7CCC8] hover:text-white hover:bg-[#5D4037]/60"
-                style={{ borderRadius: '10px', padding: '0.45rem' }}>
+                style={{borderRadius:'10px', padding:'0.45rem'}}>
                 <Search size={17} />
               </button>
 
@@ -109,25 +110,29 @@ export function Navbar() {
                 <>
                   <Link href="/upload"
                     className="btn btn-sm ml-1"
-                    style={{
-                      background: '#5D4037', color: '#F5F5F5', borderColor: '#5D4037',
-                      padding: '0.45rem 1rem', fontSize: '0.8125rem'
-                    }}>
+                    style={{background:'#5D4037', color:'#F5F5F5', borderColor:'#5D4037',
+                            padding:'0.45rem 1rem', fontSize:'0.8125rem'}}>
                     <Upload size={13} /> Upload
+                  </Link>
+                  <Link href="/bulk-upload"
+                    className="btn btn-sm"
+                    style={{background:'transparent', color:'#D7CCC8', borderColor:'rgba(141,110,99,0.4)',
+                            padding:'0.45rem 0.875rem', fontSize:'0.8125rem'}}>
+                    <Layers size={13} /> Bulk
                   </Link>
                   <Link href="/dashboard" aria-label="Dashboard"
                     className="btn-icon text-[#D7CCC8] hover:text-white hover:bg-[#5D4037]/60"
-                    style={{ borderRadius: '10px', padding: '0.45rem' }}>
+                    style={{borderRadius:'10px', padding:'0.45rem'}}>
                     <LayoutDashboard size={17} />
                   </Link>
                   <Link href="/settings" aria-label="Settings"
                     className="btn-icon text-[#D7CCC8] hover:text-white hover:bg-[#5D4037]/60"
-                    style={{ borderRadius: '10px', padding: '0.45rem' }}>
+                    style={{borderRadius:'10px', padding:'0.45rem'}}>
                     <Settings size={17} />
                   </Link>
                   <button onClick={handleSignOut} aria-label="Sign out"
                     className="btn-icon text-[#D7CCC8] hover:text-white hover:bg-[#5D4037]/60"
-                    style={{ borderRadius: '10px', padding: '0.45rem' }}>
+                    style={{borderRadius:'10px', padding:'0.45rem'}}>
                     <LogOut size={17} />
                   </button>
                 </>
@@ -140,10 +145,8 @@ export function Navbar() {
                   </Link>
                   <Link href="/signup"
                     className="btn btn-sm"
-                    style={{
-                      background: '#5D4037', color: '#F5F5F5', borderColor: '#5D4037',
-                      padding: '0.45rem 1rem', fontSize: '0.8125rem'
-                    }}>
+                    style={{background:'#5D4037', color:'#F5F5F5', borderColor:'#5D4037',
+                            padding:'0.45rem 1rem', fontSize:'0.8125rem'}}>
                     Sign up
                   </Link>
                 </>
@@ -153,11 +156,11 @@ export function Navbar() {
             {/* ── Mobile right ── */}
             <div className="flex md:hidden items-center gap-1">
               <button onClick={() => setSearchOpen(v => !v)}
-                className="btn-icon text-[#D7CCC8]" style={{ padding: '0.4rem' }}>
+                className="btn-icon text-[#D7CCC8]" style={{padding:'0.4rem'}}>
                 <Search size={17} />
               </button>
               <button onClick={() => setMenuOpen(v => !v)}
-                className="btn-icon text-[#D7CCC8]" style={{ padding: '0.4rem' }}>
+                className="btn-icon text-[#D7CCC8]" style={{padding:'0.4rem'}}>
                 {menuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
             </div>
@@ -184,14 +187,12 @@ export function Navbar() {
               </div>
               <button type="submit"
                 className="btn btn-sm"
-                style={{
-                  background: '#5D4037', color: '#F5F5F5', borderColor: '#8D6E63',
-                  padding: '0.5rem 1rem'
-                }}>
+                style={{background:'#5D4037', color:'#F5F5F5', borderColor:'#8D6E63',
+                        padding:'0.5rem 1rem'}}>
                 Search
               </button>
               <button type="button" onClick={() => setSearchOpen(false)}
-                className="btn-icon text-[#8D6E63] hover:text-white" style={{ padding: '0.4rem' }}>
+                className="btn-icon text-[#8D6E63] hover:text-white" style={{padding:'0.4rem'}}>
                 <X size={16} />
               </button>
             </form>
@@ -204,15 +205,16 @@ export function Navbar() {
                           px-4 py-3 flex flex-col gap-1 animate-slide-down">
             {navLinks.map(link => (
               <Link key={link.href} href={link.href} onClick={() => setMenuOpen(false)}
-                className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${pathname === link.href
+                className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                  pathname === link.href
                     ? 'bg-[#5D4037] text-[#F5F5F5]'
                     : 'text-[#D7CCC8] hover:bg-[#5D4037]/60 hover:text-[#F5F5F5]'
-                  }`}>
+                }`}>
                 {link.label}
               </Link>
             ))}
 
-            <div className="divider my-1" style={{ background: 'rgba(93,64,55,0.5)' }} />
+            <div className="divider my-1" style={{background:'rgba(93,64,55,0.5)'}} />
 
             {user ? (
               <>
@@ -221,6 +223,12 @@ export function Navbar() {
                              hover:bg-[#5D4037]/60 hover:text-[#F5F5F5] transition-colors
                              flex items-center gap-2">
                   <Upload size={14} /> Upload
+                </Link>
+                <Link href="/bulk-upload" onClick={() => setMenuOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-sm font-medium text-[#D7CCC8]
+                             hover:bg-[#5D4037]/60 hover:text-[#F5F5F5] transition-colors
+                             flex items-center gap-2">
+                  <Layers size={14} /> Bulk Upload
                 </Link>
                 <Link href="/dashboard" onClick={() => setMenuOpen(false)}
                   className="px-4 py-2.5 rounded-xl text-sm font-medium text-[#D7CCC8]
@@ -244,11 +252,11 @@ export function Navbar() {
             ) : (
               <div className="flex flex-col gap-2 pt-1">
                 <Link href="/login" onClick={() => setMenuOpen(false)}
-                  className="btn btn-secondary" style={{ justifyContent: 'center' }}>
+                  className="btn btn-secondary" style={{justifyContent:'center'}}>
                   Log in
                 </Link>
                 <Link href="/signup" onClick={() => setMenuOpen(false)}
-                  className="btn btn-primary" style={{ justifyContent: 'center' }}>
+                  className="btn btn-primary" style={{justifyContent:'center'}}>
                   Sign up
                 </Link>
               </div>
@@ -258,7 +266,7 @@ export function Navbar() {
       </nav>
 
       {/* Spacer */}
-      <div style={{ height: '60px' }} />
+      <div style={{height:'60px'}} />
     </>
   )
 }
