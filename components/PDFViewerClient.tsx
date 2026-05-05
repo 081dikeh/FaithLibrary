@@ -9,12 +9,11 @@ import {
   RotateCcw, Columns2, AlignJustify,
 } from 'lucide-react'
 
-// ── Worker: use the one bundled inside react-pdf (always version-matched) ──
-// This URL is served by Next.js from node_modules automatically
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString()
+// ── Worker served locally from /public — no version mismatch, no CORS ────────
+// You must copy the worker file once:
+//   Windows: copy node_modules\pdfjs-dist\build\pdf.worker.min.mjs public\pdf.worker.min.mjs
+//   Mac/Linux: cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/pdf.worker.min.mjs
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
 
 export function PDFViewerClient({ url }: { url: string }) {
   const [numPages,   setNumPages]   = useState(0)
