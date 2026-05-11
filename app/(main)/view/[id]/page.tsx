@@ -6,6 +6,9 @@ import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/Navbar'
 import { PDFViewerClient } from '@/components/PDFViewerClient'
 import { ShareButton, ShareButtonFull } from '@/components/ShareButtons'
+import { AddToCollectionButton } from '@/components/AddToCollectionButton'
+import { RelatedScores } from '@/components/RelatedScores'
+import { ViewTracker } from '@/components/ViewTracker'
 import { Download, Calendar, Tag, Eye, Music2, ArrowLeft, Globe, Lock } from 'lucide-react'
 import type { FileRecord } from '@/lib/types'
 
@@ -33,6 +36,7 @@ export default async function ViewPage({ params }: ViewPageProps) {
   return (
     <div className="min-h-screen grain bg-[#F5F5F5]">
       <Navbar />
+      <ViewTracker fileId={f.id} />
 
       {/* ── Top bar ── */}
       <div className="bg-white border-b border-[#D7CCC8] sticky top-[60px] z-40">
@@ -112,6 +116,24 @@ export default async function ViewPage({ params }: ViewPageProps) {
 
               {/* Meta */}
               <div className="space-y-2 text-sm text-[#8D6E63]" style={{fontFamily:'var(--font-ui)'}}>
+                {f.composer && (
+                  <div className="flex items-center gap-2">
+                    <Music2 size={13} className="flex-shrink-0 text-[#D7CCC8]" />
+                    <span>Composer: <strong className="text-[#5D4037]">{f.composer}</strong></span>
+                  </div>
+                )}
+                {f.arranger && (
+                  <div className="flex items-center gap-2">
+                    <Music2 size={13} className="flex-shrink-0 text-[#D7CCC8]" />
+                    <span>Arr. {f.arranger}</span>
+                  </div>
+                )}
+                {f.voice_parts && (
+                  <div className="flex items-center gap-2">
+                    <Eye size={13} className="flex-shrink-0 text-[#D7CCC8]" />
+                    <span>{f.voice_parts}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <Calendar size={13} className="flex-shrink-0 text-[#D7CCC8]" />
                   <span>{date}</span>
@@ -162,9 +184,17 @@ export default async function ViewPage({ params }: ViewPageProps) {
               <Download size={15} /> Download Score
             </a>
             <ShareButtonFull title={f.title} />
+            <AddToCollectionButton fileId={f.id} />
           </div>
         </aside>
       </div>
+
+      {/* Related scores — full width below */}
+      {f.tags && f.tags.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-10">
+          <RelatedScores fileId={f.id} tags={f.tags} />
+        </div>
+      )}
     </div>
   )
 }

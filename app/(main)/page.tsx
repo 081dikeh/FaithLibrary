@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/Navbar'
 import { FileCard, FileCardSkeleton } from '@/components/FileCard'
 import { CategoryFilter } from '@/components/CategoryFilter'
+import { FeaturedScores } from '@/components/FeaturedScores'
 import { TrendingUp, Library, Users, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import type { FileRecord } from '@/lib/types'
@@ -24,7 +25,7 @@ async function FileGrid({ query, tags }: { query?: string; tags: string[] }) {
 
   let q = supabase
     .from('files')
-    .select('*')
+    .select('*, profiles(full_name)')
     .eq('is_public', true)
     .order('created_at', { ascending: false })
     .limit(48)
@@ -144,6 +145,9 @@ export default async function HomePage({ searchParams }: HomeProps) {
           </div>
         </section>
       )}
+
+      {/* ── Featured scores ── */}
+      {showHero && <FeaturedScores />}
 
       {/* ── Search results header ── */}
       {query && (

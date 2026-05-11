@@ -1,11 +1,12 @@
 // components/DashboardTabs.tsx
 'use client'
 import { useRouter } from 'next/navigation'
-import { FileStack, Bookmark } from 'lucide-react'
+import { FileStack, Bookmark, FolderOpen } from 'lucide-react'
 
 const TABS = [
-  { key: 'uploads',   label: 'My Uploads',  icon: <FileStack size={14} /> },
-  { key: 'bookmarks', label: 'Bookmarks',   icon: <Bookmark size={14} /> },
+  { key: 'uploads',     label: 'My Uploads',  icon: <FileStack size={14} /> },
+  { key: 'bookmarks',   label: 'Bookmarks',   icon: <Bookmark size={14} /> },
+  { key: 'collections', label: 'Collections', icon: <FolderOpen size={14} /> },
 ]
 
 export function DashboardTabs({ active }: { active: string }) {

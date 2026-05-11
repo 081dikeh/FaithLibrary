@@ -135,6 +135,14 @@ export function FileCard({ file, bookmarked = false, onBookmarkToggle, index = 0
           </p>
         )}
 
+        {/* Composer / voice parts */}
+        {(file.composer || file.voice_parts) && (
+          <p className="text-xs text-[#8D6E63] mb-1 truncate"
+            style={{ fontFamily: 'var(--font-ui)' }}>
+            {[file.composer, file.voice_parts].filter(Boolean).join(' · ')}
+          </p>
+        )}
+
         {/* Uploader */}
         {file.profiles?.full_name && (
           <Link href={`/profile/${file.user_id}`}

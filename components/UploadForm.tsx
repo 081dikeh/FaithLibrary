@@ -12,6 +12,9 @@ import {
 interface FormState {
   title:       string
   description: string
+  composer:    string
+  arranger:    string
+  voice_parts: string
   tags:        string[]
   is_public:   boolean
 }
@@ -28,7 +31,7 @@ export function UploadForm() {
   const [errorMsg, setErrorMsg] = useState('')
 
   const [form, setForm] = useState<FormState>({
-    title: '', description: '', tags: [], is_public: true,
+    title: '', description: '', composer: '', arranger: '', voice_parts: '', tags: [], is_public: true,
   })
 
   /* ── File handling ── */
@@ -76,6 +79,9 @@ export function UploadForm() {
         user_id:     user.id,
         title:       form.title.trim(),
         description: form.description.trim() || null,
+        composer:    form.composer.trim() || null,
+        arranger:    form.arranger.trim() || null,
+        voice_parts: form.voice_parts.trim() || null,
         category:    form.tags[0] ?? 'General',
         tags:        form.tags,
         is_public:   form.is_public,
@@ -184,6 +190,37 @@ export function UploadForm() {
           rows={3}
           className="input resize-none"
         />
+      </div>
+
+      {/* ── Composer / Arranger / Voice parts ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label className="label">Composer</label>
+          <input
+            value={form.composer}
+            onChange={e => setForm(p => ({ ...p, composer: e.target.value }))}
+            placeholder="e.g. Handel"
+            className="input"
+          />
+        </div>
+        <div>
+          <label className="label">Arranger</label>
+          <input
+            value={form.arranger}
+            onChange={e => setForm(p => ({ ...p, arranger: e.target.value }))}
+            placeholder="e.g. John Smith"
+            className="input"
+          />
+        </div>
+        <div>
+          <label className="label">Voice Parts</label>
+          <input
+            value={form.voice_parts}
+            onChange={e => setForm(p => ({ ...p, voice_parts: e.target.value }))}
+            placeholder="e.g. SATB, SSA, Unison"
+            className="input"
+          />
+        </div>
       </div>
 
       {/* ── Category & Tags ── */}

@@ -55,8 +55,9 @@ export function Navbar() {
   }
 
   const navLinks = [
-    { href: '/', label: 'Library' },
-    { href: '/browse', label: 'Browse' },
+    { href: '/',         label: 'Library' },
+    { href: '/browse',   label: 'Browse' },
+    { href: '/requests', label: 'Requests' },
   ]
 
   return (

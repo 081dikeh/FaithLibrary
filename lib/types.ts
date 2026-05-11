@@ -6,10 +6,14 @@ export type FileRecord = {
   description: string | null
   file_url: string
   thumbnail_url: string | null
-  category: 'hymn' | 'score' | 'document' | 'composition' | 'other'
+  category: string
   tags: string[]
   is_public: boolean
+  is_featured: boolean
   download_count: number
+  composer: string | null
+  arranger: string | null
+  voice_parts: string | null
   created_at: string
   source?: string
   profiles?: {
