@@ -2,18 +2,58 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
+import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
 import { PDFViewerClient } from '@/components/PDFViewerClient'
 import { ShareButton, ShareButtonFull } from '@/components/ShareButtons'
 import { AddToCollectionButton } from '@/components/AddToCollectionButton'
 import { RelatedScores } from '@/components/RelatedScores'
 import { ViewTracker } from '@/components/ViewTracker'
-import { Download, Calendar, Tag, Eye, Music2, ArrowLeft, Globe, Lock } from 'lucide-react'
+import { CommentSection } from '@/components/CommentSection'
+import { Download, Calendar, Tag, Eye, Music2, ArrowLeft, Globe, Lock, Printer } from 'lucide-react'
 import type { FileRecord } from '@/lib/types'
+
+const BASE_URL = 'https://faith-library.vercel.app'
 
 interface ViewPageProps {
   params: Promise<{ id: string }>
+}
+
+export async function generateMetadata({ params }: ViewPageProps): Promise<Metadata> {
+  const { id }   = await params
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('files')
+    .select('title, description, composer, tags')
+    .eq('id', id)
+    .single()
+
+  if (!data) return { title: 'Score Not Found — FaithLibrary' }
+
+  const description = [
+    data.composer ? `By ${data.composer}` : null,
+    data.description,
+    data.tags?.[0],
+  ].filter(Boolean).join(' · ') || 'Sacred choral music score on FaithLibrary'
+
+  return {
+    title:       `${data.title} — FaithLibrary`,
+    description,
+    openGraph: {
+      title:       data.title,
+      description,
+      url:         `${BASE_URL}/view/${id}`,
+      siteName:    'FaithLibrary',
+      type:        'article',
+    },
+    twitter: {
+      card:        'summary',
+      title:       data.title,
+      description,
+    },
+  }
 }
 
 export default async function ViewPage({ params }: ViewPageProps) {
@@ -54,6 +94,11 @@ export default async function ViewPage({ params }: ViewPageProps) {
               style={{padding:'0.4rem 0.875rem', fontSize:'0.8rem'}}>
               <Download size={13} /> Download
             </a>
+            <Link href={`/print/${f.id}`} target="_blank"
+              className="btn btn-sm btn-secondary hidden sm:flex"
+              style={{padding:'0.4rem 0.875rem', fontSize:'0.8rem'}}>
+              <Printer size={13} /> Print
+            </Link>
             <ShareButton title={f.title} />
           </div>
         </div>
@@ -184,17 +229,28 @@ export default async function ViewPage({ params }: ViewPageProps) {
               <Download size={15} /> Download Score
             </a>
             <ShareButtonFull title={f.title} />
+            <Link href={`/print/${f.id}`} target="_blank"
+              className="btn btn-secondary w-full"
+              style={{justifyContent:'center', padding:'0.7rem'}}>
+              <Printer size={15} /> Print Score
+            </Link>
             <AddToCollectionButton fileId={f.id} />
           </div>
         </aside>
       </div>
 
-      {/* Related scores — full width below */}
+      {/* Related scores */}
       {f.tags && f.tags.length > 0 && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-6">
           <RelatedScores fileId={f.id} tags={f.tags} />
         </div>
       )}
+
+      {/* Comments */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-10">
+        <CommentSection fileId={f.id} />
+      </div>
+      <Footer />
     </div>
   )
 }

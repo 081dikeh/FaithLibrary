@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/Navbar'
-import { FileCard } from '@/components/FileCard'
+import { ScoreCard } from '@/components/ScoreCard'
 import { ArrowLeft, FolderOpen } from 'lucide-react'
 
 interface CollectionPageProps {
@@ -78,9 +78,9 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
             <Link href="/" className="btn btn-primary btn-sm">Browse Library</Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {files.map((file: any, i: number) => (
-              <FileCard key={file.id} file={file} index={i} />
+              <ScoreCard key={file.id} file={file} index={i} />
             ))}
           </div>
         )}

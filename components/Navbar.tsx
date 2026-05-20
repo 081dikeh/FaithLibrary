@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { Search, Upload, LayoutDashboard, LogOut, Menu, X, Settings, Layers, Shield } from 'lucide-react'
+import { NotificationBell } from '@/components/NotificationBell'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 
@@ -119,15 +120,36 @@ export function Navbar() {
 
             {/* ── Desktop right ── */}
             <div className="hidden md:flex items-center gap-1.5">
-              {/* Search */}
+              {/* Search — triggers CommandSearch via keyboard shortcut */}
+              <button
+                onClick={() => {
+                  const e = new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true })
+                  window.dispatchEvent(e)
+                }}
+                aria-label="Search (⌘K)"
+                className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg
+                           text-[#8D6E63] hover:text-[#D7CCC8] hover:bg-[#5D4037]/40
+                           border border-[#5D4037]/40 transition-all text-xs"
+                style={{ fontFamily: 'var(--font-ui)' }}
+              >
+                <Search size={14} />
+                <span className="hidden lg:block">Search…</span>
+                <kbd className="hidden lg:flex items-center gap-0.5 px-1 py-0.5 rounded
+                                bg-[#5D4037]/40 text-[0.6rem] leading-none">
+                  ⌘K
+                </kbd>
+              </button>
+              {/* Mobile search icon */}
               <button onClick={() => setSearchOpen(v => !v)} aria-label="Search"
-                className="btn-icon text-[#D7CCC8] hover:text-white hover:bg-[#5D4037]/60"
+                className="sm:hidden btn-icon text-[#D7CCC8] hover:text-white hover:bg-[#5D4037]/60"
                 style={{ borderRadius: '10px', padding: '0.45rem' }}>
                 <Search size={17} />
               </button>
 
               {user ? (
                 <>
+                  {/* Notifications */}
+                  <NotificationBell />
                   {/* Admin badge */}
                   {isAdmin && (
                     <Link href="/admin"

@@ -4,8 +4,10 @@ import { Suspense } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
 import { FileCard, FileCardSkeleton } from '@/components/FileCard'
+import { ScoreCard } from '@/components/ScoreCard'
 import { DashboardFileCard } from '@/components/DashboardFileCard'
 import { DashboardTabs } from '@/components/DashboardTabs'
 import { RecentlyViewed } from '@/components/RecentlyViewed'
@@ -142,7 +144,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
                 </Link>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {myCollections.map((col, i) => (
                   <CollectionCard key={col.id} collection={col} index={i} />
                 ))}
@@ -172,12 +174,12 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {activeFiles.map((file, i) =>
                 tab === 'uploads'
                   ? <DashboardFileCard key={file.id} file={file} index={i}
                       bookmarked={bookmarkIds.has(file.id)} />
-                  : <FileCard key={file.id} file={file} index={i}
+                  : <ScoreCard key={file.id} file={file} index={i}
                       bookmarked={bookmarkIds.has(file.id)} />
               )}
             </div>
@@ -185,6 +187,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
         </div>
         </div>
       </main>
+      <Footer />
     </div>
   )
 }
