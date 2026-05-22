@@ -2,12 +2,27 @@
 'use client'
 import { useState, useCallback, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { Document, Page, pdfjs } from 'react-pdf'
+import dynamic from 'next/dynamic'
 import { Download, Bookmark, BookmarkCheck, Music2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import type { FileRecord } from '@/lib/types'
 
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+// ── Dynamic import prevents react-pdf from running on the server ──────────────
+const Document = dynamic(
+  () => import('react-pdf').then(m => m.Document),
+  { ssr: false, loading: () => null }
+)
+const Page = dynamic(
+  () => import('react-pdf').then(m => m.Page),
+  { ssr: false, loading: () => null }
+)
+
+// Set worker only on client
+if (typeof window !== 'undefined') {
+  import('react-pdf').then(({ pdfjs }) => {
+    pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+  })
+}
 
 interface ScoreCardProps {
   file:        FileRecord
@@ -16,16 +31,16 @@ interface ScoreCardProps {
 }
 
 export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProps) {
-  const supabase    = createClient()
+  const supabase     = createClient()
   const containerRef = useRef<HTMLDivElement>(null)
 
   const [isBookmarked, setIsBookmarked] = useState(bookmarked)
   const [bmLoading,    setBmLoading]    = useState(false)
   const [pdfReady,     setPdfReady]     = useState(false)
   const [pdfError,     setPdfError]     = useState(false)
-  const [cardWidth,    setCardWidth]    = useState(180)
+  const [cardWidth,    setCardWidth]    = useState(0)
 
-  // Measure card width so the PDF page fills it exactly
+  // Measure card width so PDF fills it exactly
   useEffect(() => {
     if (!containerRef.current) return
     const ro = new ResizeObserver(entries => {
@@ -37,8 +52,8 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
     return () => ro.disconnect()
   }, [])
 
-  const onPdfLoad  = useCallback(() => setPdfReady(true),  [])
-  const onPdfError = useCallback(() => setPdfError(true),  [])
+  const onPdfLoad  = useCallback(() => setPdfReady(true), [])
+  const onPdfError = useCallback(() => setPdfError(true), [])
 
   const handleBookmark = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation()
@@ -82,20 +97,19 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
       style={{ animationFillMode: 'forwards' }}
     >
       {/* ── PDF Thumbnail ── */}
-      <Link href={`/view/${file.id}`} className="block flex-shrink-0 relative">
-        {/* Measure width here */}
+      <Link href={`/view/${file.id}`} className="block flex-shrink-0">
         <div ref={containerRef} className="w-full">
-          {/* A4 aspect ratio wrapper */}
-          <div className="relative w-full overflow-hidden bg-gray-50"
+          {/* A4 aspect ratio */}
+          <div className="relative w-full overflow-hidden bg-[#F5F5F5]"
             style={{ paddingBottom: '141.4%' }}>
 
-            {/* Skeleton */}
+            {/* Skeleton while loading */}
             {!pdfReady && !pdfError && (
               <div className="absolute inset-0 skeleton" />
             )}
 
-            {/* PDF first page */}
-            {!pdfError && (
+            {/* PDF first page — only when cardWidth is measured */}
+            {!pdfError && cardWidth > 0 && (
               <div className={`absolute inset-0 transition-opacity duration-500
                                ${pdfReady ? 'opacity-100' : 'opacity-0'}`}>
                 <Document
@@ -106,7 +120,7 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
                 >
                   <Page
                     pageNumber={1}
-                    width={cardWidth || 180}
+                    width={cardWidth}
                     renderAnnotationLayer={false}
                     renderTextLayer={false}
                     loading="" error=""
@@ -116,12 +130,10 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
               </div>
             )}
 
-            {/* Fallback when PDF fails */}
+            {/* Fallback illustration */}
             {pdfError && (
-              <div className="absolute inset-0 flex flex-col items-center
-                              justify-center bg-gradient-to-br
-                              from-[#EFE9E7] to-[#D7CCC8]">
-                {/* Staff lines */}
+              <div className="absolute inset-0 flex items-center justify-center
+                              bg-gradient-to-br from-[#EFE9E7] to-[#D7CCC8]">
                 <div className="absolute inset-0 flex flex-col justify-center
                                 gap-[14%] px-[15%] opacity-15 pointer-events-none">
                   {[...Array(5)].map((_, i) => (
@@ -151,7 +163,7 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
               <div className="absolute top-2 left-2 z-10">
                 <span className="inline-block px-1.5 py-0.5 rounded-full
                                  text-[0.58rem] font-bold uppercase tracking-wide
-                                 bg-white/92 backdrop-blur-sm text-[#5D4037]
+                                 bg-white/90 backdrop-blur-sm text-[#5D4037]
                                  border border-white/60 shadow-sm leading-none">
                   {file.tags[0]}
                 </span>
@@ -163,7 +175,6 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
 
       {/* ── Info ── */}
       <div className="flex flex-col flex-1 px-3 pt-2.5 pb-3">
-
         <Link href={`/view/${file.id}`}>
           <h3 className="font-display font-semibold text-[#3E2723] text-[0.8125rem]
                          leading-snug line-clamp-2 group-hover:text-[#5D4037]
@@ -172,7 +183,6 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
           </h3>
         </Link>
 
-        {/* Uploader */}
         {file.profiles?.full_name && (
           <p className="text-[0.7rem] text-[#8D6E63] truncate mb-0.5"
             style={{ fontFamily: 'var(--font-ui)' }}>
@@ -180,7 +190,6 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
           </p>
         )}
 
-        {/* Composer */}
         {file.composer && (
           <p className="text-[0.7rem] text-[#5D4037] font-medium truncate mb-0.5"
             style={{ fontFamily: 'var(--font-ui)' }}>
@@ -188,7 +197,6 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
           </p>
         )}
 
-        {/* Date + tag2 */}
         <p className="text-[0.68rem] text-[#8D6E63] mt-auto pt-1 truncate"
           style={{ fontFamily: 'var(--font-ui)' }}>
           {date}
@@ -197,7 +205,6 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
           )}
         </p>
 
-        {/* Actions */}
         <div className="flex items-center justify-between mt-2 pt-2
                         border-t border-[#EFE9E7]">
           <div className="flex items-center gap-0.5">
@@ -209,11 +216,8 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
                   : 'text-[#D7CCC8] hover:text-[#5D4037]'
               }`}
               style={{ padding: '0.3rem', borderRadius: '6px' }}>
-              {isBookmarked
-                ? <BookmarkCheck size={13} />
-                : <Bookmark size={13} />}
+              {isBookmarked ? <BookmarkCheck size={13} /> : <Bookmark size={13} />}
             </button>
-
             <button onClick={handleDownload} aria-label="Download"
               className="btn-icon text-[#D7CCC8] hover:text-[#5D4037]"
               style={{ padding: '0.3rem', borderRadius: '6px' }}>
@@ -233,7 +237,6 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
   )
 }
 
-/* ── Skeleton ── */
 export function ScoreCardSkeleton() {
   return (
     <div className="bg-white rounded-xl border border-[#D7CCC8] overflow-hidden">
@@ -245,7 +248,8 @@ export function ScoreCardSkeleton() {
         <div className="h-3.5 skeleton rounded w-3/5" />
         <div className="h-3 skeleton rounded w-1/2 mt-1" />
         <div className="h-3 skeleton rounded w-2/3" />
-        <div className="flex justify-between items-center pt-2 border-t border-[#EFE9E7] mt-2">
+        <div className="flex justify-between items-center pt-2
+                        border-t border-[#EFE9E7] mt-2">
           <div className="flex gap-1">
             <div className="w-6 h-6 skeleton rounded" />
             <div className="w-6 h-6 skeleton rounded" />
