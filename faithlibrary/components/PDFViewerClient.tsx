@@ -1,23 +1,7 @@
 // components/PDFViewerClient.tsx
 'use client'
-import { useState, useCallback, useEffect } from 'react'
-import dynamic from 'next/dynamic'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, RotateCcw, Columns2, AlignJustify } from 'lucide-react'
-
-// Set worker before any Document/Page component mounts
-const setupWorker = () =>
-  import('react-pdf').then(({ pdfjs }) => {
-    pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
-  })
-
-const Document = dynamic(
-  () => setupWorker().then(() => import('react-pdf')).then(m => m.Document),
-  { ssr: false, loading: () => null }
-)
-const Page = dynamic(
-  () => import('react-pdf').then(m => m.Page),
-  { ssr: false, loading: () => null }
-)
 
 export function PDFViewerClient({ url }: { url: string }) {
   const [numPages,   setNumPages]   = useState(0)
@@ -27,10 +11,32 @@ export function PDFViewerClient({ url }: { url: string }) {
   const [error,      setError]      = useState(false)
   const [singlePage, setSinglePage] = useState(false)
   const [width,      setWidth]      = useState<number | undefined>(undefined)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Dynamic imports — all PDF work happens client-side only
+  const [DocComp, setDocComp] = useState<React.ComponentType<any> | null>(null)
+  const [PageComp, setPageComp] = useState<React.ComponentType<any> | null>(null)
+
+  useEffect(() => {
+    // Load pdfjs worker then import react-pdf components
+    async function load() {
+      try {
+        const pdfjs = await import('pdfjs-dist')
+        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+        const mod = await import('react-pdf')
+        setDocComp(() => mod.Document)
+        setPageComp(() => mod.Page)
+      } catch {
+        setError(true)
+        setLoading(false)
+      }
+    }
+    load()
+  }, [])
 
   useEffect(() => {
     const update = () => {
-      const el = document.getElementById('pdf-container')
+      const el = containerRef.current
       if (el) setWidth(Math.floor(el.clientWidth) - 32)
     }
     update()
@@ -39,7 +45,8 @@ export function PDFViewerClient({ url }: { url: string }) {
   }, [])
 
   const onLoad = useCallback(({ numPages }: { numPages: number }) => {
-    setNumPages(numPages); setLoading(false)
+    setNumPages(numPages)
+    setLoading(false)
   }, [])
 
   const zoomIn  = () => setScale(s => Math.min(2.5, +(s + 0.15).toFixed(2)))
@@ -55,7 +62,7 @@ export function PDFViewerClient({ url }: { url: string }) {
   )
 
   return (
-    <div className="flex flex-col items-center gap-4" id="pdf-container">
+    <div className="flex flex-col items-center gap-4" ref={containerRef}>
       {/* Controls */}
       <div className="sticky top-[112px] z-30 flex items-center gap-1.5 flex-wrap justify-center
                       bg-[#2C2C2C]/95 backdrop-blur-md text-[#F5F5F5]
@@ -89,23 +96,25 @@ export function PDFViewerClient({ url }: { url: string }) {
         </div>
       )}
 
-      <div className={`w-full transition-opacity duration-300 ${loading ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
-        <Document file={url} onLoadSuccess={onLoad} onLoadError={() => { setError(true); setLoading(false) }} loading="" error="">
-          {singlePage ? (
-            <div className="flex justify-center">
-              <Page pageNumber={page} scale={scale} width={width} loading="" renderAnnotationLayer renderTextLayer />
-            </div>
-          ) : (
-            numPages > 0 && Array.from({ length: numPages }, (_, i) => (
-              <div key={i + 1} className="flex justify-center mb-4">
-                <Page pageNumber={i + 1} scale={scale} width={width} loading=""
-                  renderAnnotationLayer={i === 0} renderTextLayer={i === 0}
-                  onRenderSuccess={i === 0 ? () => setLoading(false) : undefined} />
+      {DocComp && PageComp && (
+        <div className={`w-full transition-opacity duration-300 ${loading ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
+          <DocComp file={url} onLoadSuccess={onLoad} onLoadError={() => { setError(true); setLoading(false) }} loading="" error="">
+            {singlePage ? (
+              <div className="flex justify-center">
+                <PageComp pageNumber={page} scale={scale} width={width} loading="" renderAnnotationLayer renderTextLayer />
               </div>
-            ))
-          )}
-        </Document>
-      </div>
+            ) : (
+              numPages > 0 && Array.from({ length: numPages }, (_, i) => (
+                <div key={i + 1} className="flex justify-center mb-4">
+                  <PageComp pageNumber={i + 1} scale={scale} width={width} loading=""
+                    renderAnnotationLayer={i === 0} renderTextLayer={i === 0}
+                    onRenderSuccess={i === 0 ? () => setLoading(false) : undefined} />
+                </div>
+              ))
+            )}
+          </DocComp>
+        </div>
+      )}
     </div>
   )
 }

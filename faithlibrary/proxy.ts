@@ -11,6 +11,7 @@ export default async function proxy(request: NextRequest) {
   const isProtected = PROTECTED.some(r => pathname === r || pathname.startsWith(r + '/'))
   const isAuthPage  = AUTH_ONLY.some(r => pathname === r || pathname.startsWith(r + '/'))
 
+  // Pass through immediately — no Supabase call, no work
   if (!isProtected && !isAuthPage) {
     return NextResponse.next()
   }
@@ -41,7 +42,6 @@ export default async function proxy(request: NextRequest) {
   if (isProtected && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
-
   if (isAuthPage && user) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
@@ -49,6 +49,7 @@ export default async function proxy(request: NextRequest) {
   return response
 }
 
+// Only run proxy on routes that actually need auth — nothing else
 export const config = {
   matcher: [
     '/upload',
