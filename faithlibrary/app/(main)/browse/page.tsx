@@ -17,7 +17,7 @@ interface BrowseProps {
   }>
 }
 
-const PAGE_SIZE = 20 // 5 columns × 4 rows
+const PAGE_SIZE = 10 // 5 columns × 2 rows
 
 async function ScoreGrid({
   query, tags, sort, page,

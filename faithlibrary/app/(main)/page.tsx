@@ -18,7 +18,7 @@ interface HomeProps {
   searchParams: Promise<{ q?: string; tag?: string | string[]; page?: string }>
 }
 
-const PAGE_SIZE = 20 // 5 columns × 4 rows
+const PAGE_SIZE = 10 // 5 columns × 2 rows
 
 // ── Pagination component (mirrors browse page) ────────────────────────────────
 function Pagination({
