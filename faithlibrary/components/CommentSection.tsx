@@ -113,7 +113,7 @@ export function CommentSection({ fileId }: { fileId: string }) {
                 <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="text-sm font-semibold text-[#3E2723]"
                     style={{ fontFamily: 'var(--font-ui)' }}>
-                    {comment.profiles?.full_name ?? 'Anonymous'}
+                    Anonymous
                   </span>
                   <span className="text-xs text-[#D7CCC8]">{fmt(comment.created_at)}</span>
                 </div>

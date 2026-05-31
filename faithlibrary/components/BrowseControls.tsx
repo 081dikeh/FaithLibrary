@@ -13,40 +13,34 @@ const SORT_OPTIONS = [
 ]
 
 interface BrowseControlsProps {
-  query?:      string
-  activeTags:  string[]
-  activeSort:  string
+  query?:     string
+  activeTags: string[]
+  activeSort: string
 }
 
 export function BrowseControls({ query, activeTags, activeSort }: BrowseControlsProps) {
   const router = useRouter()
-
-  const [searchVal,    setSearchVal]    = useState(query ?? '')
-  const [sortOpen,     setSortOpen]     = useState(false)
-  const [filterOpen,   setFilterOpen]   = useState(false)
-  const [tagSearch,    setTagSearch]    = useState('')
-
+  const [searchVal,  setSearchVal]  = useState(query ?? '')
+  const [sortOpen,   setSortOpen]   = useState(false)
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [tagSearch,  setTagSearch]  = useState('')
   const sortRef   = useRef<HTMLDivElement>(null)
   const filterRef = useRef<HTMLDivElement>(null)
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false)
+      if (sortRef.current   && !sortRef.current.contains(e.target as Node))   setSortOpen(false)
       if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const push = (overrides: {
-    q?: string; tags?: string[]; sort?: string
-  }) => {
+  const push = (overrides: { q?: string; tags?: string[]; sort?: string }) => {
     const params = new URLSearchParams()
     const q    = 'q'    in overrides ? overrides.q    : query
     const tags = 'tags' in overrides ? overrides.tags : activeTags
     const sort = 'sort' in overrides ? overrides.sort : activeSort
-
     if (q) params.set('q', q)
     tags?.forEach(t => params.append('tag', t))
     if (sort && sort !== 'newest') params.set('sort', sort)
@@ -57,183 +51,244 @@ export function BrowseControls({ query, activeTags, activeSort }: BrowseControls
     e.preventDefault()
     push({ q: searchVal.trim() || undefined })
   }
-
   const toggleTag = (tag: string) => {
-    const next = activeTags.includes(tag)
-      ? activeTags.filter(t => t !== tag)
-      : [...activeTags, tag]
+    const next = activeTags.includes(tag) ? activeTags.filter(t => t !== tag) : [...activeTags, tag]
     push({ tags: next })
   }
-
   const clearTag = (tag: string) => push({ tags: activeTags.filter(t => t !== tag) })
-
   const filteredGroups = TAG_GROUPS.map(g => ({
-    ...g,
-    tags: g.tags.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase())),
+    ...g, tags: g.tags.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase())),
   })).filter(g => g.tags.length > 0)
-
   const sortLabel = SORT_OPTIONS.find(o => o.value === activeSort)?.label ?? 'Newest first'
 
+  const dropdownStyle: React.CSSProperties = {
+    position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+    background: 'var(--surface)', border: '1px solid var(--border)',
+    borderRadius: 14, boxShadow: 'var(--shadow-lift)',
+    overflow: 'hidden', zIndex: 50,
+  }
+
+  const controlBtnStyle = (active = false): React.CSSProperties => ({
+    display: 'flex', alignItems: 'center', gap: 7,
+    height: 38, padding: '0 14px', borderRadius: 8,
+    fontSize: '0.8125rem', fontWeight: 500,
+    cursor: 'pointer', whiteSpace: 'nowrap',
+    transition: 'all 0.18s',
+    border: `1.5px solid ${active ? 'var(--walnut)' : 'var(--border)'}`,
+    background: active ? 'var(--walnut)' : 'var(--surface)',
+    color: active ? 'var(--bone)' : 'var(--text-secondary)',
+    boxShadow: 'var(--shadow-xs)',
+    flexShrink: 0,
+  })
+
   return (
-    <div className="space-y-3">
-      {/* Row 1: search + sort + filter */}
-      <div className="flex flex-col sm:flex-row gap-2.5">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* Row 1 */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
 
-        {/* Search */}
-        <form onSubmit={handleSearch} className="flex-1 flex gap-2">
-          <div className="relative flex-1">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8D6E63]" />
-            <input
-              type="text"
-              value={searchVal}
-              onChange={e => setSearchVal(e.target.value)}
-              placeholder="Search titles, descriptions…"
-              className="input pl-9 pr-4 h-10"
-            />
-          </div>
-          <button type="submit" className="btn btn-primary btn-sm flex-shrink-0">
-            Search
-          </button>
-          {query && (
-            <button type="button" onClick={() => { setSearchVal(''); push({ q: undefined }) }}
-              className="btn btn-secondary btn-sm flex-shrink-0">
-              <X size={13} />
-            </button>
-          )}
-        </form>
-
-        {/* Sort */}
-        <div ref={sortRef} className="relative flex-shrink-0">
-          <button
-            onClick={() => setSortOpen(v => !v)}
-            className="btn btn-secondary h-10 gap-1.5 whitespace-nowrap"
-            style={{ padding: '0 1rem', fontSize: '0.8125rem' }}
-          >
-            {sortLabel}
-            <ChevronDown size={13} className={`transition-transform ${sortOpen ? 'rotate-180' : ''}`} />
-          </button>
-          {sortOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-48 z-50
-                            bg-white border border-[#D7CCC8] rounded-xl
-                            shadow-lift overflow-hidden animate-scale-in">
-              {SORT_OPTIONS.map(opt => (
-                <button key={opt.value}
-                  onClick={() => { push({ sort: opt.value }); setSortOpen(false) }}
-                  className={`w-full text-left px-4 py-2.5 text-sm flex items-center
-                              justify-between transition-colors ${
-                    activeSort === opt.value
-                      ? 'bg-[#EFE9E7] text-[#5D4037] font-medium'
-                      : 'text-[#3E2723] hover:bg-[#F5F5F5]'
-                  }`}>
-                  {opt.label}
-                  {activeSort === opt.value && <Check size={13} className="text-[#5D4037]" />}
-                </button>
-              ))}
+          {/* Search */}
+          <form onSubmit={handleSearch} style={{ flex: 1, display: 'flex', gap: 8, minWidth: 200 }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <Search size={14} style={{
+                position: 'absolute', left: 12, top: '50%',
+                transform: 'translateY(-50%)', color: 'var(--text-muted)',
+              }} />
+              <input
+                type="text"
+                value={searchVal}
+                onChange={e => setSearchVal(e.target.value)}
+                placeholder="Search titles, composers, descriptions…"
+                style={{
+                  width: '100%', height: 38,
+                  paddingLeft: 36, paddingRight: 12,
+                  fontSize: '0.875rem',
+                  background: 'var(--surface)',
+                  border: '1.5px solid var(--border)',
+                  borderRadius: 8, color: 'var(--text-primary)',
+                  outline: 'none', fontFamily: 'var(--font-ui)',
+                  transition: 'border-color 0.18s, box-shadow 0.18s',
+                  boxShadow: 'var(--shadow-xs)',
+                }}
+                onFocus={e => {
+                  e.target.style.borderColor = 'var(--walnut)'
+                  e.target.style.boxShadow = '0 0 0 3px var(--accent-glow)'
+                }}
+                onBlur={e => {
+                  e.target.style.borderColor = 'var(--border)'
+                  e.target.style.boxShadow = 'var(--shadow-xs)'
+                }}
+              />
             </div>
-          )}
-        </div>
-
-        {/* Filter */}
-        <div ref={filterRef} className="relative flex-shrink-0">
-          <button
-            onClick={() => setFilterOpen(v => !v)}
-            className={`btn h-10 gap-1.5 whitespace-nowrap ${
-              activeTags.length > 0 ? 'btn-primary' : 'btn-secondary'
-            }`}
-            style={{ padding: '0 1rem', fontSize: '0.8125rem' }}
-          >
-            <SlidersHorizontal size={13} />
-            Filter
-            {activeTags.length > 0 && (
-              <span className="ml-0.5 w-5 h-5 rounded-full bg-white/20
-                               text-xs flex items-center justify-center font-semibold">
-                {activeTags.length}
-              </span>
+            <button type="submit" style={{
+              ...controlBtnStyle(),
+              background: 'var(--walnut)', borderColor: 'var(--walnut)',
+              color: 'var(--bone)',
+            }}>Search</button>
+            {query && (
+              <button type="button" onClick={() => { setSearchVal(''); push({ q: undefined }) }}
+                style={controlBtnStyle()}>
+                <X size={13} />
+              </button>
             )}
-            <ChevronDown size={13} className={`transition-transform ${filterOpen ? 'rotate-180' : ''}`} />
-          </button>
+          </form>
 
-          {filterOpen && (
-            <div className="absolute right-0 top-full mt-1.5 w-72 z-50
-                            bg-white border border-[#D7CCC8] rounded-xl
-                            shadow-lift animate-scale-in overflow-hidden"
-              style={{ maxHeight: '380px', display: 'flex', flexDirection: 'column' }}>
-
-              {/* Tag search */}
-              <div className="px-3 pt-3 pb-2 border-b border-[#EFE9E7] flex-shrink-0">
-                <div className="relative">
-                  <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8D6E63]" />
-                  <input
-                    autoFocus
-                    value={tagSearch}
-                    onChange={e => setTagSearch(e.target.value)}
-                    placeholder="Search categories…"
-                    className="w-full pl-7 pr-3 py-1.5 text-xs bg-[#F5F5F5] border border-[#D7CCC8]
-                               rounded-lg focus:outline-none focus:border-[#5D4037] text-[#3E2723]"
-                  />
-                </div>
-              </div>
-
-              {/* Groups */}
-              <div className="overflow-y-auto flex-1 py-1">
-                {filteredGroups.map(group => (
-                  <div key={group.label}>
-                    <p className="px-3 pt-2.5 pb-0.5 text-[0.62rem] font-bold uppercase
-                                  tracking-widest text-[#8D6E63]/60">
-                      {group.label}
-                    </p>
-                    {group.tags.map(tag => {
-                      const on = activeTags.includes(tag)
-                      return (
-                        <button key={tag} onClick={() => toggleTag(tag)}
-                          className={`w-full text-left px-3 py-2 text-sm flex items-center
-                                      justify-between gap-2 transition-colors ${
-                            on ? 'bg-[#EFE9E7] text-[#5D4037] font-medium'
-                               : 'text-[#3E2723] hover:bg-[#F5F5F5]'
-                          }`}>
-                          <span>{tag}</span>
-                          {on && <Check size={12} className="text-[#5D4037] flex-shrink-0" />}
-                        </button>
-                      )
-                    })}
-                  </div>
+          {/* Sort dropdown */}
+          <div ref={sortRef} style={{ position: 'relative', flexShrink: 0 }}>
+            <button onClick={() => setSortOpen(v => !v)} style={controlBtnStyle()}>
+              {sortLabel}
+              <ChevronDown size={12} style={{
+                transition: 'transform 0.2s',
+                transform: sortOpen ? 'rotate(180deg)' : 'none',
+              }} />
+            </button>
+            {sortOpen && (
+              <div className="animate-scale-in" style={{ ...dropdownStyle, width: 192 }}>
+                {SORT_OPTIONS.map(opt => (
+                  <button key={opt.value}
+                    onClick={() => { push({ sort: opt.value }); setSortOpen(false) }}
+                    style={{
+                      width: '100%', textAlign: 'left',
+                      padding: '9px 14px',
+                      fontSize: '0.8125rem',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      background: activeSort === opt.value ? 'var(--surface-3)' : 'transparent',
+                      color: activeSort === opt.value ? 'var(--walnut)' : 'var(--text-primary)',
+                      fontWeight: activeSort === opt.value ? 600 : 400,
+                      border: 'none', cursor: 'pointer',
+                      transition: 'background 0.12s',
+                      fontFamily: 'var(--font-ui)',
+                    }}>
+                    {opt.label}
+                    {activeSort === opt.value && <Check size={12} style={{ color: 'var(--walnut)' }} />}
+                  </button>
                 ))}
               </div>
+            )}
+          </div>
 
-              {/* Footer */}
+          {/* Filter dropdown */}
+          <div ref={filterRef} style={{ position: 'relative', flexShrink: 0 }}>
+            <button onClick={() => setFilterOpen(v => !v)}
+              style={controlBtnStyle(activeTags.length > 0)}>
+              <SlidersHorizontal size={13} />
+              Filter
               {activeTags.length > 0 && (
-                <div className="flex items-center justify-between px-3 py-2
-                                border-t border-[#EFE9E7] bg-[#F5F5F5] flex-shrink-0">
-                  <span className="text-xs text-[#8D6E63]">{activeTags.length} active</span>
-                  <button onClick={() => push({ tags: [] })}
-                    className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors">
-                    Clear all
-                  </button>
-                </div>
+                <span style={{
+                  width: 18, height: 18, borderRadius: '50%',
+                  background: 'rgba(255,255,255,0.22)', color: 'white',
+                  fontSize: '0.7rem', fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>{activeTags.length}</span>
               )}
-            </div>
-          )}
+              <ChevronDown size={12} style={{
+                transition: 'transform 0.2s',
+                transform: filterOpen ? 'rotate(180deg)' : 'none',
+              }} />
+            </button>
+
+            {filterOpen && (
+              <div className="animate-scale-in" style={{
+                ...dropdownStyle, width: 272,
+                maxHeight: 400, display: 'flex', flexDirection: 'column',
+              }}>
+                <div style={{
+                  padding: '10px 12px 8px',
+                  borderBottom: '1px solid var(--border)', flexShrink: 0,
+                }}>
+                  <div style={{ position: 'relative' }}>
+                    <Search size={12} style={{
+                      position: 'absolute', left: 10, top: '50%',
+                      transform: 'translateY(-50%)', color: 'var(--text-muted)',
+                    }} />
+                    <input
+                      autoFocus
+                      value={tagSearch}
+                      onChange={e => setTagSearch(e.target.value)}
+                      placeholder="Search categories…"
+                      style={{
+                        width: '100%', paddingLeft: 28, paddingRight: 10, paddingTop: 6, paddingBottom: 6,
+                        fontSize: '0.8rem', background: 'var(--surface-3)',
+                        border: '1px solid var(--border)', borderRadius: 7,
+                        color: 'var(--text-primary)', outline: 'none',
+                        fontFamily: 'var(--font-ui)',
+                      }}
+                    />
+                  </div>
+                </div>
+                <div style={{ overflowY: 'auto', flex: 1 }}>
+                  {filteredGroups.map(group => (
+                    <div key={group.label}>
+                      <p style={{
+                        padding: '10px 14px 4px',
+                        fontSize: '0.62rem', fontWeight: 700,
+                        letterSpacing: '0.1em', textTransform: 'uppercase',
+                        color: 'var(--text-muted)', opacity: 0.7,
+                      }}>{group.label}</p>
+                      {group.tags.map(tag => {
+                        const on = activeTags.includes(tag)
+                        return (
+                          <button key={tag} onClick={() => toggleTag(tag)} style={{
+                            width: '100%', textAlign: 'left',
+                            padding: '7px 14px', fontSize: '0.8125rem',
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                            background: on ? 'var(--surface-3)' : 'transparent',
+                            color: on ? 'var(--walnut)' : 'var(--text-primary)',
+                            fontWeight: on ? 600 : 400,
+                            border: 'none', cursor: 'pointer',
+                            transition: 'background 0.12s', fontFamily: 'var(--font-ui)',
+                          }}>
+                            <span>{tag}</span>
+                            {on && <Check size={12} style={{ color: 'var(--walnut)', flexShrink: 0 }} />}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ))}
+                </div>
+                {activeTags.length > 0 && (
+                  <div style={{
+                    padding: '8px 14px', borderTop: '1px solid var(--border)',
+                    background: 'var(--surface-2)', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                      {activeTags.length} active
+                    </span>
+                    <button onClick={() => push({ tags: [] })} style={{
+                      fontSize: '0.75rem', color: '#dc2626', fontWeight: 500,
+                      background: 'none', border: 'none', cursor: 'pointer',
+                    }}>Clear all</button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Row 2: active tag pills */}
       {activeTags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 items-center">
-          <span className="text-xs text-[#8D6E63] mr-1">Filtered by:</span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginRight: 2 }}>Filtered by:</span>
           {activeTags.map(tag => (
-            <button key={tag} onClick={() => clearTag(tag)}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium
-                         bg-[#EFE9E7] border border-[#D7CCC8] text-[#5D4037]
-                         hover:border-red-300 hover:text-red-500 transition-all">
-              {tag} <X size={10} />
+            <button key={tag} onClick={() => clearTag(tag)} style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '5px 10px', borderRadius: 7,
+              fontSize: '0.75rem', fontWeight: 500,
+              background: 'var(--surface-3)', border: '1px solid var(--border)',
+              color: 'var(--walnut)', cursor: 'pointer',
+              transition: 'all 0.15s',
+            }}>
+              {tag} <X size={10} style={{ opacity: 0.7 }} />
             </button>
           ))}
           {activeTags.length > 1 && (
-            <button onClick={() => push({ tags: [] })}
-              className="text-xs text-[#8D6E63] hover:text-red-500 px-2 py-1
-                         rounded-lg hover:bg-red-50 transition-all">
-              Clear all
-            </button>
+            <button onClick={() => push({ tags: [] })} style={{
+              fontSize: '0.75rem', color: 'var(--text-muted)',
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: '5px 8px', borderRadius: 7, transition: 'color 0.15s',
+            }}>Clear all</button>
           )}
         </div>
       )}

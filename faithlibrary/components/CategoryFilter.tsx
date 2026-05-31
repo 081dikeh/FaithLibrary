@@ -11,7 +11,7 @@ interface CategoryFilterProps {
 }
 
 export function CategoryFilter({ active, query }: CategoryFilterProps) {
-  const router       = useRouter()
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const containerRef = useRef<HTMLDivElement>(null)
@@ -26,14 +26,10 @@ export function CategoryFilter({ active, query }: CategoryFilterProps) {
   }, [])
 
   const toggleTag = (tag: string) => {
-    const next = active.includes(tag)
-      ? active.filter(t => t !== tag)
-      : [...active, tag]
+    const next = active.includes(tag) ? active.filter(t => t !== tag) : [...active, tag]
     pushFilters(next)
   }
-
   const clearAll = () => pushFilters([])
-
   const pushFilters = (tags: string[]) => {
     const params = new URLSearchParams()
     if (query) params.set('q', query)
@@ -47,73 +43,106 @@ export function CategoryFilter({ active, query }: CategoryFilterProps) {
   })).filter(g => g.tags.length > 0)
 
   return (
-    <div className="flex items-start gap-3 flex-wrap">
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
 
-      {/* ── Filter button + dropdown ── */}
-      <div ref={containerRef} className="relative">
+      {/* Filter dropdown trigger */}
+      <div ref={containerRef} style={{ position: 'relative' }}>
         <button
           onClick={() => setOpen(v => !v)}
-          className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm
-                      font-medium transition-all duration-200 ${
-            active.length > 0
-              ? 'bg-[#5D4037] text-white border-[#5D4037]'
-              : 'bg-white text-[#8D6E63] border-[#D7CCC8] hover:border-[#8D6E63] hover:text-[#5D4037]'
-          }`}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 7,
+            padding: '7px 14px', borderRadius: 8,
+            border: `1.5px solid ${active.length > 0 ? 'var(--walnut)' : 'var(--border)'}`,
+            background: active.length > 0 ? 'var(--walnut)' : 'var(--surface)',
+            color: active.length > 0 ? 'var(--bone)' : 'var(--text-secondary)',
+            fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer',
+            transition: 'all 0.18s',
+            boxShadow: 'var(--shadow-xs)',
+          }}
         >
-          <SlidersHorizontal size={14} />
+          <SlidersHorizontal size={13} />
           Filter
           {active.length > 0 && (
-            <span className="ml-0.5 w-5 h-5 rounded-full bg-white/20 text-white
-                             text-xs flex items-center justify-center font-semibold">
-              {active.length}
-            </span>
+            <span style={{
+              width: 18, height: 18, borderRadius: '50%',
+              background: 'rgba(255,255,255,0.2)', color: 'white',
+              fontSize: '0.7rem', fontWeight: 700,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>{active.length}</span>
           )}
-          <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown size={12} style={{
+            transition: 'transform 0.2s',
+            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+            marginLeft: 2,
+          }} />
         </button>
 
         {open && (
-          <div className="absolute top-full left-0 mt-1.5 z-50 w-72
-                          bg-white border border-[#D7CCC8] rounded-xl
-                          shadow-[0_8px_32px_rgba(62,39,35,0.14)]
-                          animate-scale-in overflow-hidden"
-            style={{maxHeight:'360px', display:'flex', flexDirection:'column'}}
-          >
-            {/* Search */}
-            <div className="px-3 pt-3 pb-2 border-b border-[#EFE9E7] flex-shrink-0">
-              <div className="relative">
-                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8D6E63]" />
+          <div className="animate-scale-in" style={{
+            position: 'absolute', top: 'calc(100% + 8px)', left: 0,
+            zIndex: 50, width: 268,
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 14,
+            boxShadow: 'var(--shadow-lift)',
+            overflow: 'hidden',
+            display: 'flex', flexDirection: 'column',
+            maxHeight: 380,
+          }}>
+            {/* Search inside dropdown */}
+            <div style={{
+              padding: '10px 12px 8px',
+              borderBottom: '1px solid var(--border)',
+              flexShrink: 0,
+            }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={12} style={{
+                  position: 'absolute', left: 10, top: '50%',
+                  transform: 'translateY(-50%)', color: 'var(--text-muted)',
+                }} />
                 <input
                   autoFocus
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search categories…"
-                  className="w-full pl-7 pr-3 py-1.5 text-xs bg-[#F5F5F5] border border-[#D7CCC8]
-                             rounded-lg focus:outline-none focus:border-[#5D4037]
-                             text-[#3E2723] placeholder-[#8D6E63]"
+                  style={{
+                    width: '100%', paddingLeft: 28, paddingRight: 10, paddingTop: 6, paddingBottom: 6,
+                    fontSize: '0.8125rem', background: 'var(--surface-3)',
+                    border: '1px solid var(--border)', borderRadius: 7,
+                    color: 'var(--text-primary)', outline: 'none',
+                    fontFamily: 'var(--font-ui)',
+                  }}
                 />
               </div>
             </div>
 
-            {/* Groups */}
-            <div className="overflow-y-auto flex-1 py-1">
+            {/* Groups list */}
+            <div style={{ overflowY: 'auto', flex: 1 }}>
               {filtered.map(group => (
                 <div key={group.label}>
-                  <p className="px-3 pt-2.5 pb-0.5 text-[0.62rem] font-bold uppercase
-                                tracking-widest text-[#8D6E63]/60">
-                    {group.label}
-                  </p>
+                  <p style={{
+                    padding: '10px 14px 4px',
+                    fontSize: '0.62rem', fontWeight: 700,
+                    letterSpacing: '0.1em', textTransform: 'uppercase',
+                    color: 'var(--text-muted)', opacity: 0.7,
+                  }}>{group.label}</p>
                   {group.tags.map(tag => {
                     const on = active.includes(tag)
                     return (
-                      <button key={tag} onClick={() => toggleTag(tag)}
-                        className={`w-full text-left px-3 py-1.5 text-sm flex items-center
-                                    justify-between gap-2 transition-colors ${
-                          on ? 'bg-[#EFE9E7] text-[#5D4037] font-medium'
-                             : 'text-[#3E2723] hover:bg-[#F5F5F5]'
-                        }`}
-                      >
+                      <button key={tag} onClick={() => toggleTag(tag)} style={{
+                        width: '100%', textAlign: 'left',
+                        padding: '7px 14px',
+                        fontSize: '0.8125rem',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                        background: on ? 'var(--surface-3)' : 'transparent',
+                        color: on ? 'var(--walnut)' : 'var(--text-primary)',
+                        fontWeight: on ? 600 : 400,
+                        border: 'none', cursor: 'pointer',
+                        transition: 'background 0.12s, color 0.12s',
+                        fontFamily: 'var(--font-ui)',
+                      }}>
                         <span>{tag}</span>
-                        {on && <Check size={12} className="text-[#5D4037]" />}
+                        {on && <Check size={12} style={{ color: 'var(--walnut)', flexShrink: 0 }} />}
                       </button>
                     )
                   })}
@@ -121,37 +150,51 @@ export function CategoryFilter({ active, query }: CategoryFilterProps) {
               ))}
             </div>
 
+            {/* Footer */}
             {active.length > 0 && (
-              <div className="flex items-center justify-between px-3 py-2
-                              border-t border-[#EFE9E7] bg-[#F5F5F5] flex-shrink-0">
-                <span className="text-xs text-[#8D6E63]">{active.length} active</span>
-                <button onClick={clearAll}
-                  className="text-xs text-red-500 hover:text-red-700 font-medium transition-colors">
-                  Clear all
-                </button>
+              <div style={{
+                padding: '8px 14px',
+                borderTop: '1px solid var(--border)',
+                background: 'var(--surface-2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                flexShrink: 0,
+              }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  {active.length} active
+                </span>
+                <button onClick={clearAll} style={{
+                  fontSize: '0.75rem', color: '#dc2626', fontWeight: 500,
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  transition: 'color 0.15s',
+                }}>Clear all</button>
               </div>
             )}
           </div>
         )}
       </div>
 
-      {/* ── Active tag pills ── */}
+      {/* Active tag pills */}
       {active.map(tag => (
-        <button key={tag} onClick={() => toggleTag(tag)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium
-                     bg-[#EFE9E7] border border-[#D7CCC8] text-[#5D4037]
-                     hover:border-red-300 hover:text-red-500 transition-all">
+        <button key={tag} onClick={() => toggleTag(tag)} style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          padding: '6px 12px', borderRadius: 8,
+          fontSize: '0.75rem', fontWeight: 500,
+          background: 'var(--surface-3)', border: '1.5px solid var(--border)',
+          color: 'var(--walnut)', cursor: 'pointer',
+          transition: 'all 0.15s',
+        }}>
           {tag}
-          <X size={10} />
+          <X size={10} style={{ opacity: 0.7 }} />
         </button>
       ))}
 
       {active.length > 1 && (
-        <button onClick={clearAll}
-          className="text-xs text-[#8D6E63] hover:text-red-500 transition-colors
-                     px-2 py-1.5 rounded-xl hover:bg-red-50">
-          Clear all
-        </button>
+        <button onClick={clearAll} style={{
+          fontSize: '0.75rem', color: 'var(--text-muted)',
+          background: 'none', border: 'none', cursor: 'pointer',
+          padding: '6px 8px', borderRadius: 8,
+          transition: 'color 0.15s',
+        }}>Clear all</button>
       )}
     </div>
   )
