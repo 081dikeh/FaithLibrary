@@ -13,21 +13,48 @@ interface DashboardFileCardProps {
 
 export function DashboardFileCard({ file, bookmarked, index }: DashboardFileCardProps) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <ScoreCard file={file} bookmarked={bookmarked} index={index} />
-      <div className="flex items-center justify-between px-1">
-        <div className={`flex items-center gap-1 text-[0.68rem] font-medium
-                         ${file.is_public ? 'text-[#8D6E63]' : 'text-[#D7CCC8]'}`}
-          style={{ fontFamily: 'var(--font-ui)' }}>
+
+      {/* Below-card meta row */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        paddingLeft: 2, paddingRight: 2,
+      }}>
+        {/* Visibility badge */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 4,
+          fontSize: '0.68rem', fontWeight: 500,
+          color: file.is_public ? 'var(--text-muted)' : 'var(--border-strong)',
+          fontFamily: 'var(--font-ui)',
+        }}>
           {file.is_public
-            ? <><Globe size={9} className="flex-shrink-0" /> Public</>
-            : <><Lock size={9} className="flex-shrink-0" /> Private</>}
+            ? <><Globe size={9} style={{ flexShrink: 0 }} /> Public</>
+            : <><Lock size={9} style={{ flexShrink: 0 }} /> Private</>
+          }
         </div>
-        <Link href={`/edit/${file.id}`}
-          className="flex items-center gap-1 text-[0.68rem] font-medium
-                     text-[#8D6E63] hover:text-[#5D4037] transition-colors
-                     px-2 py-1 rounded-lg hover:bg-[#EFE9E7]"
-          style={{ fontFamily: 'var(--font-ui)' }}>
+
+        {/* Edit link */}
+        <Link href={`/edit/${file.id}`} style={{
+          display: 'flex', alignItems: 'center', gap: 4,
+          fontSize: '0.68rem', fontWeight: 500,
+          color: 'var(--text-muted)', textDecoration: 'none',
+          padding: '3px 8px', borderRadius: 6,
+          background: 'transparent',
+          transition: 'all 0.15s',
+          fontFamily: 'var(--font-ui)',
+        }}
+          onMouseEnter={e => {
+            const el = e.currentTarget as HTMLElement
+            el.style.background = 'var(--surface-3)'
+            el.style.color = 'var(--walnut)'
+          }}
+          onMouseLeave={e => {
+            const el = e.currentTarget as HTMLElement
+            el.style.background = 'transparent'
+            el.style.color = 'var(--text-muted)'
+          }}
+        >
           <Pencil size={10} /> Edit
         </Link>
       </div>

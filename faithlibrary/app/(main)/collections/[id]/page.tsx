@@ -3,31 +3,41 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/Navbar'
+import { Footer } from '@/components/Footer'
 import { ScoreCard } from '@/components/ScoreCard'
 import { ArrowLeft, FolderOpen, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const PAGE_SIZE = 10
+
+function pageBtnStyle(active: boolean): React.CSSProperties {
+  return {
+    width: 36, height: 36, borderRadius: 9,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: '0.875rem', fontWeight: active ? 600 : 400,
+    textDecoration: 'none', transition: 'all 0.15s',
+    border: '1px solid ' + (active ? 'var(--walnut)' : 'var(--border)'),
+    background: active ? 'var(--walnut)' : 'var(--surface)',
+    color: active ? 'var(--bone)' : 'var(--text-muted)',
+    fontFamily: 'var(--font-ui)', flexShrink: 0,
+  }
+}
 
 function Pagination({ current, total, id }: { current: number; total: number; id: string }) {
   const build = (p: number) => `/collections/${id}?page=${p}`
   const pages: (number | '...')[] =
     total <= 7 ? Array.from({ length: total }, (_, i) => i + 1)
     : current <= 4 ? [1, 2, 3, 4, 5, '...', total]
-    : current >= total - 3 ? [1, '...', total - 4, total - 3, total - 2, total - 1, total]
-    : [1, '...', current - 1, current, current + 1, '...', total]
-
+    : current >= total - 3 ? [1, '...', total-4, total-3, total-2, total-1, total]
+    : [1, '...', current-1, current, current+1, '...', total]
   return (
-    <div className="flex items-center justify-center gap-1.5 pt-6">
-      {current > 1 && (
-        <a href={build(current - 1)} className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-[#D7CCC8] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037] transition-all"><ChevronLeft size={15} /></a>
-      )}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 24 }}>
+      {current > 1 && <a href={build(current - 1)} style={pageBtnStyle(false)}><ChevronLeft size={14} /></a>}
       {pages.map((p, i) =>
-        p === '...' ? <span key={`d${i}`} className="w-9 h-9 flex items-center justify-center text-[#D7CCC8] text-sm">…</span>
-        : <a key={p} href={build(p as number)} className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-medium transition-all ${p === current ? 'bg-[#5D4037] text-white shadow-sm' : 'bg-white border border-[#D7CCC8] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037]'}`}>{p}</a>
+        p === '...'
+          ? <span key={`d${i}`} style={{ width: 36, textAlign: 'center', color: 'var(--text-muted)' }}>…</span>
+          : <a key={p} href={build(p as number)} style={pageBtnStyle(p === current)}>{p}</a>
       )}
-      {current < total && (
-        <a href={build(current + 1)} className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-[#D7CCC8] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037] transition-all"><ChevronRight size={15} /></a>
-      )}
+      {current < total && <a href={build(current + 1)} style={pageBtnStyle(false)}><ChevronRight size={14} /></a>}
     </div>
   )
 }
@@ -43,7 +53,6 @@ export default async function CollectionPage({ params, searchParams }: Collectio
   const page   = Math.max(1, parseInt(sp.page ?? '1', 10))
   const from   = (page - 1) * PAGE_SIZE
   const to     = from + PAGE_SIZE - 1
-
   const supabase = await createClient()
 
   const { data: collection, error } = await supabase
@@ -62,24 +71,40 @@ export default async function CollectionPage({ params, searchParams }: Collectio
   const totalPages = Math.ceil(totalFiles / PAGE_SIZE)
 
   return (
-    <div className="min-h-screen grain bg-[#F5F5F5]">
+    <div style={{ minHeight: '100vh', background: 'var(--bone)' }} className="grain">
       <Navbar />
-      <div className="bg-[#3E2723] relative overflow-hidden">
-        <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-[#5D4037]/30 blur-3xl pointer-events-none" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-10">
-          <Link href="/collections" className="inline-flex items-center gap-1.5 text-[#8D6E63] text-sm mb-5 hover:text-[#D7CCC8] transition-colors">
-            <ArrowLeft size={14} /> My Collections
+
+      {/* ── Collection hero ── */}
+      <div style={{ background: 'var(--roasted)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -64, right: -64, width: 280, height: 280, borderRadius: '50%', background: 'rgba(93,64,55,0.35)', filter: 'blur(56px)', pointerEvents: 'none' }} />
+        <div className="page-container" style={{ position: 'relative', paddingTop: 32, paddingBottom: 40 }}>
+          <Link href="/collections" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            color: 'var(--ochre)', fontSize: '0.8125rem', textDecoration: 'none',
+            marginBottom: 20, transition: 'color 0.15s',
+          }}>
+            <ArrowLeft size={13} /> My Collections
           </Link>
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-white text-2xl shadow-lg" style={{background: collection.cover_color ?? '#5D4037'}}>
-              <FolderOpen size={26} />
+
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: 14, flexShrink: 0,
+              background: collection.cover_color ?? 'var(--walnut)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+            }}>
+              <FolderOpen size={24} style={{ color: 'rgba(255,255,255,0.9)' }} />
             </div>
             <div>
-              <h1 className="font-display text-3xl font-bold text-[#F5F5F5]">{collection.title}</h1>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', fontWeight: 700, color: 'var(--bone)', lineHeight: 1.1 }}>
+                {collection.title}
+              </h1>
               {collection.description && (
-                <p className="text-[#8D6E63] text-sm mt-1" style={{fontFamily:'var(--font-ui)'}}>{collection.description}</p>
+                <p style={{ color: 'var(--ochre)', fontSize: '0.875rem', marginTop: 4, fontFamily: 'var(--font-ui)' }}>
+                  {collection.description}
+                </p>
               )}
-              <p className="text-[#8D6E63] text-xs mt-2" style={{fontFamily:'var(--font-ui)'}}>
+              <p style={{ color: 'var(--ochre)', fontSize: '0.75rem', marginTop: 6, fontFamily: 'var(--font-ui)', opacity: 0.8 }}>
                 {totalFiles} score{totalFiles !== 1 ? 's' : ''}
                 {collection.profiles?.full_name && ` · by ${collection.profiles.full_name}`}
               </p>
@@ -88,12 +113,15 @@ export default async function CollectionPage({ params, searchParams }: Collectio
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      {/* ── Score grid ── */}
+      <main className="page-container" style={{ paddingTop: 32, paddingBottom: 56 }}>
         {files.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 py-24 text-center">
-            <p className="font-display text-xl text-[#5D4037]">No scores in this collection</p>
-            <p className="text-sm text-[#8D6E63]" style={{fontFamily:'var(--font-ui)'}}>Browse the library and add scores to this collection.</p>
-            <Link href="/" className="btn btn-primary btn-sm">Browse Library</Link>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '80px 0', textAlign: 'center' }}>
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', color: 'var(--walnut)', fontWeight: 600 }}>No scores in this collection</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Browse the library and add scores to this collection.</p>
+            <Link href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 8, padding: '9px 18px', borderRadius: 9, background: 'var(--walnut)', color: 'var(--bone)', fontSize: '0.8125rem', fontWeight: 500, textDecoration: 'none' }}>
+              Browse Library
+            </Link>
           </div>
         ) : (
           <>
@@ -104,6 +132,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
           </>
         )}
       </main>
+      <Footer />
     </div>
   )
 }

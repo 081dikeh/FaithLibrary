@@ -1,6 +1,5 @@
 // app/(main)/profile/[id]/page.tsx
 import { notFound } from 'next/navigation'
-import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
@@ -10,26 +9,35 @@ import type { FileRecord } from '@/lib/types'
 
 const PAGE_SIZE = 10
 
+function pageBtnStyle(active: boolean): React.CSSProperties {
+  return {
+    width: 36, height: 36, borderRadius: 9,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: '0.875rem', fontWeight: active ? 600 : 400,
+    textDecoration: 'none', transition: 'all 0.15s',
+    border: '1px solid ' + (active ? 'var(--walnut)' : 'var(--border)'),
+    background: active ? 'var(--walnut)' : 'var(--surface)',
+    color: active ? 'var(--bone)' : 'var(--text-muted)',
+    fontFamily: 'var(--font-ui)', flexShrink: 0,
+  }
+}
+
 function Pagination({ current, total, userId }: { current: number; total: number; userId: string }) {
   const build = (p: number) => `/profile/${userId}?page=${p}`
   const pages: (number | '...')[] =
     total <= 7 ? Array.from({ length: total }, (_, i) => i + 1)
     : current <= 4 ? [1, 2, 3, 4, 5, '...', total]
-    : current >= total - 3 ? [1, '...', total - 4, total - 3, total - 2, total - 1, total]
-    : [1, '...', current - 1, current, current + 1, '...', total]
-
+    : current >= total - 3 ? [1, '...', total-4, total-3, total-2, total-1, total]
+    : [1, '...', current-1, current, current+1, '...', total]
   return (
-    <div className="flex items-center justify-center gap-1.5 pt-6">
-      {current > 1 && (
-        <a href={build(current - 1)} className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-[#D7CCC8] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037] transition-all"><ChevronLeft size={15} /></a>
-      )}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 24 }}>
+      {current > 1 && <a href={build(current - 1)} style={pageBtnStyle(false)}><ChevronLeft size={14} /></a>}
       {pages.map((p, i) =>
-        p === '...' ? <span key={`d${i}`} className="w-9 h-9 flex items-center justify-center text-[#D7CCC8] text-sm">…</span>
-        : <a key={p} href={build(p as number)} className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-medium transition-all ${p === current ? 'bg-[#5D4037] text-white shadow-sm' : 'bg-white border border-[#D7CCC8] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037]'}`}>{p}</a>
+        p === '...'
+          ? <span key={`d${i}`} style={{ width: 36, textAlign: 'center', color: 'var(--text-muted)' }}>…</span>
+          : <a key={p} href={build(p as number)} style={pageBtnStyle(p === current)}>{p}</a>
       )}
-      {current < total && (
-        <a href={build(current + 1)} className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-[#D7CCC8] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037] transition-all"><ChevronRight size={15} /></a>
-      )}
+      {current < total && <a href={build(current + 1)} style={pageBtnStyle(false)}><ChevronRight size={14} /></a>}
     </div>
   )
 }
@@ -52,14 +60,11 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
   if (profileErr || !profile) notFound()
 
   const { data: files, count } = await supabase
-    .from('files')
-    .select('*', { count: 'exact' })
-    .eq('user_id', id)
-    .eq('is_public', true)
+    .from('files').select('*', { count: 'exact' })
+    .eq('user_id', id).eq('is_public', true)
     .order('created_at', { ascending: false })
     .range(from, to)
 
-  // Stats — total counts without pagination
   const { count: totalCount } = await supabase
     .from('files').select('*', { count: 'exact', head: true })
     .eq('user_id', id).eq('is_public', true)
@@ -75,52 +80,71 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
   const initials       = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
   return (
-    <div className="min-h-screen grain bg-[#F5F5F5]">
+    <div style={{ minHeight: '100vh', background: 'var(--bone)' }} className="grain">
       <Navbar />
-      <div className="bg-[#3E2723] relative overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-[#5D4037]/30 blur-3xl pointer-events-none" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex-shrink-0 bg-[#5D4037] flex items-center justify-center overflow-hidden border-2 border-[#8D6E63]/40 shadow-xl">
+
+      {/* ── Profile hero ── */}
+      <div style={{ background: 'var(--roasted)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -80, right: -80, width: 320, height: 320, borderRadius: '50%', background: 'rgba(93,64,55,0.35)', filter: 'blur(64px)', pointerEvents: 'none' }} />
+        <div className="page-container" style={{ position: 'relative', paddingTop: 48, paddingBottom: 48 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 24 }}>
+            {/* Avatar */}
+            <div style={{
+              width: 88, height: 88, borderRadius: 20, flexShrink: 0,
+              background: 'var(--walnut)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              overflow: 'hidden',
+              border: '2px solid rgba(141,110,99,0.35)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+            }}>
               {profile.avatar_url
-                ? <img src={profile.avatar_url} alt={displayName} className="w-full h-full object-cover" />
-                : <span className="font-display text-2xl font-bold text-[#D7CCC8]">{initials}</span>
+                ? <img src={profile.avatar_url} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <span style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 700, color: 'var(--sand)' }}>{initials}</span>
               }
             </div>
-            <div className="flex-1">
-              <h1 className="font-display text-3xl sm:text-4xl font-bold text-[#F5F5F5]">{displayName}</h1>
-              <div className="flex flex-wrap gap-5 mt-4">
-                <div className="flex items-center gap-1.5 text-[#D7CCC8] text-sm" style={{fontFamily:'var(--font-ui)'}}>
-                  <FileStack size={14} className="text-[#8D6E63]" />
-                  <span><strong className="text-[#F5F5F5]">{totalCount ?? 0}</strong> scores</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-[#D7CCC8] text-sm" style={{fontFamily:'var(--font-ui)'}}>
-                  <Download size={14} className="text-[#8D6E63]" />
-                  <span><strong className="text-[#F5F5F5]">{totalDownloads}</strong> downloads</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-[#D7CCC8] text-sm" style={{fontFamily:'var(--font-ui)'}}>
-                  <Calendar size={14} className="text-[#8D6E63]" />
-                  <span>Joined {joined}</span>
-                </div>
+
+            {/* Info */}
+            <div style={{ flex: 1 }}>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', fontWeight: 700, color: 'var(--bone)', lineHeight: 1.1 }}>
+                {displayName}
+              </h1>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginTop: 12 }}>
+                {[
+                  { icon: <FileStack size={13} />, label: `${totalCount ?? 0} scores` },
+                  { icon: <Download size={13} />,  label: `${totalDownloads.toLocaleString()} downloads` },
+                  { icon: <Calendar size={13} />,  label: `Joined ${joined}` },
+                ].map(({ icon, label }) => (
+                  <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--sand)', fontSize: '0.875rem', fontFamily: 'var(--font-ui)' }}>
+                    <span style={{ color: 'var(--ochre)' }}>{icon}</span>
+                    {label}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="font-display text-xl font-semibold text-[#3E2723]">Published Scores</h2>
+      {/* ── Score grid ── */}
+      <main className="page-container" style={{ paddingTop: 32, paddingBottom: 56 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+            Published Scores
+          </h2>
           {totalPages > 1 && (
-            <p className="text-xs text-[#8D6E63]" style={{fontFamily:'var(--font-ui)'}}>Page {page} of {totalPages}</p>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
+              Page {page} of {totalPages}
+            </p>
           )}
         </div>
 
         {uploads.length === 0 ? (
-          <div className="flex flex-col items-center gap-4 py-24 text-center">
-            <div className="w-16 h-16 rounded-full bg-[#EFE9E7] flex items-center justify-center"><FileStack size={26} className="text-[#8D6E63]" /></div>
-            <p className="font-display text-xl text-[#5D4037]">No public scores yet</p>
-            <p className="text-sm text-[#8D6E63]">{displayName} hasn't published any scores to the library.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '80px 0', textAlign: 'center' }}>
+            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--surface-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ochre)' }}>
+              <FileStack size={28} />
+            </div>
+            <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', color: 'var(--walnut)', fontWeight: 600 }}>No public scores yet</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{displayName} hasn't published any scores to the library.</p>
           </div>
         ) : (
           <>
