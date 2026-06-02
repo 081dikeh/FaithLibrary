@@ -1,0 +1,27 @@
+<!-- <div style={{ background: 'var(--roasted)', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -64, right: -64, width: 280, height: 280, borderRadius: '50%', background: 'rgba(93,64,55,0.4)', filter: 'blur(56px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -32, left: -24, width: 200, height: 200, borderRadius: '50%', background: 'rgba(141,110,99,0.15)', filter: 'blur(48px)', pointerEvents: 'none' }} />
+        <div className="page-container" style={{ position: 'relative', paddingTop: 40, paddingBottom: 40 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
+            <div>
+              <p className="section-eyebrow" style={{ color: 'var(--ochre)', marginBottom: 6 }}>Welcome back</p>
+              <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.75rem,4vw,2.5rem)', fontWeight: 700, color: 'var(--bone)', lineHeight: 1.1 }}>{displayName}</h1>
+              <p style={{ color: 'var(--ochre)', fontSize: '0.875rem', marginTop: 4, fontFamily: 'var(--font-ui)' }}>{user.email}</p>
+            </div>
+            <Link href="/upload" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 10, background: 'var(--walnut)', color: 'var(--bone)', fontFamily: 'var(--font-ui)', fontSize: '0.875rem', fontWeight: 500, textDecoration: 'none', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>
+              <Upload size={15} /> Upload New Score
+            </Link>
+          </div>
+          <div className="dash-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
+            {stats.map(stat => (
+              <div key={stat.label} style={{ background: 'rgba(93,64,55,0.35)', border: '1px solid rgba(141,110,99,0.22)', borderRadius: 12, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ color: 'var(--ochre)', flexShrink: 0 }}>{stat.icon}</div>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', fontWeight: 700, color: 'var(--bone)', lineHeight: 1 }}>{stat.value.toLocaleString()}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--ochre)', marginTop: 2, fontFamily: 'var(--font-ui)' }}>{stat.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div> -->
