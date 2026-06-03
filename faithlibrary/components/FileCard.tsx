@@ -43,7 +43,8 @@ export function FileCard({ file, bookmarked = false, onBookmarkToggle, index = 0
   const handleBookmark = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation()
     setBmLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user ?? null
     if (!user) { window.location.href = '/login'; return }
     if (isBookmarked) {
       await supabase.from('bookmarks').delete().match({ user_id: user.id, file_id: file.id })
