@@ -97,7 +97,7 @@ export default function LoginPage() {
           <div className="relative w-9 h-9">
             <Image src="/FaithLibrary_logo.png" alt="FaithLibrary" fill className="object-contain" />
           </div>
-          <span className="font-display text-xl font-semibold text-[#3E2723]">
+          <span className="font-display text-[35px] font-bold text-[#3E2723]">
             Faith<span className="text-[#8D6E63] font-normal italic">Library</span>
           </span>
         </div>

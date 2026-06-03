@@ -2,6 +2,7 @@
 'use client'
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { ZoomIn, ZoomOut, ChevronLeft, ChevronRight, RotateCcw, Columns2, AlignJustify } from 'lucide-react'
+import { getPdfJs } from '@/lib/pdfWorker'
 
 export function PDFViewerClient({ url }: { url: string }) {
   const [numPages,   setNumPages]   = useState(0)
@@ -18,19 +19,23 @@ export function PDFViewerClient({ url }: { url: string }) {
   useEffect(() => {
     async function load() {
       try {
-        const pdfjs = await import('pdfjs-dist')
-        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+        // Use singleton — worker is set once, not re-set
+        await getPdfJs()
         const mod = await import('react-pdf')
         setDocComp(() => mod.Document)
         setPageComp(() => mod.Page)
-      } catch { setError(true); setLoading(false) }
+      } catch {
+        setError(true)
+        setLoading(false)
+      }
     }
     load()
   }, [])
 
   useEffect(() => {
     const update = () => {
-      if (containerRef.current) setWidth(Math.floor(containerRef.current.clientWidth) - 32)
+      if (containerRef.current)
+        setWidth(Math.floor(containerRef.current.clientWidth) - 32)
     }
     update()
     window.addEventListener('resize', update)
@@ -38,7 +43,8 @@ export function PDFViewerClient({ url }: { url: string }) {
   }, [])
 
   const onLoad = useCallback(({ numPages }: { numPages: number }) => {
-    setNumPages(numPages); setLoading(false)
+    setNumPages(numPages)
+    setLoading(false)
   }, [])
 
   if (error) return (
@@ -51,6 +57,7 @@ export function PDFViewerClient({ url }: { url: string }) {
 
   return (
     <div className="flex flex-col items-center gap-4" ref={containerRef}>
+      {/* Toolbar */}
       <div className="sticky top-[112px] z-30 flex items-center gap-1.5 flex-wrap justify-center bg-[#2C2C2C]/95 backdrop-blur-md text-[#F5F5F5] px-3 py-2 rounded-2xl shadow-xl border border-white/10">
         <div className="flex items-center gap-1 border-r border-white/10 pr-2 mr-1">
           <button onClick={() => setScale(s => Math.max(0.4, +(s - 0.15).toFixed(2)))} className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center"><ZoomOut size={13} /></button>
@@ -71,6 +78,7 @@ export function PDFViewerClient({ url }: { url: string }) {
         {!singlePage && numPages > 0 && <span className="text-xs text-white/40 pl-1">{numPages} pages</span>}
       </div>
 
+      {/* Loading spinner */}
       {loading && (
         <div className="flex flex-col items-center gap-3 py-20 text-[#8D6E63]">
           <div className="w-10 h-10 rounded-full border-2 border-[#5D4037]/30 border-t-[#D7CCC8] animate-spin" />
@@ -78,9 +86,16 @@ export function PDFViewerClient({ url }: { url: string }) {
         </div>
       )}
 
+      {/* Document */}
       {DocComp && PageComp && (
         <div className={`w-full transition-opacity duration-300 ${loading ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
-          <DocComp file={url} onLoadSuccess={onLoad} onLoadError={() => { setError(true); setLoading(false) }} loading="" error="">
+          <DocComp
+            file={url}
+            onLoadSuccess={onLoad}
+            onLoadError={() => { setError(true); setLoading(false) }}
+            loading=""
+            error=""
+          >
             {singlePage ? (
               <div className="flex justify-center">
                 <PageComp pageNumber={page} scale={scale} width={width} loading="" renderAnnotationLayer renderTextLayer />
@@ -88,9 +103,15 @@ export function PDFViewerClient({ url }: { url: string }) {
             ) : (
               numPages > 0 && Array.from({ length: numPages }, (_, i) => (
                 <div key={i + 1} className="flex justify-center mb-4">
-                  <PageComp pageNumber={i + 1} scale={scale} width={width} loading=""
-                    renderAnnotationLayer={i === 0} renderTextLayer={i === 0}
-                    onRenderSuccess={i === 0 ? () => setLoading(false) : undefined} />
+                  <PageComp
+                    pageNumber={i + 1}
+                    scale={scale}
+                    width={width}
+                    loading=""
+                    renderAnnotationLayer={i === 0}
+                    renderTextLayer={i === 0}
+                    onRenderSuccess={i === 0 ? () => setLoading(false) : undefined}
+                  />
                 </div>
               ))
             )}

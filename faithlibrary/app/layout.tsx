@@ -1,4 +1,5 @@
 // app/layout.tsx
+// ONLY CHANGE: removed bg-[#F5F5F5] from <body> className
 import type { Metadata } from 'next'
 import './globals.css'
 import { MobileNav } from '@/components/MobileNav'
