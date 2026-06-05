@@ -27,7 +27,8 @@ export function CreateCollectionButton() {
     if (!title.trim()) return
     setSaving(true); setError('')
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user ?? null
     if (!user) { window.location.href = '/login'; return }
 
     const { data, error } = await supabase

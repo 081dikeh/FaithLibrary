@@ -29,7 +29,8 @@ export function AddToCollectionButton({ fileId }: AddToCollectionButtonProps) {
   const loadCollections = async () => {
     if (collections.length > 0) return
     setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user ?? null
     if (!user) { window.location.href = '/login'; return }
 
     const { data: cols } = await supabase

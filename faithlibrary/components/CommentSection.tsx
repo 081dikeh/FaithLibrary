@@ -6,72 +6,65 @@ import { MessageCircle, Send, Trash2, Loader2, User } from 'lucide-react'
 import Link from 'next/link'
 
 interface Comment {
-  id: string
-  body: string
-  created_at: string
-  user_id: string
-  author?: string | null
+  id: string; body: string; created_at: string
+  user_id: string; profiles: { full_name: string | null } | null
 }
 
 export function CommentSection({ fileId }: { fileId: string }) {
-  const supabase   = createClient()
-  const textaRef   = useRef<HTMLTextAreaElement>(null)
+  const supabase  = createClient()
+  const textaRef  = useRef<HTMLTextAreaElement>(null)
   const channelRef = useRef<any>(null)
 
-  const [comments,   setComments]   = useState<Comment[]>([])
-  const [loading,    setLoading]    = useState(true)
-  const [body,       setBody]       = useState('')
-  const [posting,    setPosting]    = useState(false)
-  const [userId,     setUserId]     = useState<string | null>(null)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [comments,    setComments]    = useState<Comment[]>([])
+  const [loading,     setLoading]     = useState(true)
+  const [body,        setBody]        = useState('')
+  const [posting,     setPosting]     = useState(false)
+  const [userId,      setUserId]      = useState<string | null>(null)
+  const [deletingId,  setDeletingId]  = useState<string | null>(null)
 
   const fetchComments = async () => {
-    // Step 1: fetch raw comments (no join — avoids 400 when FK not set in PostgREST)
-    const { data: rows, error } = await supabase
+    const { data } = await supabase
       .from('comments')
-      .select('id, body, created_at, user_id')
+      .select('id, body, created_at, user_id, profiles(full_name)')
       .eq('file_id', fileId)
       .order('created_at', { ascending: true })
-
-    if (error || !rows) { setComments([]); return }
-
-    // Step 2: fetch display names for unique user_ids
-    const ids = [...new Set(rows.map(r => r.user_id))]
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, full_name')
-      .in('id', ids)
-
-    const nameMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p.full_name]))
-
-    setComments(rows.map(r => ({ ...r, author: nameMap[r.user_id] ?? null })))
+    setComments((data as Comment[]) ?? [])
   }
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user ?? null
       setUserId(user?.id ?? null)
       await fetchComments()
       setLoading(false)
 
+      // Realtime
       if (channelRef.current) supabase.removeChannel(channelRef.current)
-      const ch = supabase.channel(`comments-${fileId}`)
-      channelRef.current = ch
-      ch.on('postgres_changes', {
-        event: '*', schema: 'public', table: 'comments',
-        filter: `file_id=eq.${fileId}`,
-      }, () => fetchComments()).subscribe()
+      const channel = supabase.channel(`comments-${fileId}`)
+      channelRef.current = channel
+      channel
+        .on('postgres_changes', {
+          event: '*', schema: 'public', table: 'comments',
+          filter: `file_id=eq.${fileId}`,
+        }, () => fetchComments())
+        .subscribe()
     }
     init()
     return () => {
-      if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null }
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
     }
   }, [fileId])
 
   const handlePost = async () => {
     if (!body.trim() || !userId) return
     setPosting(true)
-    await supabase.from('comments').insert({ file_id: fileId, user_id: userId, body: body.trim() })
+    await supabase.from('comments').insert({
+      file_id: fileId, user_id: userId, body: body.trim(),
+    })
     setBody('')
     setPosting(false)
   }
@@ -86,96 +79,58 @@ export function CommentSection({ fileId }: { fileId: string }) {
     month: 'short', day: 'numeric', year: 'numeric',
   })
 
-  const initials = (name: string | null | undefined) =>
-    name ? name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : null
-
   return (
-    <div style={{
-      background: 'var(--surface)',
-      borderRadius: 16,
-      border: '1px solid var(--border)',
-      boxShadow: 'var(--shadow-card)',
-      overflow: 'hidden',
-    }}>
-      {/* Header */}
-      <div style={{
-        padding: '14px 20px', borderBottom: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center', gap: 8,
-      }}>
-        <MessageCircle size={15} style={{ color: 'var(--walnut)' }} />
-        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-          Discussion
-        </h3>
+    <div className="bg-white rounded-2xl border border-[#D7CCC8] shadow-card overflow-hidden">
+      <div className="px-5 py-4 border-b border-[#EFE9E7] flex items-center gap-2">
+        <MessageCircle size={15} className="text-[#5D4037]" />
+        <h3 className="font-display text-base font-semibold text-[#3E2723]">Discussion</h3>
         {comments.length > 0 && (
-          <span style={{
-            marginLeft: 'auto', fontSize: '0.72rem', color: 'var(--text-muted)',
-            background: 'var(--surface-3)', padding: '2px 8px', borderRadius: 99,
-          }}>{comments.length}</span>
+          <span className="ml-auto text-xs text-[#8D6E63] bg-[#EFE9E7] px-2 py-0.5 rounded-full">
+            {comments.length}
+          </span>
         )}
       </div>
 
-      {/* Comments list */}
-      <div style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="divide-y divide-[#EFE9E7]">
         {loading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
-            <Loader2 size={18} style={{ color: 'var(--ochre)', animation: 'spin 1s linear infinite' }} />
+          <div className="flex items-center justify-center py-10">
+            <Loader2 size={18} className="animate-spin text-[#8D6E63]" />
           </div>
         ) : comments.length === 0 ? (
-          <div style={{ padding: '40px 0', textAlign: 'center' }}>
-            <MessageCircle size={24} style={{ color: 'var(--border)', margin: '0 auto 8px' }} />
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', fontFamily: 'var(--font-ui)' }}>
-              No comments yet. Be the first!
-            </p>
+          <div className="py-10 text-center">
+            <MessageCircle size={24} className="text-[#D7CCC8] mx-auto mb-2" />
+            <p className="text-sm text-[#8D6E63]">No comments yet. Be the first!</p>
           </div>
         ) : (
-          comments.map((comment, i) => (
-            <div key={comment.id} style={{
-              padding: '14px 20px',
-              display: 'flex', alignItems: 'flex-start', gap: 12,
-              borderBottom: i < comments.length - 1 ? '1px solid var(--border)' : 'none',
-            }}
-              className="comment-row"
-            >
-              {/* Avatar */}
-              <div style={{
-                width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
-                background: 'var(--surface-3)', border: '1px solid var(--border)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--walnut)', fontSize: '0.7rem', fontWeight: 700,
-              }}>
-                {initials(comment.author) ?? <User size={13} />}
+          comments.map(comment => (
+            <div key={comment.id} className="px-5 py-4 flex items-start gap-3 group">
+              <div className="w-8 h-8 rounded-full bg-[#EFE9E7] flex items-center
+                              justify-center text-[#5D4037] text-xs font-bold flex-shrink-0">
+                {comment.profiles?.full_name
+                  ? comment.profiles.full_name.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()
+                  : <User size={13} />}
               </div>
-
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-                  <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
-                    {comment.author ?? 'Anonymous'}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <span className="text-sm font-semibold text-[#3E2723]"
+                    style={{ fontFamily: 'var(--font-ui)' }}>
+                    Anonymous
                   </span>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                    {fmt(comment.created_at)}
-                  </span>
+                  <span className="text-xs text-[#D7CCC8]">{fmt(comment.created_at)}</span>
                 </div>
-                <p style={{
-                  fontSize: '0.875rem', color: 'var(--text-secondary)',
-                  lineHeight: 1.55, fontFamily: 'var(--font-ui)',
-                }}>{comment.body}</p>
+                <p className="text-sm text-[#5D4037] mt-1 leading-relaxed"
+                  style={{ fontFamily: 'var(--font-ui)' }}>
+                  {comment.body}
+                </p>
               </div>
-
               {userId === comment.user_id && (
-                <button
-                  onClick={() => handleDelete(comment.id)}
+                <button onClick={() => handleDelete(comment.id)}
                   disabled={deletingId === comment.id}
-                  style={{
-                    padding: 4, borderRadius: 6,
-                    background: 'transparent', border: 'none',
-                    color: 'var(--border-strong)', cursor: 'pointer',
-                    transition: 'color 0.15s',
-                    opacity: 0, // shown via CSS on hover of .comment-row
-                  }}
-                  className="comment-delete"
-                >
+                  className="opacity-0 group-hover:opacity-100 btn-icon text-[#D7CCC8]
+                             hover:text-red-400 flex-shrink-0 transition-all"
+                  style={{ padding: '0.25rem' }}>
                   {deletingId === comment.id
-                    ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
+                    ? <Loader2 size={13} className="animate-spin" />
                     : <Trash2 size={13} />}
                 </button>
               )}
@@ -184,13 +139,9 @@ export function CommentSection({ fileId }: { fileId: string }) {
         )}
       </div>
 
-      {/* Compose */}
-      <div style={{
-        padding: '14px 20px',
-        background: 'var(--surface-2)',
-      }}>
+      <div className="px-5 py-4 border-t border-[#EFE9E7] bg-[#F5F5F5]">
         {userId ? (
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+          <div className="flex items-end gap-2">
             <textarea
               ref={textaRef}
               value={body}
@@ -199,57 +150,25 @@ export function CommentSection({ fileId }: { fileId: string }) {
               placeholder="Add a comment… (Ctrl+Enter to post)"
               rows={2}
               maxLength={1000}
-              style={{
-                flex: 1, resize: 'none',
-                fontFamily: 'var(--font-ui)', fontSize: '0.875rem',
-                color: 'var(--text-primary)',
-                background: 'var(--surface)', border: '1.5px solid var(--border)',
-                borderRadius: 10, padding: '10px 12px',
-                outline: 'none', transition: 'border-color 0.18s, box-shadow 0.18s',
-                minHeight: 60, lineHeight: 1.5,
-              }}
-              onFocus={e => {
-                e.target.style.borderColor = 'var(--walnut)'
-                e.target.style.boxShadow = '0 0 0 3px var(--accent-glow)'
-              }}
-              onBlur={e => {
-                e.target.style.borderColor = 'var(--border)'
-                e.target.style.boxShadow = 'none'
-              }}
+              className="input flex-1 resize-none text-sm"
+              style={{ minHeight: '60px' }}
             />
-            <button
-              onClick={handlePost}
-              disabled={posting || !body.trim()}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: '10px 14px', borderRadius: 10,
-                background: 'var(--walnut)', color: 'var(--bone)',
-                border: 'none', cursor: 'pointer',
-                opacity: posting || !body.trim() ? 0.4 : 1,
-                transition: 'all 0.18s', alignSelf: 'flex-end',
-              }}
-            >
-              {posting ? <Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> : <Send size={15} />}
+            <button onClick={handlePost} disabled={posting || !body.trim()}
+              className="btn btn-primary flex-shrink-0"
+              style={{ padding: '0.6rem 0.875rem', alignSelf: 'flex-end' }}>
+              {posting ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
             </button>
           </div>
         ) : (
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', textAlign: 'center', fontFamily: 'var(--font-ui)' }}>
-            <Link href="/login" style={{ color: 'var(--walnut)', fontWeight: 500 }}>Log in</Link>
+          <p className="text-sm text-[#8D6E63] text-center">
+            <Link href="/login" className="text-[#5D4037] font-medium hover:underline">Log in</Link>
             {' '}to join the discussion.
           </p>
         )}
         {body.length > 800 && (
-          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4, textAlign: 'right' }}>
-            {body.length}/1000
-          </p>
+          <p className="text-xs text-[#8D6E63] mt-1 text-right">{body.length}/1000</p>
         )}
       </div>
-
-      <style>{`
-        .comment-row:hover .comment-delete { opacity: 1 !important; }
-        .comment-delete:hover { color: #dc2626 !important; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
     </div>
   )
 }
