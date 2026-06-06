@@ -128,7 +128,14 @@ export default async function HomePage({ searchParams }: HomeProps) {
             </div>
             <div className="flex justify-center mb-6 animate-fade-up">
               <div className="relative w-16 h-20 logo-on-dark opacity-70">
-                <Image src="/FaithLibrary_logo.png" alt="" fill className="object-contain" />
+                <Image
+                  src="/FaithLibrary_logo.png"
+                  alt="FaithLibrary Logo"
+                  width={40}
+                  height={40}
+                  className="object-contain"
+                  priority
+                />
               </div>
             </div>
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-[#F5F5F5] leading-[1.1] mb-4 animate-fade-up delay-100">

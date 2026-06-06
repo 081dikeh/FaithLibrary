@@ -95,8 +95,14 @@ export function Navbar() {
             <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
               <div className="relative w-7 h-8 sm:w-8 sm:h-9 logo-on-dark opacity-85
                               group-hover:opacity-100 transition-opacity duration-200">
-                <Image src="/FaithLibrary_logo.png" alt="FaithLibrary" fill
-                  className="object-contain" priority />
+                <Image
+                  src="/FaithLibrary_logo.png"
+                  alt="FaithLibrary Logo"
+                  width={40}
+                  height={40}
+                  className="object-contain"
+                  priority
+                />
               </div>
               <span className="font-display text-lg sm:text-xl font-semibold
                                text-[#F5F5F5] tracking-tight">

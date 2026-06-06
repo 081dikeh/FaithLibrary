@@ -13,8 +13,14 @@ export function Footer() {
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="relative w-6 h-7 logo-on-light group-hover:opacity-80
                             transition-opacity">
-              <Image src="/FaithLibrary_logo.png" alt="FaithLibrary" fill
-                className="object-contain" />
+              <Image
+                src="/FaithLibrary_logo.png"
+                alt="FaithLibrary Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+                priority
+              />
             </div>
             <span className="font-display font-semibold text-[#5D4037]">FaithLibrary</span>
           </Link>
