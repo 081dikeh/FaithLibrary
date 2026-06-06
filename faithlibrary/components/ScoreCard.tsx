@@ -164,7 +164,7 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
   )
 }
 
-export function ScoreCardSkeleton({ index }: { index?: number } = {}) {
+export function ScoreCardSkeleton({ index = 0 }: { index?: number }) {
   return (
     <div className="bg-white rounded-xl border border-[#D7CCC8] overflow-hidden">
       <div className="relative w-full bg-[#EFE9E7] animate-pulse" style={{ paddingBottom: '141.4%' }} />
