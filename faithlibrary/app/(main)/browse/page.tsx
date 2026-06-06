@@ -139,7 +139,7 @@ export default async function BrowsePage({ searchParams }: BrowseProps) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div className="skeleton" style={{ height: 16, width: 128, borderRadius: 6 }} />
               <div className="score-grid">
-                {[...Array(10)].map((_, i) => <ScoreCardSkeleton key={i} index={i} />)}
+                {[...Array(10)].map((_, i) => <ScoreCardSkeleton key={i} />)}
               </div>
             </div>
           }
