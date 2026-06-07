@@ -33,7 +33,8 @@ function PdfThumb({ url }: { url: string }) {
         const pdf = await pdfjs.getDocument({
           url, disableRange: true, disableStream: true,
           disableAutoFetch: true, useWorkerFetch: false, isEvalSupported: false,
-          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.296/cmaps/', cMapPacked: true,
+          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.296/cmaps/',
+          cMapPacked: true,
         }).promise
         if (cancelled) { pdf.destroy(); return }
         const pg = await pdf.getPage(1)
@@ -114,8 +115,12 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
   return (
     <article className="group relative bg-white rounded-xl overflow-hidden flex flex-col border border-[#D7CCC8] hover:shadow-[0_8px_28px_rgba(62,39,35,0.14)] hover:-translate-y-1 transition-all duration-200">
       <Link href={`/view/${file.id}`} className="block flex-shrink-0" tabIndex={-1} aria-hidden>
-        <div ref={thumbRef} className="relative w-full overflow-hidden bg-[#EFE9E7]" style={{ paddingBottom: '141.4%' }}>
-          {inView ? <PdfThumb url={file.file_url} /> : <div className="absolute inset-0 bg-[#EFE9E7] animate-pulse" />}
+        <div ref={thumbRef} className="relative w-full overflow-hidden bg-[#EFE9E7]"
+          style={{ paddingBottom: '141.4%' }}>
+          {inView
+            ? <PdfThumb url={file.file_url} />
+            : <div className="absolute inset-0 bg-[#EFE9E7] animate-pulse" />
+          }
           <div className="absolute inset-0 bg-[#3E2723]/0 group-hover:bg-[#3E2723]/55 transition-all duration-200 flex items-end justify-start p-2.5 z-10">
             <div className="opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-200 flex items-center gap-1.5">
               <span className="inline-flex items-center gap-1 bg-white/95 text-[#3E2723] text-[0.68rem] font-bold px-2.5 py-1.5 rounded-full">
@@ -164,7 +169,8 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
   )
 }
 
-export function ScoreCardSkeleton({ index = 0 }: { index?: number }) {
+// Accepts both index prop and no props — works with any page version
+export function ScoreCardSkeleton(props?: { index?: number }) {
   return (
     <div className="bg-white rounded-xl border border-[#D7CCC8] overflow-hidden">
       <div className="relative w-full bg-[#EFE9E7] animate-pulse" style={{ paddingBottom: '141.4%' }} />
