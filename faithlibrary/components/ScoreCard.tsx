@@ -6,10 +6,15 @@ import { Download, Bookmark, BookmarkCheck, Music2, Eye, ArrowDownToLine } from 
 import { createClient } from '@/lib/supabase/client'
 import type { FileRecord } from '@/lib/types'
 
+// ── Worker singleton ─────────────────────────────────────────
+// Uses pdfjs-dist directly (NOT via react-pdf) for canvas rendering.
+// Worker file must match: copy from react-pdf's bundled pdfjs:
+//   cp node_modules/react-pdf/node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/pdf.worker.min.mjs
 let workerReady = false
 let renderQueue = Promise.resolve()
 const enqueue = (fn: () => Promise<void>) => { renderQueue = renderQueue.then(fn, fn) }
 
+// ── PDF Thumbnail ────────────────────────────────────────────
 function PdfThumb({ url }: { url: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [ready,  setReady]  = useState(false)
@@ -19,34 +24,54 @@ function PdfThumb({ url }: { url: string }) {
     const canvas = canvasRef.current
     if (!canvas) return
     let cancelled = false
+
     enqueue(async () => {
       if (cancelled) return
       try {
-        const pdfjs = await import('pdfjs-dist')
+        // Dynamically import pdfjs-dist — safe in browser context
+        const pdfjs = await import('pdfjs-dist/build/pdf.mjs' as any)
+
         if (!workerReady) {
           pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
           workerReady = true
         }
+
+        // Wait one frame so parent has real clientWidth
         await new Promise<void>(r => requestAnimationFrame(() => r()))
         if (cancelled) return
+
         const w = canvas.parentElement?.clientWidth || 220
+
         const pdf = await pdfjs.getDocument({
-          url, disableRange: true, disableStream: true,
-          disableAutoFetch: true, useWorkerFetch: false, isEvalSupported: false,
-          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.296/cmaps/', cMapPacked: true,
+          url,
+          disableRange: true,
+          disableStream: true,
+          disableAutoFetch: true,
+          cMapUrl: '/cmaps/',
+          cMapPacked: true,
         }).promise
+
         if (cancelled) { pdf.destroy(); return }
+
         const pg = await pdf.getPage(1)
         if (cancelled) { pdf.destroy(); return }
+
         const vp = pg.getViewport({ scale: w / pg.getViewport({ scale: 1 }).width })
-        canvas.width = vp.width; canvas.height = vp.height
+        canvas.width  = vp.width
+        canvas.height = vp.height
+
         const ctx = canvas.getContext('2d')
         if (!ctx || cancelled) { pdf.destroy(); return }
+
         await pg.render({ canvasContext: ctx, viewport: vp } as any).promise
         pdf.destroy()
         if (!cancelled) setReady(true)
-      } catch { if (!cancelled) setFailed(true) }
+      } catch (e) {
+        console.error('PDF thumb error:', e)
+        if (!cancelled) setFailed(true)
+      }
     })
+
     return () => { cancelled = true }
   }, [url])
 
@@ -55,15 +80,20 @@ function PdfThumb({ url }: { url: string }) {
       <Music2 size={28} className="text-[#C4B5AF]" />
     </div>
   )
+
   return (
     <>
       {!ready && <div className="absolute inset-0 bg-[#EFE9E7] animate-pulse" />}
-      <canvas ref={canvasRef} className="absolute inset-0 w-full h-full"
-        style={{ objectFit: 'cover', opacity: ready ? 1 : 0, transition: 'opacity 0.45s ease' }} />
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full"
+        style={{ objectFit: 'cover', opacity: ready ? 1 : 0, transition: 'opacity 0.45s ease' }}
+      />
     </>
   )
 }
 
+// ── Score Card ───────────────────────────────────────────────
 interface ScoreCardProps { file: FileRecord; bookmarked?: boolean; index?: number }
 
 export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProps) {
@@ -108,17 +138,19 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
     const d = Math.floor((Date.now() - new Date(file.created_at).getTime()) / 86400000)
     if (d === 0) return 'Today'; if (d === 1) return 'Yesterday'
     if (d < 30) return `${d}d ago`
-    const m = Math.floor(d / 30); return m < 12 ? `${m}mo ago` : `${Math.floor(m/12)}y ago`
+    const m = Math.floor(d / 30); return m < 12 ? `${m}mo ago` : `${Math.floor(m / 12)}y ago`
   })()
 
   return (
     <article className="group relative bg-white rounded-xl overflow-hidden flex flex-col border border-[#D7CCC8] hover:shadow-[0_8px_28px_rgba(62,39,35,0.14)] hover:-translate-y-1 transition-all duration-200">
-      {/* No aria-hidden or tabIndex on Link — was causing accessibility warning */}
       <Link href={`/view/${file.id}`} className="block flex-shrink-0">
         <div ref={thumbRef} className="relative w-full overflow-hidden bg-[#EFE9E7]"
           style={{ paddingBottom: '141.4%' }}>
-          {inView ? <PdfThumb url={file.file_url} /> : <div className="absolute inset-0 bg-[#EFE9E7] animate-pulse" />}
-          <div className="absolute inset-0 bg-[#3E2723]/0 group-hover:bg-[#3E2723]/55 transition-all duration-200 flex items-end justify-start p-2.5 z-10">
+          {inView
+            ? <PdfThumb url={file.file_url} />
+            : <div className="absolute inset-0 bg-[#EFE9E7] animate-pulse" />
+          }
+          <div className="absolute inset-0 bg-[#3E2723]/0 group-hover:bg-[#3E2723]/55 transition-all duration-200 flex items-end p-2.5 z-10">
             <div className="opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-200 flex items-center gap-1.5">
               <span className="inline-flex items-center gap-1 bg-white/95 text-[#3E2723] text-[0.68rem] font-bold px-2.5 py-1.5 rounded-full">
                 <Eye size={10} /> View Score
@@ -130,8 +162,8 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
             </div>
           </div>
           {file.tags?.[0] && (
-            <span className="absolute top-2 left-2 z-20 inline-block px-2 py-0.5 rounded-full text-[0.58rem] font-bold uppercase tracking-wide leading-relaxed"
-              style={{ background: 'rgba(255,255,255,0.93)', backdropFilter: 'blur(6px)', color: '#5D4037' }}>
+            <span className="absolute top-2 left-2 z-20 px-2 py-0.5 rounded-full text-[0.58rem] font-bold uppercase tracking-wide"
+              style={{ background: 'rgba(255,255,255,0.93)', backdropFilter: 'blur(6px)', color: '#5D4037', lineHeight: 1.6 }}>
               {file.tags[0]}
             </span>
           )}
@@ -142,6 +174,7 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
           </button>
         </div>
       </Link>
+
       <div className="flex flex-col flex-1 px-3 pt-2.5 pb-3">
         <Link href={`/view/${file.id}`} className="no-underline">
           <h3 className="font-display font-semibold text-[#3E2723] text-[0.8125rem] leading-snug group-hover:text-[#5D4037] transition-colors mb-1"
@@ -166,7 +199,6 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
   )
 }
 
-// Accepts optional index prop — works with or without it
 export function ScoreCardSkeleton({ index }: { index?: number } = {}) {
   return (
     <div className="bg-white rounded-xl border border-[#D7CCC8] overflow-hidden">
