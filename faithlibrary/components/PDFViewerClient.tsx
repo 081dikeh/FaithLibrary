@@ -1,70 +1,130 @@
 // components/PDFViewerClient.tsx
+// Pure canvas renderer — no react-pdf dependency, uses same pdfjs as ScoreCard
 'use client'
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import {
   ZoomIn, ZoomOut, ChevronLeft, ChevronRight,
-  RotateCcw, Columns2, AlignJustify, ExternalLink,
+  RotateCcw, ExternalLink, Loader2,
 } from 'lucide-react'
 
+interface RenderedPage {
+  pageNum: number
+  canvas: HTMLCanvasElement
+}
+
 export function PDFViewerClient({ url }: { url: string }) {
-  const [numPages,   setNumPages]   = useState(0)
-  const [page,       setPage]       = useState(1)
-  const [scale,      setScale]      = useState(1.0)
-  const [loading,    setLoading]    = useState(true)
-  const [error,      setError]      = useState<string | null>(null)
-  const [singlePage, setSinglePage] = useState(false)
-  const [width,      setWidth]      = useState<number | undefined>(undefined)
-  const [DocComp,    setDocComp]    = useState<React.ComponentType<any> | null>(null)
-  const [PageComp,   setPageComp]   = useState<React.ComponentType<any> | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef  = useRef<HTMLDivElement>(null)
+  const [numPages,    setNumPages]    = useState(0)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [scale,       setScale]       = useState(1.2)
+  const [loading,     setLoading]     = useState(true)
+  const [error,       setError]       = useState<string | null>(null)
+  const [singleMode,  setSingleMode]  = useState(false)
+  const [pdfDoc,      setPdfDoc]      = useState<any>(null)
+  const [containerW,  setContainerW]  = useState(0)
+  const renderingRef  = useRef(false)
 
-  useEffect(() => {
-    async function load() {
-      try {
-        // Import react-pdf — it bundles its own pdfjs reference
-        const reactPdf = await import('react-pdf')
-
-        // Set worker on the pdfjs that react-pdf uses internally
-        // This is the correct way — do NOT import pdfjs-dist separately
-        reactPdf.pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
-
-        setDocComp(() => reactPdf.Document)
-        setPageComp(() => reactPdf.Page)
-      } catch (e) {
-        setError('Failed to load PDF viewer.')
-        setLoading(false)
-      }
-    }
-    load()
-  }, [])
-
+  // Track container width
   useEffect(() => {
     const update = () => {
       if (containerRef.current)
-        setWidth(Math.floor(containerRef.current.clientWidth) - 32)
+        setContainerW(containerRef.current.clientWidth - 32)
     }
     update()
-    window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
+    const ro = new ResizeObserver(update)
+    if (containerRef.current) ro.observe(containerRef.current)
+    return () => ro.disconnect()
   }, [])
 
-  const onLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
-    setNumPages(numPages)
-    setLoading(false)
+  // Load PDF document once
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
     setError(null)
+    ;(async () => {
+      try {
+        const pdfjs = await import('pdfjs-dist')
+        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+        const doc = await pdfjs.getDocument({
+          url,
+          cMapUrl: '/cmaps/',
+          cMapPacked: true,
+        }).promise
+        if (cancelled) { doc.destroy(); return }
+        setPdfDoc(doc)
+        setNumPages(doc.numPages)
+        setLoading(false)
+      } catch (e: any) {
+        if (!cancelled) {
+          console.error('PDF load error:', e)
+          setError('Could not load this document.')
+          setLoading(false)
+        }
+      }
+    })()
+    return () => { cancelled = true }
+  }, [url])
+
+  // Render a single page into a canvas element
+  const renderPage = useCallback(async (
+    doc: any,
+    pageNum: number,
+    canvasEl: HTMLCanvasElement,
+    scaleVal: number,
+    maxWidth: number,
+  ) => {
+    try {
+      const page     = await doc.getPage(pageNum)
+      const baseVp   = page.getViewport({ scale: 1 })
+      const fitScale = maxWidth > 0 ? (maxWidth / baseVp.width) * scaleVal : scaleVal
+      const vp       = page.getViewport({ scale: fitScale })
+
+      canvasEl.width  = vp.width
+      canvasEl.height = vp.height
+
+      const ctx = canvasEl.getContext('2d')
+      if (!ctx) return
+
+      await page.render({ canvasContext: ctx, viewport: vp }).promise
+    } catch (e) {
+      console.error(`Page ${pageNum} render error:`, e)
+    }
   }, [])
 
-  const onLoadError = useCallback((err: Error) => {
-    console.error('PDF load error:', err)
-    setError('Could not load this document.')
-    setLoading(false)
-  }, [])
+  // Scroll-mode: render all pages
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!pdfDoc || singleMode || containerW === 0 || renderingRef.current) return
+    renderingRef.current = true
+    ;(async () => {
+      const container = scrollContainerRef.current
+      if (!container) { renderingRef.current = false; return }
+      container.innerHTML = ''
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const wrap  = document.createElement('div')
+        wrap.className = 'flex justify-center mb-4'
+        const canvas = document.createElement('canvas')
+        canvas.className = 'rounded-lg shadow-[0_4px_24px_rgba(0,0,0,0.28)] max-w-full'
+        wrap.appendChild(canvas)
+        container.appendChild(wrap)
+        await renderPage(pdfDoc, i, canvas, scale, containerW)
+      }
+      renderingRef.current = false
+    })()
+  }, [pdfDoc, singleMode, containerW, scale, renderPage])
+
+  // Single-page mode: render one page into a canvas ref
+  const singleCanvasRef = useRef<HTMLCanvasElement>(null)
+  useEffect(() => {
+    if (!pdfDoc || !singleMode || containerW === 0) return
+    const canvas = singleCanvasRef.current
+    if (!canvas) return
+    renderPage(pdfDoc, currentPage, canvas, scale, containerW)
+  }, [pdfDoc, singleMode, currentPage, scale, containerW, renderPage])
 
   if (error) return (
     <div className="flex flex-col items-center justify-center py-24 gap-4">
-      <div className="w-16 h-16 rounded-full bg-[#3E2723] flex items-center justify-center text-white text-2xl">
-        ⚠
-      </div>
+      <div className="w-16 h-16 rounded-full bg-[#3E2723] flex items-center justify-center text-white text-2xl">⚠</div>
       <p className="text-sm text-[#8D6E63]">{error}</p>
       <a href={url} target="_blank" rel="noreferrer"
         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#5D4037] text-white text-sm font-medium hover:bg-[#3E2723] transition-colors">
@@ -74,117 +134,99 @@ export function PDFViewerClient({ url }: { url: string }) {
   )
 
   return (
-    <div className="flex flex-col items-center gap-4" ref={containerRef}>
+    <div ref={containerRef} className="flex flex-col items-center gap-4 w-full">
 
       {/* Toolbar */}
       <div className="sticky top-[112px] z-30 flex items-center gap-1.5 flex-wrap justify-center
-                      bg-[#2C2C2C]/95 backdrop-blur-md text-[#F5F5F5] px-3 py-2
+                      bg-[#2C2C2C]/95 backdrop-blur-md text-white px-3 py-2
                       rounded-2xl shadow-xl border border-white/10">
 
-        {/* Zoom */}
+        {/* Zoom controls */}
         <div className="flex items-center gap-1 border-r border-white/10 pr-2 mr-1">
-          <button onClick={() => setScale(s => Math.max(0.4, +(s - 0.15).toFixed(2)))}
-            className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center">
+          <button
+            onClick={() => setScale(s => Math.max(0.4, +(s - 0.2).toFixed(1)))}
+            className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
             <ZoomOut size={13} />
           </button>
           <span className="text-xs font-mono w-12 text-center text-white/70">
             {Math.round(scale * 100)}%
           </span>
-          <button onClick={() => setScale(s => Math.min(2.5, +(s + 0.15).toFixed(2)))}
-            className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center">
+          <button
+            onClick={() => setScale(s => Math.min(3.0, +(s + 0.2).toFixed(1)))}
+            className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
             <ZoomIn size={13} />
           </button>
-          <button onClick={() => setScale(1.0)}
-            className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center ml-0.5">
+          <button
+            onClick={() => setScale(1.2)}
+            className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center ml-0.5 transition-colors"
+            title="Reset zoom">
             <RotateCcw size={11} />
           </button>
         </div>
 
-        {/* Page nav — single page mode only */}
-        {singlePage && numPages > 0 && (
+        {/* Page navigation — single mode only */}
+        {singleMode && numPages > 0 && (
           <div className="flex items-center gap-1 border-r border-white/10 pr-2 mr-1">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
-              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center disabled:opacity-30">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center disabled:opacity-30 transition-colors">
               <ChevronLeft size={13} />
             </button>
-            <span className="text-xs text-white/70 font-mono">{page}/{numPages}</span>
-            <button onClick={() => setPage(p => Math.min(numPages, p + 1))} disabled={page >= numPages}
-              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center disabled:opacity-30">
+            <span className="text-xs text-white/70 font-mono px-1">
+              {currentPage} / {numPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))}
+              disabled={currentPage >= numPages}
+              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center disabled:opacity-30 transition-colors">
               <ChevronRight size={13} />
             </button>
           </div>
         )}
 
         {/* Mode toggle */}
-        <button onClick={() => { setSinglePage(v => !v); setPage(1) }}
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium">
-          {singlePage
-            ? <><AlignJustify size={12} /> Scroll</>
-            : <><Columns2 size={12} /> Single page</>}
+        <button
+          onClick={() => { setSingleMode(v => !v); setCurrentPage(1) }}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-medium transition-colors">
+          {singleMode ? 'Scroll mode' : 'Single page'}
         </button>
 
-        {!singlePage && numPages > 0 && (
-          <span className="text-xs text-white/40 pl-1">{numPages} pages</span>
+        {!singleMode && numPages > 0 && (
+          <span className="text-xs text-white/40">{numPages} pages</span>
         )}
 
-        {/* Direct link */}
+        {/* Open directly */}
         <a href={url} target="_blank" rel="noreferrer"
-          className="ml-1 w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center"
+          className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center ml-1 transition-colors"
           title="Open file directly">
           <ExternalLink size={11} />
         </a>
       </div>
 
-      {/* Loading spinner */}
+      {/* Loading */}
       {loading && (
         <div className="flex flex-col items-center gap-3 py-20 text-[#8D6E63]">
-          <div className="w-10 h-10 rounded-full border-2 border-[#5D4037]/30 border-t-[#D7CCC8] animate-spin" />
+          <Loader2 size={28} className="animate-spin text-[#D7CCC8]" />
           <p className="text-sm">Loading score…</p>
         </div>
       )}
 
-      {/* Document */}
-      {DocComp && PageComp && (
-        <div className={`w-full transition-opacity duration-300 ${loading ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
-          <DocComp
-            file={url}
-            onLoadSuccess={onLoadSuccess}
-            onLoadError={onLoadError}
-            loading=""
-            error=""
-            options={{
-              cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.4.296/cmaps/',
-              cMapPacked: true,
-            }}
-          >
-            {singlePage ? (
-              <div className="flex justify-center">
-                <PageComp
-                  pageNumber={page}
-                  scale={scale}
-                  width={width}
-                  loading=""
-                  renderAnnotationLayer={false}
-                  renderTextLayer={false}
-                />
-              </div>
-            ) : (
-              numPages > 0 && Array.from({ length: numPages }, (_, i) => (
-                <div key={i + 1} className="flex justify-center mb-4">
-                  <PageComp
-                    pageNumber={i + 1}
-                    scale={scale}
-                    width={width}
-                    loading=""
-                    renderAnnotationLayer={false}
-                    renderTextLayer={false}
-                  />
-                </div>
-              ))
-            )}
-          </DocComp>
+      {/* Scroll mode — all pages */}
+      {!loading && !singleMode && (
+        <div ref={scrollContainerRef} className="w-full" />
+      )}
+
+      {/* Single page mode */}
+      {!loading && singleMode && (
+        <div className="flex justify-center w-full">
+          <canvas
+            ref={singleCanvasRef}
+            className="rounded-lg shadow-[0_4px_24px_rgba(0,0,0,0.28)] max-w-full"
+          />
         </div>
       )}
+
     </div>
   )
 }
