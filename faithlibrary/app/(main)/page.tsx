@@ -31,9 +31,9 @@ function Pagination({ current, total, query, tags }: {
   }
   const pages: (number | '...')[] =
     total <= 7 ? Array.from({ length: total }, (_, i) => i + 1)
-    : current <= 4 ? [1, 2, 3, 4, 5, '...', total]
-    : current >= total - 3 ? [1, '...', total - 4, total - 3, total - 2, total - 1, total]
-    : [1, '...', current - 1, current, current + 1, '...', total]
+      : current <= 4 ? [1, 2, 3, 4, 5, '...', total]
+        : current >= total - 3 ? [1, '...', total - 4, total - 3, total - 2, total - 1, total]
+          : [1, '...', current - 1, current, current + 1, '...', total]
 
   return (
     <div className="flex items-center justify-center gap-1.5 pt-6">
@@ -58,7 +58,7 @@ function Pagination({ current, total, query, tags }: {
 async function ScoreGrid({ query, tags, page }: { query?: string; tags: string[]; page: number }) {
   const supabase = await createClient()
   const from = (page - 1) * PAGE_SIZE
-  const to   = from + PAGE_SIZE - 1
+  const to = from + PAGE_SIZE - 1
 
   let q = supabase
     .from('files')
@@ -106,11 +106,11 @@ async function ScoreGrid({ query, tags, page }: { query?: string; tags: string[]
 }
 
 export default async function HomePage({ searchParams }: HomeProps) {
-  const params   = await searchParams
-  const query    = params.q
-  const rawTags  = params.tag
-  const tags     = rawTags ? (Array.isArray(rawTags) ? rawTags : [rawTags]) : []
-  const page     = Math.max(1, parseInt(params.page ?? '1', 10))
+  const params = await searchParams
+  const query = params.q
+  const rawTags = params.tag
+  const tags = rawTags ? (Array.isArray(rawTags) ? rawTags : [rawTags]) : []
+  const page = Math.max(1, parseInt(params.page ?? '1', 10))
   const showHero = !query && tags.length === 0 && page === 1
 
   return (
@@ -149,7 +149,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
               <Link href="/browse" className="btn btn-primary" style={{ fontSize: '0.9rem', padding: '0.7rem 1.5rem' }}>
                 <BookOpen size={16} /> Browse Library
               </Link>
-              <Link href="/signup" className="btn" style={{ background: 'transparent', color: '#D7CCC8', borderColor: 'rgba(141,110,99,0.5)', fontSize: '0.9rem', padding: '0.7rem 1.5rem' }}>
+              <Link href="/upload" className="btn" style={{ background: 'transparent', color: '#D7CCC8', borderColor: 'rgba(141,110,99,0.5)', fontSize: '0.9rem', padding: '0.7rem 1.5rem' }}>
                 <Upload size={16} /> Upload a Score
               </Link>
             </div>
@@ -165,8 +165,8 @@ export default async function HomePage({ searchParams }: HomeProps) {
           <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
               {[{ icon: '🔍', title: 'Discover', desc: 'Browse hundreds of Mass parts, hymns, and choral scores organised by category and season.' },
-                { icon: '📄', title: 'View & Print', desc: 'Read scores in-browser with our PDF viewer. Print or download in one click.' },
-                { icon: '🎵', title: 'Share', desc: 'Upload your own compositions or arrangements and share them with the global community.' }
+              { icon: '📄', title: 'View & Print', desc: 'Read scores in-browser with our PDF viewer. Print or download in one click.' },
+              { icon: '🎵', title: 'Share', desc: 'Upload your own compositions or arrangements and share them with the global community.' }
               ].map(item => (
                 <div key={item.title} className="text-center">
                   <div className="text-3xl mb-3">{item.icon}</div>
