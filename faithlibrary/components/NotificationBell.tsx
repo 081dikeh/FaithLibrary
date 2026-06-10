@@ -12,22 +12,22 @@ interface Notification {
 }
 
 const ICONS: Record<string, React.ReactNode> = {
-  comment:           <MessageCircle size={14} className="text-[#5D4037]" />,
-  request_fulfilled: <CheckCheck    size={14} className="text-green-500" />,
-  new_score:         <Music2        size={14} className="text-[#8D6E63]" />,
-  system:            <Info          size={14} className="text-[#8D6E63]" />,
+  comment: <MessageCircle size={14} className="text-[#5D4037]" />,
+  request_fulfilled: <CheckCheck size={14} className="text-green-500" />,
+  new_score: <Music2 size={14} className="text-[#8D6E63]" />,
+  system: <Info size={14} className="text-[#8D6E63]" />,
 }
 
 export function NotificationBell() {
-  const supabase     = createClient()
+  const supabase = createClient()
   const containerRef = useRef<HTMLDivElement>(null)
-  const channelRef   = useRef<any>(null)
+  const channelRef = useRef<any>(null)
 
-  const [open,          setOpen]          = useState(false)
+  const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
-  const [unread,        setUnread]        = useState(0)
-  const [userId,        setUserId]        = useState<string | null>(null)
-  const [marking,       setMarking]       = useState(false)
+  const [unread, setUnread] = useState(0)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [marking, setMarking] = useState(false)
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -64,8 +64,8 @@ export function NotificationBell() {
         .on('postgres_changes', {
           event: 'INSERT', schema: 'public', table: 'notifications',
           filter: `user_id=eq.${uid}`,
-        }, payload => {
-          setNotifications(prev => [payload.new as Notification, ...prev])
+        }, (payload: { new: Notification }) => {
+          setNotifications(prev => [payload.new, ...prev])
           setUnread(c => c + 1)
         })
         .subscribe()
