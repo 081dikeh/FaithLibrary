@@ -13,16 +13,16 @@ interface RenderedPage {
 }
 
 export function PDFViewerClient({ url }: { url: string }) {
-  const containerRef  = useRef<HTMLDivElement>(null)
-  const [numPages,    setNumPages]    = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [numPages, setNumPages] = useState(0)
   const [currentPage, setCurrentPage] = useState(1)
-  const [scale,       setScale]       = useState(1.2)
-  const [loading,     setLoading]     = useState(true)
-  const [error,       setError]       = useState<string | null>(null)
-  const [singleMode,  setSingleMode]  = useState(false)
-  const [pdfDoc,      setPdfDoc]      = useState<any>(null)
-  const [containerW,  setContainerW]  = useState(0)
-  const renderingRef  = useRef(false)
+  const [scale, setScale] = useState(1.2)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [singleMode, setSingleMode] = useState(false)
+  const [pdfDoc, setPdfDoc] = useState<any>(null)
+  const [containerW, setContainerW] = useState(0)
+  const renderingRef = useRef(false)
 
   // Track container width
   useEffect(() => {
@@ -41,27 +41,27 @@ export function PDFViewerClient({ url }: { url: string }) {
     let cancelled = false
     setLoading(true)
     setError(null)
-    ;(async () => {
-      try {
-        const pdfjs = await import('pdfjs-dist')
-        pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
-        const doc = await pdfjs.getDocument({
-          url,
-          cMapUrl: '/cmaps/',
-          cMapPacked: true,
-        }).promise
-        if (cancelled) { doc.destroy(); return }
-        setPdfDoc(doc)
-        setNumPages(doc.numPages)
-        setLoading(false)
-      } catch (e: any) {
-        if (!cancelled) {
-          console.error('PDF load error:', e)
-          setError('Could not load this document.')
+      ; (async () => {
+        try {
+          const pdfjs = await import('pdfjs-dist')
+          pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+          const doc = await pdfjs.getDocument({
+            url,
+            cMapUrl: '/cmaps/',
+            cMapPacked: true,
+          }).promise
+          if (cancelled) { doc.destroy(); return }
+          setPdfDoc(doc)
+          setNumPages(doc.numPages)
           setLoading(false)
+        } catch (e: any) {
+          if (!cancelled) {
+            console.error('PDF load error:', e)
+            setError('Could not load this document.')
+            setLoading(false)
+          }
         }
-      }
-    })()
+      })()
     return () => { cancelled = true }
   }, [url])
 
@@ -74,18 +74,18 @@ export function PDFViewerClient({ url }: { url: string }) {
     maxWidth: number,
   ) => {
     try {
-      const page     = await doc.getPage(pageNum)
-      const baseVp   = page.getViewport({ scale: 1 })
+      const page = await doc.getPage(pageNum)
+      const baseVp = page.getViewport({ scale: 1 })
       const fitScale = maxWidth > 0 ? (maxWidth / baseVp.width) * scaleVal : scaleVal
-      const vp       = page.getViewport({ scale: fitScale })
+      const vp = page.getViewport({ scale: fitScale })
 
-      canvasEl.width  = vp.width
+      canvasEl.width = vp.width
       canvasEl.height = vp.height
 
       const ctx = canvasEl.getContext('2d')
       if (!ctx) return
 
-      await page.render({ canvasContext: ctx, viewport: vp }).promise
+      await page.render({ canvas: canvasEl, canvasContext: ctx, viewport: vp }).promise
     } catch (e) {
       console.error(`Page ${pageNum} render error:`, e)
     }
@@ -96,21 +96,21 @@ export function PDFViewerClient({ url }: { url: string }) {
   useEffect(() => {
     if (!pdfDoc || singleMode || containerW === 0 || renderingRef.current) return
     renderingRef.current = true
-    ;(async () => {
-      const container = scrollContainerRef.current
-      if (!container) { renderingRef.current = false; return }
-      container.innerHTML = ''
-      for (let i = 1; i <= pdfDoc.numPages; i++) {
-        const wrap  = document.createElement('div')
-        wrap.className = 'flex justify-center mb-4'
-        const canvas = document.createElement('canvas')
-        canvas.className = 'rounded-lg shadow-[0_4px_24px_rgba(0,0,0,0.28)] max-w-full'
-        wrap.appendChild(canvas)
-        container.appendChild(wrap)
-        await renderPage(pdfDoc, i, canvas, scale, containerW)
-      }
-      renderingRef.current = false
-    })()
+      ; (async () => {
+        const container = scrollContainerRef.current
+        if (!container) { renderingRef.current = false; return }
+        container.innerHTML = ''
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+          const wrap = document.createElement('div')
+          wrap.className = 'flex justify-center mb-4'
+          const canvas = document.createElement('canvas')
+          canvas.className = 'rounded-lg shadow-[0_4px_24px_rgba(0,0,0,0.28)] max-w-full'
+          wrap.appendChild(canvas)
+          container.appendChild(wrap)
+          await renderPage(pdfDoc, i, canvas, scale, containerW)
+        }
+        renderingRef.current = false
+      })()
   }, [pdfDoc, singleMode, containerW, scale, renderPage])
 
   // Single-page mode: render one page into a canvas ref
