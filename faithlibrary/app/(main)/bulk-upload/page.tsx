@@ -1,9 +1,9 @@
-// app/(main)/bulk-upload/page.tsx
+// app/(main)/bulk-upload/page.tsx — UI only, logic unchanged
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/Navbar'
 import { BulkUploadForm } from '@/components/BulkUploadForm'
-import { Layers, Info } from 'lucide-react'
+import { Layers, Info, Zap } from 'lucide-react'
 
 export default async function BulkUploadPage() {
   const supabase = await createClient()
@@ -11,71 +11,102 @@ export default async function BulkUploadPage() {
   if (!user) redirect('/login')
 
   return (
-    <div className="min-h-screen grain bg-[#F5F5F5]">
+    <div className="min-h-screen grain" style={{ background: '#F7F4F2' }}>
       <Navbar />
 
-      <div className="bg-white border-b border-[#D7CCC8]">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-7 sm:py-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#5D4037]/10 flex items-center
-                            justify-center text-[#5D4037] flex-shrink-0">
-              <Layers size={20} />
-            </div>
-            <div>
-              <h1 className="font-display text-3xl font-bold text-[#3E2723]">
-                Bulk Upload
-              </h1>
-              <p className="text-[#8D6E63] text-sm mt-0.5" style={{ fontFamily: 'var(--font-ui)' }}>
-                Upload hundreds of scores at once — set shared tags then upload.
-              </p>
-            </div>
+      {/* ── Dark hero ── */}
+      <div style={{ background: '#1C0E0A', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: -60, left: -40, width: 280, height: 280, borderRadius: '50%', background: 'rgba(93,64,55,0.25)', filter: 'blur(56px)', pointerEvents: 'none' }} />
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '36px 24px 40px', position: 'relative' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: 11,
+              background: 'rgba(93,64,55,0.45)', border: '1px solid rgba(141,110,99,0.25)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#D7CCC8',
+            }}><Layers size={17} /></div>
+            <p style={{ fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#5A4035', fontFamily: 'var(--font-ui)' }}>
+              Bulk Upload
+            </p>
           </div>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', fontWeight: 700, color: '#F7F4F2', lineHeight: 1.1, marginBottom: 8 }}>
+            Upload hundreds
+            <span style={{ display: 'block', color: '#7A5A4A', fontStyle: 'italic', fontWeight: 400 }}>at once</span>
+          </h1>
+          <p style={{ color: '#5A4035', fontSize: '0.875rem', fontFamily: 'var(--font-ui)', lineHeight: 1.7 }}>
+            Set shared tags, drop your files, and upload up to 100 scores simultaneously.
+          </p>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-        <div className="flex flex-col lg:flex-row gap-8">
-
-          <div className="flex-1 min-w-0">
+      {/* ── Content ── */}
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px 64px' }}>
+        <div style={{ display: 'flex', gap: 28, alignItems: 'flex-start' }} className="bulk-layout">
+          <div style={{ flex: 1, minWidth: 0 }}>
             <BulkUploadForm />
           </div>
 
-          {/* Tips */}
-          <aside className="lg:w-64 xl:w-72 flex-shrink-0 space-y-4">
-            <div className="bg-[#3E2723] rounded-2xl p-5 text-[#D7CCC8]">
-              <div className="flex items-center gap-2 text-[#F5F5F5] font-semibold text-sm mb-3">
-                <Info size={14} /> Bulk upload tips
+          <aside style={{ width: 260, flexShrink: 0 }} className="bulk-sidebar">
+            {/* Tips */}
+            <div style={{
+              background: '#1C0E0A', borderRadius: 18, padding: '22px',
+              border: '1px solid rgba(255,255,255,0.05)', marginBottom: 14,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: 8,
+                  background: 'rgba(141,110,99,0.2)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8D6E63',
+                }}><Zap size={13} /></div>
+                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#D7CCC8' }}>Bulk upload tips</span>
               </div>
-              <ul className="space-y-2.5 text-sm">
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
                 {[
                   'Select up to 100 files at once',
-                  'Files upload in parallel — 5 at a time',
-                  'Each file title is pre-filled from its filename',
-                  'Shared tags apply to all files in the batch',
-                  'You can edit individual titles before uploading',
-                  'Failed files can be retried without re-uploading the whole batch',
+                  'Files upload 5 at a time in parallel',
+                  'Titles are pre-filled from each filename',
+                  'Shared tags apply to the whole batch',
+                  'Edit individual titles before uploading',
+                  'Failed files can be retried without restarting',
                 ].map((tip, i) => (
-                  <li key={i} className="flex gap-2 leading-snug">
-                    <span className="text-[#8D6E63] flex-shrink-0 mt-0.5">›</span>
+                  <li key={i} style={{ display: 'flex', gap: 10, fontSize: '0.8rem', color: '#7A6055', lineHeight: 1.55 }}>
+                    <span style={{ color: '#5D4037', flexShrink: 0, fontWeight: 700, marginTop: 1 }}>›</span>
                     <span>{tip}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="bg-white rounded-2xl border border-[#D7CCC8] shadow-card p-5">
-              <p className="text-xs font-semibold text-[#5D4037] uppercase tracking-widest mb-2">
-                Supported formats
-              </p>
-              <div className="flex flex-wrap gap-1.5">
+            {/* Formats */}
+            <div style={{
+              background: '#fff', borderRadius: 16, padding: '18px',
+              border: '1px solid #E8E0DC', boxShadow: '0 1px 3px rgba(62,39,35,0.04)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 12 }}>
+                <Info size={13} style={{ color: '#8D6E63' }} />
+                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#5D4037', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  Supported formats
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {['PDF', 'MXL', 'MusicXML', 'XML'].map(f => (
-                  <span key={f} className="badge badge-sand">{f}</span>
+                  <span key={f} style={{
+                    padding: '4px 11px', borderRadius: 99,
+                    background: '#F2EDE9', border: '1px solid #D7CCC8',
+                    fontSize: '0.72rem', fontWeight: 700, color: '#5D4037',
+                  }}>{f}</span>
                 ))}
               </div>
             </div>
           </aside>
         </div>
       </div>
+
+      <style>{`
+        @media (max-width: 900px) {
+          .bulk-layout  { flex-direction: column !important; }
+          .bulk-sidebar { width: 100% !important; }
+        }
+      `}</style>
     </div>
   )
 }
