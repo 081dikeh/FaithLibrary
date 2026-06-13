@@ -1,4 +1,4 @@
-// components/Footer.tsx — UI rewrite, all logic unchanged
+// components/Footer.tsx — server component, no event handlers
 import Link from 'next/link'
 import Image from 'next/image'
 import { Music2 } from 'lucide-react'
@@ -6,7 +6,7 @@ import { Music2 } from 'lucide-react'
 export function Footer() {
   const year = new Date().getFullYear()
 
-  const links = [
+  const navLinks = [
     { href: '/',            label: 'Library'     },
     { href: '/browse',      label: 'Browse'      },
     { href: '/requests',    label: 'Requests'    },
@@ -14,13 +14,19 @@ export function Footer() {
     { href: '/collections', label: 'Collections' },
   ]
 
+  const legalLinks = [
+    { href: '/terms',   label: 'Terms'   },
+    { href: '/privacy', label: 'Privacy' },
+    { href: '/admin',   label: 'Admin'   },
+  ]
+
   return (
     <footer style={{
       background: '#1C0E0A',
       borderTop: '1px solid rgba(255,255,255,0.05)',
       marginTop: 48,
-      paddingBottom: 'calc(64px + env(safe-area-inset-bottom))',
-    }} className="md:pb-0">
+    }}>
+      {/* Mobile safe area handled via Tailwind */}
       <div style={{ maxWidth: 1400, margin: '0 auto', padding: '40px 24px 32px' }}>
 
         {/* Top row */}
@@ -32,10 +38,11 @@ export function Footer() {
           {/* Brand */}
           <div style={{ maxWidth: 280 }}>
             <Link href="/" style={{
-              display: 'flex', alignItems: 'center', gap: 10,
+              display: 'inline-flex', alignItems: 'center', gap: 10,
               textDecoration: 'none', marginBottom: 12,
             }}>
-              <div style={{ position: 'relative', width: 26, height: 30, opacity: 0.85 }} className="logo-on-dark">
+              <div style={{ position: 'relative', width: 26, height: 30, opacity: 0.85 }}
+                className="logo-on-dark">
                 <Image src="/FaithLibrary_logo.png" alt="FaithLibrary" fill className="object-contain" />
               </div>
               <span style={{
@@ -54,17 +61,18 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Nav links */}
+          {/* Nav links — hover via CSS class */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 24px' }}>
-            {links.map(link => (
-              <Link key={link.href} href={link.href} style={{
-                fontSize: '0.8125rem', color: '#4A3028', fontWeight: 500,
-                textDecoration: 'none', fontFamily: 'var(--font-ui)',
-                transition: 'color 0.15s',
-              }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#D7CCC8' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#4A3028' }}
-              >{link.label}</Link>
+            {navLinks.map(link => (
+              <Link key={link.href} href={link.href}
+                className="footer-link"
+                style={{
+                  fontSize: '0.8125rem', color: '#4A3028', fontWeight: 500,
+                  textDecoration: 'none', fontFamily: 'var(--font-ui)',
+                  transition: 'color 0.15s',
+                }}>
+                {link.label}
+              </Link>
             ))}
           </div>
         </div>
@@ -86,26 +94,28 @@ export function Footer() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            {[
-              { href: '/terms',   label: 'Terms'   },
-              { href: '/privacy', label: 'Privacy' },
-              { href: '/admin',   label: 'Admin'   },
-            ].map(({ href, label }) => (
-              <Link key={href} href={href} style={{
-                fontSize: '0.75rem', color: '#3A2018',
-                textDecoration: 'none', fontFamily: 'var(--font-ui)',
-                transition: 'color 0.15s',
-              }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#8D6E63' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#3A2018' }}
-              >{label}</Link>
+            {legalLinks.map(({ href, label }) => (
+              <Link key={href} href={href}
+                className="footer-link"
+                style={{
+                  fontSize: '0.75rem', color: '#3A2018',
+                  textDecoration: 'none', fontFamily: 'var(--font-ui)',
+                  transition: 'color 0.15s',
+                }}>
+                {label}
+              </Link>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Mobile bottom nav safe area */}
-      <style>{`@media(min-width:768px){footer{padding-bottom:32px!important}}`}</style>
+      {/* Hover styles injected via globals — no event handlers needed */}
+      <style>{`
+        .footer-link:hover { color: #8D6E63 !important; }
+        @media (max-width: 767px) {
+          footer { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+        }
+      `}</style>
     </footer>
   )
 }

@@ -38,7 +38,7 @@ function Pagination({ current, total, query, tags }: {
   return (
     <div className="flex items-center justify-center gap-1.5 pt-6">
       {current > 1 && (
-        <a href={build(current - 1)} className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-[#D7CCC8] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037] transition-all">
+        <a href={build(current - 1)} className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-[#E0D8D4] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037] transition-all">
           <ChevronLeft size={15} />
         </a>
       )}

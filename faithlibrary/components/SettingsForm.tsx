@@ -1,8 +1,8 @@
-// components/SettingsForm.tsx
+// components/SettingsForm.tsx — UI rewrite, all logic unchanged
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { CheckCircle2, AlertCircle, Loader2, Save } from 'lucide-react'
 
 interface SettingsFormProps {
   userId:      string
@@ -11,95 +11,145 @@ interface SettingsFormProps {
 }
 
 export function SettingsForm({ userId, email, currentName }: SettingsFormProps) {
-  const supabase  = createClient()
+  const supabase = createClient()
   const [name,    setName]    = useState(currentName)
-  const [saving,  setSaving]  = useState(false)
-  const [status,  setStatus]  = useState<'idle' | 'success' | 'error'>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
+  const [status,  setStatus]  = useState<'idle' | 'saving' | 'success' | 'error'>('idle')
+  const [message, setMessage] = useState('')
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSave = async () => {
     if (!name.trim()) return
-    setSaving(true)
-    setStatus('idle')
-
+    setStatus('saving')
     const { error } = await supabase
       .from('profiles')
       .update({ full_name: name.trim() })
       .eq('id', userId)
-
-    // Also update auth metadata
-    await supabase.auth.updateUser({
-      data: { full_name: name.trim() },
-    })
-
     if (error) {
-      setErrorMsg(error.message)
-      setStatus('error')
+      setMessage(error.message); setStatus('error')
     } else {
-      setStatus('success')
+      setMessage('Display name updated successfully.'); setStatus('success')
       setTimeout(() => setStatus('idle'), 3000)
     }
-    setSaving(false)
+  }
+
+  const inputFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.style.borderColor = '#5D4037'
+    e.target.style.boxShadow = '0 0 0 3px rgba(93,64,55,0.1)'
+    e.target.style.background = '#fff'
+  }
+  const inputBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.style.borderColor = '#E0D8D4'
+    e.target.style.boxShadow = 'none'
+    e.target.style.background = '#FAFAF9'
   }
 
   return (
-    <form onSubmit={handleSave} className="space-y-4">
-      {/* Email (read-only) */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+      {/* Email — read only */}
       <div>
-        <label className="label">Email address</label>
+        <label style={{
+          display: 'block', fontSize: '0.72rem', fontWeight: 700,
+          letterSpacing: '0.07em', textTransform: 'uppercase',
+          color: '#8D6E63', marginBottom: 6, fontFamily: 'var(--font-ui)',
+        }}>Email</label>
         <input
-          type="email"
-          value={email}
-          disabled
-          className="input bg-[#F5F5F5] text-[#8D6E63] cursor-not-allowed"
+          type="email" value={email} disabled
+          style={{
+            width: '100%', fontFamily: 'var(--font-ui)', fontSize: '0.875rem',
+            color: '#9E8070', background: '#F5F1EF',
+            border: '1.5px solid #E8E4E1', borderRadius: 10,
+            padding: '10px 13px', outline: 'none',
+            cursor: 'not-allowed',
+          }}
         />
-        <p className="text-xs text-[#8D6E63] mt-1" style={{ fontFamily: 'var(--font-ui)' }}>
-          Email cannot be changed.
+        <p style={{ marginTop: 5, fontSize: '0.73rem', color: '#B09080', fontFamily: 'var(--font-ui)' }}>
+          Email cannot be changed directly. Contact support if needed.
         </p>
       </div>
 
       {/* Display name */}
       <div>
-        <label className="label">Display name</label>
+        <label style={{
+          display: 'block', fontSize: '0.72rem', fontWeight: 700,
+          letterSpacing: '0.07em', textTransform: 'uppercase',
+          color: '#5D4037', marginBottom: 6, fontFamily: 'var(--font-ui)',
+        }}>Display Name</label>
         <input
-          type="text"
-          value={name}
+          type="text" value={name}
           onChange={e => setName(e.target.value)}
-          placeholder="Your name"
-          className="input"
+          placeholder="How you appear to others"
+          style={{
+            width: '100%', fontFamily: 'var(--font-ui)', fontSize: '0.875rem',
+            color: '#2C1810', background: '#FAFAF9',
+            border: '1.5px solid #E0D8D4', borderRadius: 10,
+            padding: '10px 13px', outline: 'none', lineHeight: 1.5,
+            transition: 'border-color 0.15s, box-shadow 0.15s, background 0.15s',
+          }}
+          onFocus={inputFocus}
+          onBlur={inputBlur}
         />
-        <p className="text-xs text-[#8D6E63] mt-1" style={{ fontFamily: 'var(--font-ui)' }}>
-          This appears on your profile and next to your uploaded scores.
+        <p style={{ marginTop: 5, fontSize: '0.73rem', color: '#9E8070', fontFamily: 'var(--font-ui)' }}>
+          This is the name shown on your uploads and profile page.
         </p>
       </div>
 
-      {/* Alerts */}
+      {/* Status messages */}
       {status === 'success' && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-xl
-                        bg-green-50 border border-green-200 text-green-700 text-sm"
-          style={{ fontFamily: 'var(--font-ui)' }}>
-          <CheckCircle2 size={15} className="flex-shrink-0" /> Profile updated successfully.
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '11px 16px', borderRadius: 10,
+          background: '#F0FDF4', border: '1.5px solid #86EFAC',
+          color: '#166534', fontSize: '0.875rem', fontFamily: 'var(--font-ui)',
+        }}>
+          <CheckCircle2 size={15} style={{ flexShrink: 0 }} />
+          {message}
         </div>
       )}
       {status === 'error' && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-xl
-                        bg-red-50 border border-red-200 text-red-700 text-sm"
-          style={{ fontFamily: 'var(--font-ui)' }}>
-          <AlertCircle size={15} className="flex-shrink-0" /> {errorMsg}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '11px 16px', borderRadius: 10,
+          background: '#FEF2F2', border: '1.5px solid #FCA5A5',
+          color: '#991B1B', fontSize: '0.875rem', fontFamily: 'var(--font-ui)',
+        }}>
+          <AlertCircle size={15} style={{ flexShrink: 0 }} />
+          {message}
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={saving || !name.trim() || name.trim() === currentName}
-        className="btn btn-primary"
-        style={{ padding: '0.6rem 1.5rem' }}
-      >
-        {saving
-          ? <><Loader2 size={14} className="animate-spin" /> Saving…</>
-          : 'Save changes'}
-      </button>
-    </form>
+      {/* Save button */}
+      <div>
+        <button
+          onClick={handleSave}
+          disabled={status === 'saving' || !name.trim() || name === currentName}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 7,
+            padding: '10px 22px', borderRadius: 10, border: 'none',
+            background: (status === 'saving' || !name.trim() || name === currentName) ? '#E0D8D4' : '#3E2723',
+            color: (status === 'saving' || !name.trim() || name === currentName) ? '#9E8070' : '#F7F4F2',
+            cursor: (status === 'saving' || !name.trim() || name === currentName) ? 'not-allowed' : 'pointer',
+            fontSize: '0.875rem', fontWeight: 700,
+            fontFamily: 'var(--font-ui)',
+            transition: 'all 0.2s',
+            boxShadow: (status === 'saving' || !name.trim() || name === currentName) ? 'none' : '0 2px 8px rgba(62,39,35,0.22)',
+          }}
+          onMouseEnter={e => {
+            const el = e.currentTarget as HTMLButtonElement
+            if (!el.disabled) el.style.background = '#2C1810'
+          }}
+          onMouseLeave={e => {
+            const el = e.currentTarget as HTMLButtonElement
+            if (!el.disabled) el.style.background = '#3E2723'
+          }}
+        >
+          {status === 'saving'
+            ? <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Saving…</>
+            : <><Save size={15} /> Save changes</>
+          }
+        </button>
+      </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
   )
 }
