@@ -13,11 +13,12 @@ function pageBtnStyle(active: boolean): React.CSSProperties {
   return {
     width: 36, height: 36, borderRadius: 9,
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: '0.875rem', fontWeight: active ? 600 : 400,
+    fontSize: '0.875rem', fontWeight: active ? 700 : 500,
     textDecoration: 'none', transition: 'all 0.15s',
-    border: '1px solid ' + (active ? 'var(--walnut)' : 'var(--border)'),
-    background: active ? 'var(--walnut)' : 'var(--surface)',
-    color: active ? 'var(--bone)' : 'var(--text-muted)',
+    border: '1px solid ' + (active ? '#3E2723' : '#E0D8D4'),
+    background: active ? '#3E2723' : '#fff',
+    color: active ? '#F7F4F2' : '#8D6E63',
+    boxShadow: active ? '0 2px 8px rgba(62,39,35,0.2)' : 'none',
     fontFamily: 'var(--font-ui)', flexShrink: 0,
   }
 }
@@ -26,9 +27,9 @@ function Pagination({ current, total, userId }: { current: number; total: number
   const build = (p: number) => `/profile/${userId}?page=${p}`
   const pages: (number | '...')[] =
     total <= 7 ? Array.from({ length: total }, (_, i) => i + 1)
-    : current <= 4 ? [1, 2, 3, 4, 5, '...', total]
-    : current >= total - 3 ? [1, '...', total-4, total-3, total-2, total-1, total]
-    : [1, '...', current-1, current, current+1, '...', total]
+      : current <= 4 ? [1, 2, 3, 4, 5, '...', total]
+        : current >= total - 3 ? [1, '...', total - 4, total - 3, total - 2, total - 1, total]
+          : [1, '...', current - 1, current, current + 1, '...', total]
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, paddingTop: 24 }}>
       {current > 1 && <a href={build(current - 1)} style={pageBtnStyle(false)}><ChevronLeft size={14} /></a>}
@@ -48,11 +49,11 @@ interface ProfilePageProps {
 }
 
 export default async function ProfilePage({ params, searchParams }: ProfilePageProps) {
-  const { id }   = await params
-  const sp       = await searchParams
-  const page     = Math.max(1, parseInt(sp.page ?? '1', 10))
-  const from     = (page - 1) * PAGE_SIZE
-  const to       = from + PAGE_SIZE - 1
+  const { id } = await params
+  const sp = await searchParams
+  const page = Math.max(1, parseInt(sp.page ?? '1', 10))
+  const from = (page - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
   const supabase = await createClient()
 
   const { data: profile, error: profileErr } = await supabase
@@ -72,12 +73,12 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
   const { data: dlData } = await supabase
     .from('files').select('download_count').eq('user_id', id).eq('is_public', true)
 
-  const uploads        = (files ?? []) as FileRecord[]
+  const uploads = (files ?? []) as FileRecord[]
   const totalDownloads = (dlData ?? []).reduce((s, f) => s + (f.download_count ?? 0), 0)
-  const totalPages     = Math.ceil((count ?? 0) / PAGE_SIZE)
-  const joined         = new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-  const displayName    = profile.full_name ?? 'Anonymous Musician'
-  const initials       = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+  const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
+  const joined = new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const displayName = profile.full_name ?? 'Anonymous Musician'
+  const initials = displayName.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bone)' }} className="grain">
@@ -111,8 +112,8 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, marginTop: 12 }}>
                 {[
                   { icon: <FileStack size={13} />, label: `${totalCount ?? 0} scores` },
-                  { icon: <Download size={13} />,  label: `${totalDownloads.toLocaleString()} downloads` },
-                  { icon: <Calendar size={13} />,  label: `Joined ${joined}` },
+                  { icon: <Download size={13} />, label: `${totalDownloads.toLocaleString()} downloads` },
+                  { icon: <Calendar size={13} />, label: `Joined ${joined}` },
                 ].map(({ icon, label }) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--sand)', fontSize: '0.875rem', fontFamily: 'var(--font-ui)' }}>
                     <span style={{ color: 'var(--ochre)' }}>{icon}</span>

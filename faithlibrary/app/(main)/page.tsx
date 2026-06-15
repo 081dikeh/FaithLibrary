@@ -43,11 +43,11 @@ function Pagination({ current, total, query, tags }: {
         </a>
       )}
       {pages.map((p, i) => p === '...'
-        ? <span key={`d${i}`} className="w-9 h-9 flex items-center justify-center text-[#D7CCC8] text-sm">…</span>
-        : <a key={p} href={build(p as number)} className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-medium transition-all ${p === current ? 'bg-[#5D4037] text-white shadow-sm' : 'bg-white border border-[#D7CCC8] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037]'}`}>{p}</a>
+        ? <span key={`d${i}`} className="w-9 h-9 flex items-center justify-center text-[#C4B5AF] text-sm">…</span>
+        : <a key={p} href={build(p as number)} className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-medium transition-all ${p === current ? 'bg-[#5D4037] text-white shadow-sm' : 'bg-white border border-[#E0D8D4] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037]'}`}>{p}</a>
       )}
       {current < total && (
-        <a href={build(current + 1)} className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-[#D7CCC8] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037] transition-all">
+        <a href={build(current + 1)} className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-[#E0D8D4] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037] transition-all">
           <ChevronRight size={15} />
         </a>
       )}

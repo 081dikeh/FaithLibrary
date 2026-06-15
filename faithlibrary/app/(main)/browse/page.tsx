@@ -10,8 +10,8 @@ import type { FileRecord } from '@/lib/types'
 
 interface BrowseProps {
   searchParams: Promise<{
-    q?:    string
-    tag?:  string | string[]
+    q?: string
+    tag?: string | string[]
     sort?: string
     page?: string
   }>
@@ -26,7 +26,7 @@ async function ScoreGrid({
 }) {
   const supabase = await createClient()
   const from = (page - 1) * PAGE_SIZE
-  const to   = from + PAGE_SIZE - 1
+  const to = from + PAGE_SIZE - 1
 
   let q = supabase
     .from('files')
@@ -43,9 +43,9 @@ async function ScoreGrid({
 
   switch (sort) {
     case 'downloads': q = q.order('download_count', { ascending: false }); break
-    case 'az':        q = q.order('title',           { ascending: true });  break
-    case 'za':        q = q.order('title',           { ascending: false }); break
-    default:          q = q.order('created_at',      { ascending: false }); break
+    case 'az': q = q.order('title', { ascending: true }); break
+    case 'za': q = q.order('title', { ascending: false }); break
+    default: q = q.order('created_at', { ascending: false }); break
   }
 
   q = q.range(from, to)
@@ -127,8 +127,8 @@ function Pagination({
   const getPages = () => {
     if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
     if (current <= 4) return [1, 2, 3, 4, 5, '...', total]
-    if (current >= total - 3) return [1, '...', total-4, total-3, total-2, total-1, total]
-    return [1, '...', current-1, current, current+1, '...', total]
+    if (current >= total - 3) return [1, '...', total - 4, total - 3, total - 2, total - 1, total]
+    return [1, '...', current - 1, current, current + 1, '...', total]
   }
 
   const pages = getPages()
@@ -139,7 +139,7 @@ function Pagination({
       {current > 1 && (
         <a href={buildHref(current - 1)}
           className="w-9 h-9 rounded-xl flex items-center justify-center
-                     bg-white border border-[#D7CCC8] text-[#8D6E63]
+                     bg-white border border-[#E0D8D4] text-[#8D6E63]
                      hover:border-[#5D4037] hover:text-[#5D4037] transition-all">
           <ChevronLeft size={15} />
         </a>
@@ -149,17 +149,16 @@ function Pagination({
       {pages.map((p, i) =>
         p === '...' ? (
           <span key={`dot-${i}`}
-            className="w-9 h-9 flex items-center justify-center text-[#D7CCC8] text-sm">
+            className="w-9 h-9 flex items-center justify-center text-[#C4B5AF] text-sm">
             …
           </span>
         ) : (
           <a key={p} href={buildHref(p as number)}
             className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm
-                        font-medium transition-all duration-150 ${
-              p === current
+                        font-medium transition-all duration-150 ${p === current
                 ? 'bg-[#5D4037] text-white shadow-sm'
-                : 'bg-white border border-[#D7CCC8] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037]'
-            }`}>
+                : 'bg-white border border-[#E0D8D4] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037]'
+              }`}>
             {p}
           </a>
         )
@@ -169,7 +168,7 @@ function Pagination({
       {current < total && (
         <a href={buildHref(current + 1)}
           className="w-9 h-9 rounded-xl flex items-center justify-center
-                     bg-white border border-[#D7CCC8] text-[#8D6E63]
+                     bg-white border border-[#E0D8D4] text-[#8D6E63]
                      hover:border-[#5D4037] hover:text-[#5D4037] transition-all">
           <ChevronRight size={15} />
         </a>
@@ -179,12 +178,12 @@ function Pagination({
 }
 
 export default async function BrowsePage({ searchParams }: BrowseProps) {
-  const params  = await searchParams
-  const query   = params.q
+  const params = await searchParams
+  const query = params.q
   const rawTags = params.tag
-  const tags    = rawTags ? (Array.isArray(rawTags) ? rawTags : [rawTags]) : []
-  const sort    = params.sort ?? 'newest'
-  const page    = Math.max(1, parseInt(params.page ?? '1', 10))
+  const tags = rawTags ? (Array.isArray(rawTags) ? rawTags : [rawTags]) : []
+  const sort = params.sort ?? 'newest'
+  const page = Math.max(1, parseInt(params.page ?? '1', 10))
 
   return (
     <div className="min-h-screen grain bg-[#F5F5F5]">
@@ -215,13 +214,13 @@ export default async function BrowsePage({ searchParams }: BrowseProps) {
         <Suspense
           key={`${query ?? ''}-${tags.join(',')}-${sort}-${page}`}
           fallback={
-          <div className="space-y-8">
-            <div className="h-5 skeleton w-32 rounded" />
-            <div className="score-grid">
-              {[...Array(20)].map((_, i) => <ScoreCardSkeleton key={i} />)}
+            <div className="space-y-8">
+              <div className="h-5 skeleton w-32 rounded" />
+              <div className="score-grid">
+                {[...Array(20)].map((_, i) => <ScoreCardSkeleton key={i} />)}
+              </div>
             </div>
-          </div>
-        }>
+          }>
           <ScoreGrid query={query} tags={tags} sort={sort} page={page} />
         </Suspense>
       </main>
