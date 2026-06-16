@@ -10,7 +10,8 @@ import { FeaturedScores } from '@/components/FeaturedScores'
 import { HomeStats } from '@/components/HomeStats'
 import { ScoreOfWeek } from '@/components/ScoreOfWeek'
 import { Footer } from '@/components/Footer'
-import { ArrowRight, Upload, Search, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Pagination } from '@/components/Pagination'
+import { ArrowRight, Upload, Search, BookOpen } from 'lucide-react'
 import type { FileRecord } from '@/lib/types'
 
 const PAGE_SIZE = 10
@@ -19,46 +20,10 @@ interface HomeProps {
   searchParams: Promise<{ q?: string; tag?: string | string[]; page?: string }>
 }
 
-function Pagination({ current, total, query, tags }: {
-  current: number; total: number; query?: string; tags: string[]
-}) {
-  const build = (p: number) => {
-    const ps = new URLSearchParams()
-    if (query) ps.set('q', query)
-    tags.forEach(t => ps.append('tag', t))
-    ps.set('page', String(p))
-    return `/?${ps}`
-  }
-  const pages: (number | '...')[] =
-    total <= 7 ? Array.from({ length: total }, (_, i) => i + 1)
-      : current <= 4 ? [1, 2, 3, 4, 5, '...', total]
-        : current >= total - 3 ? [1, '...', total - 4, total - 3, total - 2, total - 1, total]
-          : [1, '...', current - 1, current, current + 1, '...', total]
-
-  return (
-    <div className="flex items-center justify-center gap-1.5 pt-6">
-      {current > 1 && (
-        <a href={build(current - 1)} className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-[#E0D8D4] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037] transition-all">
-          <ChevronLeft size={15} />
-        </a>
-      )}
-      {pages.map((p, i) => p === '...'
-        ? <span key={`d${i}`} className="w-9 h-9 flex items-center justify-center text-[#C4B5AF] text-sm">…</span>
-        : <a key={p} href={build(p as number)} className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-medium transition-all ${p === current ? 'bg-[#5D4037] text-white shadow-sm' : 'bg-white border border-[#E0D8D4] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037]'}`}>{p}</a>
-      )}
-      {current < total && (
-        <a href={build(current + 1)} className="w-9 h-9 rounded-xl flex items-center justify-center bg-white border border-[#E0D8D4] text-[#8D6E63] hover:border-[#5D4037] hover:text-[#5D4037] transition-all">
-          <ChevronRight size={15} />
-        </a>
-      )}
-    </div>
-  )
-}
-
 async function ScoreGrid({ query, tags, page }: { query?: string; tags: string[]; page: number }) {
   const supabase = await createClient()
   const from = (page - 1) * PAGE_SIZE
-  const to = from + PAGE_SIZE - 1
+  const to   = from + PAGE_SIZE - 1
 
   let q = supabase
     .from('files')
@@ -72,45 +37,73 @@ async function ScoreGrid({ query, tags, page }: { query?: string; tags: string[]
 
   const { data: files, error, count } = await q
 
-  if (error) return <p className="text-center py-20 text-[#8D6E63] text-sm">Something went wrong. Please refresh.</p>
+  if (error) return (
+    <p style={{ textAlign: 'center', padding: '80px 0', color: '#8D6E63', fontSize: '0.875rem' }}>
+      Something went wrong. Please refresh.
+    </p>
+  )
 
   if (!files || files.length === 0) return (
-    <div className="flex flex-col items-center gap-4 py-24 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-[#EFE9E7] flex items-center justify-center">
-        <Search size={26} className="text-[#8D6E63]" />
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '96px 0', textAlign: 'center' }}>
+      <div style={{ width: 64, height: 64, borderRadius: 16, background: '#EFE9E7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Search size={26} style={{ color: '#8D6E63' }} />
       </div>
-      <p className="font-display text-xl text-[#5D4037]">No scores found</p>
-      <p className="text-[#8D6E63] text-sm max-w-xs leading-relaxed" style={{ fontFamily: 'var(--font-ui)' }}>
+      <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', color: '#5D4037', fontWeight: 700 }}>No scores found</p>
+      <p style={{ color: '#9E8070', fontSize: '0.875rem', maxWidth: 280, lineHeight: 1.6, fontFamily: 'var(--font-ui)' }}>
         {query ? `No results for "${query}". Try different keywords or clear filters.` : 'No scores yet. Be the first to upload.'}
       </p>
-      <Link href="/upload" className="btn btn-primary btn-sm mt-2">Upload a score <ArrowRight size={13} /></Link>
+      <Link href="/upload" style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 4,
+        padding: '9px 18px', borderRadius: 10,
+        background: '#3E2723', color: '#F7F4F2',
+        fontSize: '0.8125rem', fontWeight: 700, textDecoration: 'none',
+        fontFamily: 'var(--font-ui)', boxShadow: '0 2px 8px rgba(62,39,35,0.22)',
+      }}>
+        Upload a score <ArrowRight size={13} />
+      </Link>
     </div>
   )
 
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
 
+  const buildHref = (p: number) => {
+    const ps = new URLSearchParams()
+    if (query) ps.set('q', query)
+    tags.forEach(t => ps.append('tag', t))
+    ps.set('page', String(p))
+    return `/?${ps}`
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-[#8D6E63]" style={{ fontFamily: 'var(--font-ui)' }}>
-          <span className="font-semibold text-[#3E2723]">{count ?? 0}</span> score{(count ?? 0) !== 1 ? 's' : ''}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <p style={{ fontSize: '0.875rem', color: '#8D6E63', fontFamily: 'var(--font-ui)' }}>
+          <span style={{ fontWeight: 700, color: '#3E2723' }}>{count ?? 0}</span> score{(count ?? 0) !== 1 ? 's' : ''}
         </p>
-        {totalPages > 1 && <p className="text-xs text-[#8D6E63]">Page {page} of {totalPages}</p>}
+        {totalPages > 1 && (
+          <p style={{ fontSize: '0.75rem', color: '#B09080', fontFamily: 'var(--font-ui)' }}>
+            Page {page} of {totalPages}
+          </p>
+        )}
       </div>
+
       <div className="score-grid">
         {(files as FileRecord[]).map((file, i) => <ScoreCard key={file.id} file={file} index={i} />)}
       </div>
-      {totalPages > 1 && <Pagination current={page} total={totalPages} query={query} tags={tags} />}
+
+      {totalPages > 1 && (
+        <Pagination current={page} total={totalPages} buildHref={buildHref} />
+      )}
     </div>
   )
 }
 
 export default async function HomePage({ searchParams }: HomeProps) {
-  const params = await searchParams
-  const query = params.q
-  const rawTags = params.tag
-  const tags = rawTags ? (Array.isArray(rawTags) ? rawTags : [rawTags]) : []
-  const page = Math.max(1, parseInt(params.page ?? '1', 10))
+  const params   = await searchParams
+  const query    = params.q
+  const rawTags  = params.tag
+  const tags     = rawTags ? (Array.isArray(rawTags) ? rawTags : [rawTags]) : []
+  const page     = Math.max(1, parseInt(params.page ?? '1', 10))
   const showHero = !query && tags.length === 0 && page === 1
 
   return (
@@ -128,14 +121,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
             </div>
             <div className="flex justify-center mb-6 animate-fade-up">
               <div className="relative w-16 h-20 logo-on-dark opacity-70">
-                <Image
-                  src="/FaithLibrary_logo.png"
-                  alt="FaithLibrary Logo"
-                  width={40}
-                  height={40}
-                  className="object-contain"
-                  priority
-                />
+                <Image src="/FaithLibrary_logo.png" alt="" fill className="object-contain" />
               </div>
             </div>
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-[#F5F5F5] leading-[1.1] mb-4 animate-fade-up delay-100">
@@ -149,7 +135,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
               <Link href="/browse" className="btn btn-primary" style={{ fontSize: '0.9rem', padding: '0.7rem 1.5rem' }}>
                 <BookOpen size={16} /> Browse Library
               </Link>
-              <Link href="/upload" className="btn" style={{ background: 'transparent', color: '#D7CCC8', borderColor: 'rgba(141,110,99,0.5)', fontSize: '0.9rem', padding: '0.7rem 1.5rem' }}>
+              <Link href="/signup" className="btn" style={{ background: 'transparent', color: '#D7CCC8', borderColor: 'rgba(141,110,99,0.5)', fontSize: '0.9rem', padding: '0.7rem 1.5rem' }}>
                 <Upload size={16} /> Upload a Score
               </Link>
             </div>
@@ -165,8 +151,8 @@ export default async function HomePage({ searchParams }: HomeProps) {
           <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
               {[{ icon: '🔍', title: 'Discover', desc: 'Browse hundreds of Mass parts, hymns, and choral scores organised by category and season.' },
-              { icon: '📄', title: 'View & Print', desc: 'Read scores in-browser with our PDF viewer. Print or download in one click.' },
-              { icon: '🎵', title: 'Share', desc: 'Upload your own compositions or arrangements and share them with the global community.' }
+                { icon: '📄', title: 'View & Print', desc: 'Read scores in-browser with our PDF viewer. Print or download in one click.' },
+                { icon: '🎵', title: 'Share', desc: 'Upload your own compositions or arrangements and share them with the global community.' }
               ].map(item => (
                 <div key={item.title} className="text-center">
                   <div className="text-3xl mb-3">{item.icon}</div>
@@ -204,7 +190,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
           key={`${query ?? ''}-${tags.join(',')}-${page}`}
           fallback={
             <div className="score-grid">
-              {[...Array(10)].map((_, i) => <ScoreCardSkeleton key={i} />)}
+              {[...Array(10)].map((_, i) => <ScoreCardSkeleton key={i} index={i} />)}
             </div>
           }
         >
