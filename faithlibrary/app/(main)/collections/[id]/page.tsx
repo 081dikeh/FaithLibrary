@@ -118,4 +118,4 @@ export default async function CollectionPage({ params, searchParams }: Collectio
       <Footer />
     </div>
   )
-}
+}               
