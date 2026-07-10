@@ -111,34 +111,58 @@ export default async function HomePage({ searchParams }: HomeProps) {
       <Navbar />
 
       {showHero && (
-        <section className="relative overflow-hidden bg-[#3E2723] pt-12 pb-16 px-4 sm:px-6">
+        <section className="relative overflow-hidden bg-[#3E2723] pt-20 pb-24 px-4 sm:px-6">
           <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-[#5D4037]/30 blur-3xl pointer-events-none" />
           <div className="absolute -bottom-16 -left-16 w-72 h-72 rounded-full bg-[#8D6E63]/15 blur-3xl pointer-events-none" />
+
+          {/* signature: faint staff lines, like an open hymnal */}
+          <div
+            aria-hidden
+            className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-40 pointer-events-none opacity-[0.06]"
+            style={{
+              backgroundImage: 'repeating-linear-gradient(to bottom, #F5F5F5 0px, #F5F5F5 1px, transparent 1px, transparent 22px)',
+            }}
+          />
+
           <div className="relative max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#5D4037]/60 border border-[#8D6E63]/30 text-[#D7CCC8] text-xs font-medium mb-5 animate-fade-in">
+            <div
+              className="inline-flex items-center gap-2 px-3.5 py-4 rounded-full bg-[#5D4037]/60 border border-[#8D6E63]/30 text-[#D7CCC8] text-xs font-medium mb-6 animate-fade-in"
+              style={{ fontFamily: 'var(--font-ui)', letterSpacing: '0.02em' }}
+            >
               <span className="w-1.5 h-1.5 rounded-full bg-[#8D6E63] animate-pulse" />
               Sacred music commons — free forever
             </div>
-            <div className="flex justify-center mb-6 animate-fade-up">
+
+            <div className="flex justify-center mb-7 animate-fade-up">
               <div className="relative w-16 h-20 logo-on-dark opacity-70">
                 <Image src="/FaithLibrary_logo.png" alt="" fill className="object-contain" />
               </div>
             </div>
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-[#F5F5F5] leading-[1.1] mb-4 animate-fade-up delay-100">
+
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-[#F5F5F5] leading-[1.1] mb-5 animate-fade-up delay-100">
               Discover & Share
-              <span className="block text-[#D7CCC8] font-normal italic mt-1">Choral Music</span>
+              <span className="block text-[#D7CCC8] font-normal italic mt-2">Choral Music</span>
             </h1>
-            <p className="text-[#8D6E63] text-sm sm:text-base max-w-lg mx-auto mb-8 animate-fade-up delay-150" style={{ fontFamily: 'var(--font-ui)' }}>
+
+            <div className="flex items-center justify-center gap-3 mb-6 animate-fade-up delay-100">
+              <span className="h-px w-10 bg-[#8D6E63]/40" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#8D6E63]/60" />
+              <span className="h-px w-10 bg-[#8D6E63]/40" />
+            </div>
+
+            <p className="text-[#8D6E63] text-sm sm:text-base max-w-lg mx-auto mb-9 leading-relaxed animate-fade-up delay-150" style={{ fontFamily: 'var(--font-ui)' }}>
               A growing commons of hymns, choral scores, and sacred compositions — free to explore, upload, and share with the world.
             </p>
-            <div className="flex flex-wrap justify-center gap-3 mb-10 animate-fade-up delay-200">
-              <Link href="/browse" className="btn btn-primary" style={{ fontSize: '0.9rem', padding: '0.7rem 1.5rem' }}>
+
+            <div className="flex flex-wrap justify-center gap-3 mb-12 animate-fade-up delay-200">
+              <Link href="/browse" className="btn btn-primary" style={{ fontSize: '0.9rem', padding: '0.75rem 1.75rem' }}>
                 <BookOpen size={16} /> Browse Library
               </Link>
-              <Link href="/signup" className="btn" style={{ background: 'transparent', color: '#D7CCC8', borderColor: 'rgba(141,110,99,0.5)', fontSize: '0.9rem', padding: '0.7rem 1.5rem' }}>
+              <Link href="/signup" className="btn" style={{ background: 'transparent', color: '#D7CCC8', borderColor: 'rgba(141,110,99,0.5)', fontSize: '0.9rem', padding: '0.75rem 1.75rem' }}>
                 <Upload size={16} /> Upload a Score
               </Link>
             </div>
+
             <Suspense fallback={<div className="flex justify-center gap-10 animate-pulse">{[...Array(3)].map((_, i) => (<div key={i} className="text-center"><div className="h-6 w-12 bg-[#5D4037]/40 rounded mx-auto mb-1" /><div className="h-3 w-16 bg-[#5D4037]/20 rounded mx-auto" /></div>))}</div>}>
               <HomeStats />
             </Suspense>
@@ -148,15 +172,44 @@ export default async function HomePage({ searchParams }: HomeProps) {
 
       {showHero && (
         <section className="bg-white border-b border-[#D7CCC8]">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-              {[{ icon: '🔍', title: 'Discover', desc: 'Browse hundreds of Mass parts, hymns, and choral scores organised by category and season.' },
-                { icon: '📄', title: 'View & Print', desc: 'Read scores in-browser with our PDF viewer. Print or download in one click.' },
-                { icon: '🎵', title: 'Share', desc: 'Upload your own compositions or arrangements and share them with the global community.' }
-              ].map(item => (
-                <div key={item.title} className="text-center">
-                  <div className="text-3xl mb-3">{item.icon}</div>
-                  <h3 className="font-display text-lg font-semibold text-[#3E2723] mb-1">{item.title}</h3>
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+            <div className="text-center mb-12">
+              <p
+                className="text-xs font-semibold uppercase mb-3"
+                style={{ fontFamily: 'var(--font-ui)', letterSpacing: '0.15em', color: '#8D6E63' }}
+              >
+                How it works
+              </p>
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#3E2723]">
+                Three steps to sacred sound
+              </h2>
+            </div>
+
+            <div
+              className="rounded-2xl border border-[#EFE9E7] overflow-hidden"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              }}
+            >
+              {[
+                { numeral: 'I', icon: '🔍', title: 'Discover', desc: 'Browse hundreds of Mass parts, hymns, and choral scores organised by category and season.' },
+                { numeral: 'II', icon: '📄', title: 'View & Print', desc: 'Read scores in-browser with our PDF viewer. Print or download in one click.' },
+                { numeral: 'III', icon: '🎵', title: 'Share', desc: 'Upload your own compositions or arrangements and share them with the global community.' },
+              ].map((item, i) => (
+                <div
+                  key={item.title}
+                  className="group text-center px-8 py-10 transition-colors duration-300 hover:bg-[#FBF8F6]"
+                  style={{ borderLeft: i > 0 ? '1px solid #EFE9E7' : 'none' }}
+                >
+                  <span
+                    className="inline-flex items-center justify-center w-9 h-9 rounded-full mb-5 text-xs font-bold"
+                    style={{ fontFamily: 'var(--font-display)', color: '#8D6E63', border: '1px solid #D7CCC8' }}
+                  >
+                    {item.numeral}
+                  </span>
+                  <div className="text-3xl mb-4 transition-transform duration-300 group-hover:scale-110">{item.icon}</div>
+                  <h3 className="font-display text-lg font-semibold text-[#3E2723] mb-2">{item.title}</h3>
                   <p className="text-sm text-[#8D6E63] leading-relaxed" style={{ fontFamily: 'var(--font-ui)' }}>{item.desc}</p>
                 </div>
               ))}
