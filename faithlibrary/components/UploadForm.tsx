@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { TagDropdown } from '@/components/TagDropdown'
 import { Upload, X, CheckCircle2, AlertCircle, FileText, Loader2, Globe, Lock, CloudUpload } from 'lucide-react'
+import { isPdfFile, FILE_TYPE_ERROR_MESSAGE } from '@/lib/validation'
 
 interface FormState {
   title: string; description: string; composer: string
@@ -17,6 +18,7 @@ export function UploadForm() {
   const fileRef  = useRef<HTMLInputElement>(null)
 
   const [file,     setFile]     = useState<File | null>(null)
+  const [fileError, setFileError] = useState('')
   const [dragging, setDragging] = useState(false)
   const [progress, setProgress] = useState(0)
   const [status,   setStatus]   = useState<'idle'|'uploading'|'success'|'error'>('idle')
@@ -26,6 +28,12 @@ export function UploadForm() {
   })
 
   const acceptFile = useCallback((f: File) => {
+    if (!isPdfFile(f)) {
+      setFileError(FILE_TYPE_ERROR_MESSAGE)
+      setFile(null)
+      return
+    }
+    setFileError('')
     setFile(f)
     if (!form.title)
       setForm(prev => ({ ...prev, title: f.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ') }))
@@ -39,16 +47,16 @@ export function UploadForm() {
 
   const handleUpload = async () => {
     if (!file || !form.title.trim()) return
+    if (!isPdfFile(file)) { setStatus('error'); setErrorMsg(FILE_TYPE_ERROR_MESSAGE); return }
     setStatus('uploading'); setProgress(10); setErrorMsg('')
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
       setProgress(25)
-      const ext  = file.name.split('.').pop() ?? 'pdf'
-      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.pdf`
       const { error: storageErr } = await supabase.storage
         .from('faithlibrary-files')
-        .upload(path, file, { contentType: file.type || 'application/pdf', cacheControl: '3600' })
+        .upload(path, file, { contentType: 'application/pdf', cacheControl: '3600' })
       if (storageErr) throw storageErr
       setProgress(70)
       const { data: { publicUrl } } = supabase.storage.from('faithlibrary-files').getPublicUrl(path)
@@ -112,7 +120,8 @@ export function UploadForm() {
       <div
         role="button"
         tabIndex={0}
-        aria-label={file ? `Selected file: ${file.name}. Press Enter to choose a different file.` : 'Choose a score file to upload. PDF, MXL, or MusicXML.'}
+        aria-label={file ? `Selected file: ${file.name}. Press Enter to choose a different file.` : 'Choose a PDF score file to upload.'}
+        aria-describedby={fileError ? 'upload-file-error' : undefined}
         onDragOver={e => { e.preventDefault(); setDragging(true) }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
@@ -130,7 +139,7 @@ export function UploadForm() {
         }}
       >
         <input ref={fileRef} type="file" aria-hidden="true" tabIndex={-1} style={{ display: 'none' }}
-          accept=".pdf,.mxl,.xml,.musicxml"
+          accept=".pdf,application/pdf"
           onChange={e => e.target.files?.[0] && acceptFile(e.target.files[0])} />
 
         {file ? (
@@ -171,21 +180,28 @@ export function UploadForm() {
                 {dragging ? 'Release to drop' : 'Drop your score here'}
               </p>
               <p style={{ fontSize: '0.8rem', color: '#9E8070', fontFamily: 'var(--font-ui)' }}>
-                or click to browse · PDF, MXL, MusicXML
+                or click to browse · PDF only
               </p>
             </div>
             <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-              {['PDF', 'MXL', 'XML'].map(f => (
-                <span key={f} style={{
-                  padding: '3px 10px', borderRadius: 99,
-                  background: '#EFE9E7', border: '1px solid #D7CCC8',
-                  fontSize: '0.68rem', fontWeight: 700, color: '#8D6E63',
-                }}>{f}</span>
-              ))}
+              <span style={{
+                padding: '3px 10px', borderRadius: 99,
+                background: '#EFE9E7', border: '1px solid #D7CCC8',
+                fontSize: '0.68rem', fontWeight: 700, color: '#8D6E63',
+              }}>PDF</span>
             </div>
           </>
         )}
       </div>
+
+      {fileError && (
+        <p id="upload-file-error" role="alert" style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          fontSize: '0.8125rem', color: '#C0392B', fontFamily: 'var(--font-ui)', marginTop: -12,
+        }}>
+          <AlertCircle size={14} aria-hidden="true" /> {fileError}
+        </p>
+      )}
 
       {/* ── Title ── */}
       <div>

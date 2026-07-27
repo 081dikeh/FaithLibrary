@@ -7,6 +7,7 @@ import {
   Upload, X, CheckCircle2, AlertCircle, FileText,
   Loader2, Globe, Lock, RotateCcw, Play, Layers, CloudUpload,
 } from 'lucide-react'
+import { isPdfFile } from '@/lib/validation'
 
 type FileStatus = 'pending' | 'uploading' | 'done' | 'error'
 interface QueueItem { id: string; file: File; title: string; status: FileStatus; progress: number; error?: string }
@@ -18,6 +19,7 @@ export function BulkUploadForm() {
   const fileRef  = useRef<HTMLInputElement>(null)
 
   const [queue,    setQueue]    = useState<QueueItem[]>([])
+  const [rejectedCount, setRejectedCount] = useState(0)
   const [tags,     setTags]     = useState<string[]>([])
   const [isPublic, setIsPublic] = useState(true)
   const [dragging, setDragging] = useState(false)
@@ -25,8 +27,10 @@ export function BulkUploadForm() {
   const [allDone,  setAllDone]  = useState(false)
 
   const addFiles = useCallback((files: FileList | File[]) => {
-    const items: QueueItem[] = Array.from(files)
-      .filter(f => /\.(pdf|mxl|xml|musicxml)$/i.test(f.name))
+    const all = Array.from(files)
+    const accepted = all.filter(isPdfFile)
+    setRejectedCount(all.length - accepted.length)
+    const items: QueueItem[] = accepted
       .map(f => ({
         id: Math.random().toString(36).slice(2),
         file: f,
@@ -44,11 +48,11 @@ export function BulkUploadForm() {
   const uploadOne = async (item: QueueItem, userId: string) => {
     updateItem(item.id, { status: 'uploading', progress: 15 })
     try {
-      const ext  = item.file.name.split('.').pop() ?? 'pdf'
-      const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      if (!isPdfFile(item.file)) throw new Error('Only PDF files are accepted right now.')
+      const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.pdf`
       const { error: se } = await supabase.storage
         .from('faithlibrary-files')
-        .upload(path, item.file, { contentType: item.file.type || 'application/pdf' })
+        .upload(path, item.file, { contentType: 'application/pdf' })
       if (se) throw se
       updateItem(item.id, { progress: 60 })
       const { data: { publicUrl } } = supabase.storage.from('faithlibrary-files').getPublicUrl(path)
@@ -127,7 +131,7 @@ export function BulkUploadForm() {
           }}
         >
           <input ref={fileRef} type="file" style={{ display: 'none' }} multiple
-            accept=".pdf,.mxl,.xml,.musicxml"
+            accept=".pdf,application/pdf"
             onChange={e => e.target.files && addFiles(e.target.files)} />
 
           <div style={{
@@ -142,7 +146,7 @@ export function BulkUploadForm() {
               {dragging ? 'Release to drop files' : 'Drop multiple files or click to browse'}
             </p>
             <p style={{ fontSize: '0.8rem', color: '#9E8070', fontFamily: 'var(--font-ui)' }}>
-              PDF, MXL, MusicXML · up to 100 files at once
+              PDF only · up to 100 files at once
             </p>
           </div>
 
@@ -154,6 +158,16 @@ export function BulkUploadForm() {
             }}>+ Add more files</span>
           )}
         </div>
+      )}
+
+      {rejectedCount > 0 && (
+        <p role="alert" style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          fontSize: '0.8125rem', color: '#C0392B', fontFamily: 'var(--font-ui)',
+        }}>
+          <AlertCircle size={14} aria-hidden="true" />
+          {rejectedCount} file{rejectedCount !== 1 ? 's were' : ' was'} skipped — only PDF files are accepted.
+        </p>
       )}
 
       {/* ── Shared settings ── */}

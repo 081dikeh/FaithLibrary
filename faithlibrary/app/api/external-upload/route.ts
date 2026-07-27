@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { isPdfFile, FILE_TYPE_ERROR_MESSAGE } from '@/lib/validation'
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,10 +28,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
+    if (!isPdfFile(file)) {
+      return NextResponse.json({ error: FILE_TYPE_ERROR_MESSAGE }, { status: 415 })
+    }
+
     const metadata = JSON.parse(metadataRaw || '{}')
 
     // 4. Upload file to Supabase Storage
-    const ext = file.name.split('.').pop() || 'pdf'
+    const ext = 'pdf'
     const storagePath = `${user.id}/${Date.now()}.${ext}`
     const arrayBuffer = await file.arrayBuffer()
     const buffer = new Uint8Array(arrayBuffer)
@@ -38,7 +43,7 @@ export async function POST(request: NextRequest) {
     const { error: storageError } = await supabase.storage
       .from('faithlibrary-files')
       .upload(storagePath, buffer, {
-        contentType: file.type || 'application/pdf',
+        contentType: 'application/pdf',
         upsert: false,
       })
 
