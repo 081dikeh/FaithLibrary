@@ -134,8 +134,11 @@ export default async function HomePage({ searchParams }: HomeProps) {
             </div>
 
             <div className="flex justify-center mb-7 animate-fade-up">
-              <div className="relative w-16 h-20 logo-on-dark opacity-70">
-                <Image src="/FaithLibrary_logo.png" alt="" fill className="object-contain" />
+              <div
+                className="logo-on-dark opacity-70"
+                style={{ position: 'relative', width: 64, height: 80 }}
+              >
+                <Image src="/FaithLibrary_logo.png" alt="" fill sizes="64px" className="object-contain" />
               </div>
             </div>
 

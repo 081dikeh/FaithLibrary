@@ -6,8 +6,8 @@ export default function NotFound() {
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center justify-center px-6 text-center">
       {/* Logo */}
-      <div className="relative w-16 h-16 mb-6 opacity-30">
-        <Image src="/FaithLibrary_logo.png" alt="FaithLibrary" fill className="object-contain" />
+      <div style={{ position: 'relative', width: 64, height: 64, opacity: 0.3 }} className="mb-6">
+        <Image src="/FaithLibrary_logo.png" alt="FaithLibrary" fill sizes="64px" className="object-contain" />
       </div>
 
       {/* Big 404 */}

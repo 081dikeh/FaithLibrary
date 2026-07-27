@@ -110,8 +110,8 @@ export default function SignupPage() {
         </div>
 
         <div className="relative flex flex-col items-center text-center gap-6">
-          <div className="relative w-24 h-24 brightness-0 invert opacity-90">
-            <Image src="/FaithLibrary_logo.png" alt="" fill className="object-contain" />
+          <div style={{ position: 'relative', width: 96, height: 96 }} className="brightness-0 invert opacity-90">
+            <Image src="/FaithLibrary_logo.png" alt="" fill sizes="96px" className="object-contain" />
           </div>
           <div>
             <h1 className="font-display text-4xl font-bold text-[#F5F5F5]">
@@ -148,8 +148,8 @@ export default function SignupPage() {
 
         {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-2.5 mb-10">
-          <div className="relative w-9 h-9">
-            <Image src="/FaithLibrary_logo.png" alt="" fill className="object-contain" />
+          <div style={{ position: 'relative', width: 36, height: 36 }}>
+            <Image src="/FaithLibrary_logo.png" alt="" fill sizes="36px" className="object-contain" />
           </div>
           <span className="font-display text-xl font-semibold text-[#3E2723]">
             Faith<span className="text-[#8D6E63] font-normal italic">Library</span>

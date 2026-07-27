@@ -93,7 +93,7 @@ export function Navbar() {
             {/* Logo */}
             <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
               <div style={{ position: 'relative', width: 28, height: 32, opacity: 0.9 }} className="logo-on-dark">
-                <Image src="/FaithLibrary_logo.png" alt="" fill className="object-contain" priority />
+                <Image src="/FaithLibrary_logo.png" alt="" fill sizes="28px" className="object-contain" priority />
               </div>
               <span style={{
                 fontFamily: 'var(--font-display)', fontSize: '1.15rem',
