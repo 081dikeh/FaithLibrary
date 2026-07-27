@@ -6,10 +6,12 @@ import { createClient } from '@/lib/supabase/client'
 import { TagDropdown } from '@/components/TagDropdown'
 import { Upload, X, CheckCircle2, AlertCircle, FileText, Loader2, Globe, Lock, CloudUpload } from 'lucide-react'
 import { isPdfFile, FILE_TYPE_ERROR_MESSAGE } from '@/lib/validation'
+import { LICENSE_OPTIONS, type LicenseStatus } from '@/lib/license'
 
 interface FormState {
   title: string; description: string; composer: string
   arranger: string; voice_parts: string; tags: string[]; is_public: boolean
+  license_status: LicenseStatus
 }
 
 export function UploadForm() {
@@ -25,6 +27,7 @@ export function UploadForm() {
   const [errorMsg, setErrorMsg] = useState('')
   const [form, setForm] = useState<FormState>({
     title: '', description: '', composer: '', arranger: '', voice_parts: '', tags: [], is_public: true,
+    license_status: 'unknown',
   })
 
   const acceptFile = useCallback((f: File) => {
@@ -80,6 +83,7 @@ export function UploadForm() {
         composer: form.composer.trim() || null, arranger: form.arranger.trim() || null,
         voice_parts: form.voice_parts.trim() || null, category: form.tags[0] ?? 'General',
         tags: form.tags, is_public: form.is_public, file_url: publicUrl, thumbnail_url: thumbnailUrl,
+        license_status: form.license_status,
       })
       if (dbErr) throw new Error(dbErr.message + (dbErr.details ? ' — ' + dbErr.details : '') + (dbErr.hint ? ' — Hint: ' + dbErr.hint : ''))
       setProgress(100); setStatus('success')
@@ -94,12 +98,12 @@ export function UploadForm() {
     && status !== 'uploading' && status !== 'success'
 
   /* shared input focus handlers */
-  const onFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const onFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     e.target.style.borderColor = '#5D4037'
     e.target.style.boxShadow = '0 0 0 3px rgba(93,64,55,0.1)'
     e.target.style.background = '#fff'
   }
-  const onBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const onBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     e.target.style.borderColor = '#E0D8D4'
     e.target.style.boxShadow = 'none'
     e.target.style.background = '#FAFAF9'
@@ -295,6 +299,27 @@ export function UploadForm() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* ── Copyright / license status ── */}
+      <div>
+        <label htmlFor="upload-license" style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
+          Copyright Status <span style={{ color: '#E57373', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>*</span>
+        </label>
+        <select
+          id="upload-license"
+          value={form.license_status}
+          onChange={e => setForm(p => ({ ...p, license_status: e.target.value as typeof p.license_status }))}
+          style={{ ...inputBase, cursor: 'pointer' }}
+          onFocus={onFocus} onBlur={onBlur}
+        >
+          {LICENSE_OPTIONS.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        <p style={{ marginTop: 6, fontSize: '0.75rem', color: '#9E8070', fontFamily: 'var(--font-ui)' }}>
+          {LICENSE_OPTIONS.find(o => o.value === form.license_status)?.hint}
+        </p>
       </div>
 
       {/* ── Progress ── */}

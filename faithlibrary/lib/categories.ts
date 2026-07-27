@@ -50,6 +50,23 @@ export const DEVOTIONAL = [
 
 export const GENERAL_TAGS = ['General'] as const
 
+export const LANGUAGES = [
+  'English',
+  'Latin',
+  'Spanish',
+  'Vietnamese',
+  'Tagalog',
+  'French',
+  'Polish',
+  'Igbo',
+] as const
+
+export const DIFFICULTY = [
+  'Beginner / Unison',
+  'Intermediate (2-3 parts)',
+  'Advanced (SATB+)',
+] as const
+
 // Flat list for dropdowns/search
 export const ALL_TAGS: string[] = [
   ...MASS_PARTS,
@@ -57,6 +74,8 @@ export const ALL_TAGS: string[] = [
   ...LITURGICAL_SEASONS,
   ...OCCASIONS,
   ...DEVOTIONAL,
+  ...LANGUAGES,
+  ...DIFFICULTY,
   ...GENERAL_TAGS,
 ]
 
@@ -67,5 +86,7 @@ export const TAG_GROUPS = [
   { label: 'Liturgical Seasons',  tags: [...LITURGICAL_SEASONS] },
   { label: 'Occasions',           tags: [...OCCASIONS] },
   { label: 'Devotional',          tags: [...DEVOTIONAL] },
+  { label: 'Language',            tags: [...LANGUAGES] },
+  { label: 'Difficulty',          tags: [...DIFFICULTY] },
   { label: 'General',             tags: [...GENERAL_TAGS] },
 ] as const

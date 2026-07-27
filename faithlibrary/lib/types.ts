@@ -15,6 +15,7 @@ export interface FileRecord {
   is_public:      boolean
   file_url:       string
   thumbnail_url?: string | null   // ← ADD THIS if missing
+  license_status?: string | null
   download_count?: number | null
   created_at:     string
   updated_at?:    string

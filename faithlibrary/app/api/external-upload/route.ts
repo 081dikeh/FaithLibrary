@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { isPdfFile, FILE_TYPE_ERROR_MESSAGE } from '@/lib/validation'
+import { isValidLicenseStatus } from '@/lib/license'
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,6 +67,7 @@ export async function POST(request: NextRequest) {
         category: metadata.category || 'score',
         tags: metadata.tags || [],
         is_public: metadata.is_public ?? true,
+        license_status: isValidLicenseStatus(metadata.license_status) ? metadata.license_status : 'unknown',
         file_url: publicUrl,
         source: 'notation_app', // optional: track where it came from
       })

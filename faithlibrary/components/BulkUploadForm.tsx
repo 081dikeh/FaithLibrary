@@ -8,6 +8,7 @@ import {
   Loader2, Globe, Lock, RotateCcw, Play, Layers, CloudUpload,
 } from 'lucide-react'
 import { isPdfFile } from '@/lib/validation'
+import { LICENSE_OPTIONS, type LicenseStatus } from '@/lib/license'
 
 type FileStatus = 'pending' | 'uploading' | 'done' | 'error'
 interface QueueItem { id: string; file: File; title: string; status: FileStatus; progress: number; error?: string }
@@ -22,6 +23,7 @@ export function BulkUploadForm() {
   const [rejectedCount, setRejectedCount] = useState(0)
   const [tags,     setTags]     = useState<string[]>([])
   const [isPublic, setIsPublic] = useState(true)
+  const [licenseStatus, setLicenseStatus] = useState<LicenseStatus>('unknown')
   const [dragging, setDragging] = useState(false)
   const [running,  setRunning]  = useState(false)
   const [allDone,  setAllDone]  = useState(false)
@@ -73,6 +75,7 @@ export function BulkUploadForm() {
       const { error: de } = await supabase.from('files').insert({
         user_id: userId, title: item.title.trim() || item.file.name,
         category: tags[0] ?? 'General', tags, is_public: isPublic,
+        license_status: licenseStatus,
         file_url: publicUrl, thumbnail_url: thumbnailUrl,
       })
       if (de) throw new Error(de.message)
@@ -227,6 +230,28 @@ export function BulkUploadForm() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Copyright / license status — applied to the whole batch */}
+            <div>
+              <label htmlFor="bulk-license" style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 8 }}>
+                Copyright Status <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#9E8070' }}>(applies to all files in this batch)</span>
+              </label>
+              <select
+                id="bulk-license"
+                value={licenseStatus}
+                onChange={e => setLicenseStatus(e.target.value as LicenseStatus)}
+                style={{
+                  width: '100%', fontFamily: 'var(--font-ui)', fontSize: '0.875rem',
+                  color: '#2C1810', background: '#FAFAF9',
+                  border: '1.5px solid #E0D8D4', borderRadius: 10,
+                  padding: '10px 13px', outline: 'none', cursor: 'pointer',
+                }}
+              >
+                {LICENSE_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

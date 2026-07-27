@@ -9,6 +9,7 @@ import {
   Trash2, Save, Globe, Lock,
 } from 'lucide-react'
 import type { FileRecord } from '@/lib/types'
+import { LICENSE_OPTIONS, isValidLicenseStatus, type LicenseStatus } from '@/lib/license'
 
 interface EditFileFormProps { file: FileRecord }
 
@@ -20,6 +21,9 @@ export function EditFileForm({ file }: EditFileFormProps) {
   const [description, setDescription] = useState(file.description ?? '')
   const [tags,        setTags]        = useState<string[]>(file.tags ?? [])
   const [isPublic,    setIsPublic]    = useState(file.is_public)
+  const [licenseStatus, setLicenseStatus] = useState<LicenseStatus>(
+    isValidLicenseStatus(file.license_status) ? file.license_status : 'unknown'
+  )
   const [saving,      setSaving]      = useState(false)
   const [deleting,    setDeleting]    = useState(false)
   const [confirmDel,  setConfirmDel]  = useState(false)
@@ -39,6 +43,7 @@ export function EditFileForm({ file }: EditFileFormProps) {
         category:    tags[0] ?? 'General',
         tags,
         is_public:   isPublic,
+        license_status: licenseStatus,
       })
       .eq('id', file.id)
 
@@ -135,6 +140,21 @@ export function EditFileForm({ file }: EditFileFormProps) {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Copyright status */}
+      <div>
+        <label htmlFor="edit-license" className="label">Copyright Status</label>
+        <select
+          id="edit-license"
+          value={licenseStatus}
+          onChange={e => setLicenseStatus(e.target.value as LicenseStatus)}
+          className="input cursor-pointer"
+        >
+          {LICENSE_OPTIONS.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
       </div>
 
       {/* Alerts */}

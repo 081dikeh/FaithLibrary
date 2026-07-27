@@ -11,7 +11,8 @@ import { AddToCollectionButton } from '@/components/AddToCollectionButton'
 import { RelatedScores } from '@/components/RelatedScores'
 import { ViewTracker } from '@/components/ViewTracker'
 import { CommentSection } from '@/components/CommentSection'
-import { Download, Calendar, Tag, Music2, ArrowLeft, Globe, Lock, Printer, User } from 'lucide-react'
+import { Download, Calendar, Tag, Music2, ArrowLeft, Globe, Lock, Printer, User, Scale } from 'lucide-react'
+import { getLicenseLabel } from '@/lib/license'
 import type { FileRecord } from '@/lib/types'
 
 const BASE_URL = 'https://faith-library.vercel.app'
@@ -200,6 +201,7 @@ export default async function ViewPage({ params }: ViewPageProps) {
                 {f.voice_parts && metaRow(<User size={13} />, 'Voice parts', f.voice_parts)}
                 {metaRow(<Calendar size={13} />, 'Published', date)}
                 {metaRow(f.is_public ? <Globe size={13} /> : <Lock size={13} />, 'Visibility', f.is_public ? 'Public' : 'Private')}
+                {metaRow(<Scale size={13} />, 'Copyright', getLicenseLabel(f.license_status))}
                 {(f.download_count ?? 0) > 0 && metaRow(<Download size={13} />, 'Downloads', String(f.download_count))}
               </div>
             </div>
