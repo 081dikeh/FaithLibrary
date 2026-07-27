@@ -99,7 +99,7 @@ export default async function StatsPage() {
         </div>
       </div>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-10">
+      <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 py-10 space-y-10">
 
         {/* Summary stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

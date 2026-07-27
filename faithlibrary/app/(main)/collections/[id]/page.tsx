@@ -82,7 +82,7 @@ export default async function CollectionPage({ params, searchParams }: Collectio
       </div>
 
       {/* ── Score grid ── */}
-      <main style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 24px 56px' }}>
+      <main id="main-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 24px 56px' }}>
         {files.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '72px 0', textAlign: 'center' }}>
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#F2EDE9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8D6E63' }}>

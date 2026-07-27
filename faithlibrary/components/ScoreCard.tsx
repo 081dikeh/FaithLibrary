@@ -158,51 +158,46 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
       }}
     >
       {/* ── Thumbnail ── */}
-      <Link href={`/view/${file.id}`} className="block flex-shrink-0" style={{ textDecoration: 'none' }}>
-        <div ref={thumbRef} style={{
-          position: 'relative', width: '100%', paddingBottom: '141.4%',
-          overflow: 'hidden', background: '#F2EDE9',
-        }}>
+      {/* Buttons live as siblings of the Link (not nested inside it) — an <a> can't
+          contain other interactive elements like <button> per HTML/ARIA rules. */}
+      <div ref={thumbRef} className="score-card-thumb-link" style={{
+        position: 'relative', width: '100%', paddingBottom: '141.4%',
+        overflow: 'hidden', background: '#F2EDE9', flexShrink: 0,
+      }}>
+        <Link
+          href={`/view/${file.id}`}
+          aria-label={`View ${file.title}${file.composer ? ` by ${file.composer}` : ''}`}
+          className="block"
+          style={{ position: 'absolute', inset: 0, textDecoration: 'none' }}
+        >
           {thumbnailContent}
 
           {/* Hover overlay */}
-          <div style={{
+          <div aria-hidden="true" style={{
             position: 'absolute', inset: 0, zIndex: 5,
             background: hovered ? 'linear-gradient(to bottom, rgba(28,14,10,0) 40%, rgba(28,14,10,0.68) 100%)' : 'transparent',
             transition: 'background 0.25s ease',
             display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: 10,
           }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 6,
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4, width: 'fit-content',
+              background: 'rgba(255,255,255,0.95)', color: '#3E2723',
+              fontSize: '0.68rem', fontWeight: 700,
+              padding: '4px 10px', borderRadius: 99,
+              backdropFilter: 'blur(4px)',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
               opacity: hovered ? 1 : 0,
               transform: hovered ? 'translateY(0)' : 'translateY(4px)',
               transition: 'all 0.2s ease',
             }}>
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                background: 'rgba(255,255,255,0.95)', color: '#3E2723',
-                fontSize: '0.68rem', fontWeight: 700,
-                padding: '4px 10px', borderRadius: 99,
-                backdropFilter: 'blur(4px)',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
-              }}>
-                <Eye size={9} /> View Score
-              </span>
-              <button onClick={handleDownload} aria-label="Quick download" style={{
-                width: 26, height: 26, borderRadius: '50%',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.35)',
-                color: 'white', cursor: 'pointer',
-              }}>
-                <ArrowDownToLine size={10} />
-              </button>
-            </div>
+              <Eye size={9} /> View Score
+            </span>
           </div>
 
           {/* Tag badge */}
           {file.tags?.[0] && (
             <span style={{
-              position: 'absolute', top: 8, left: 8, zIndex: 10,
+              position: 'absolute', top: 8, left: 8, zIndex: 4,
               padding: '2px 7px', borderRadius: 99,
               fontSize: '0.57rem', fontWeight: 700,
               letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.6,
@@ -212,9 +207,34 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
               {file.tags[0]}
             </span>
           )}
+        </Link>
 
-          {/* Bookmark button */}
-          <button onClick={handleBookmark} disabled={bmLoading} aria-label="Bookmark" style={{
+        {/* Quick download — sibling of the Link so it's independently focusable/clickable */}
+        <button
+          onClick={handleDownload}
+          aria-label={`Quick download ${file.title}`}
+          className="score-card-quick-download"
+          style={{
+            position: 'absolute', bottom: 10, right: 10, zIndex: 10,
+            width: 26, height: 26, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(28,14,10,0.55)', border: '1px solid rgba(255,255,255,0.35)',
+            color: 'white', cursor: 'pointer',
+            opacity: hovered ? 1 : 0,
+            transition: 'opacity 0.2s ease',
+          }}
+        >
+          <ArrowDownToLine size={10} aria-hidden="true" />
+        </button>
+
+        {/* Bookmark button — sibling of the Link */}
+        <button
+          onClick={handleBookmark}
+          disabled={bmLoading}
+          aria-label={isBookmarked ? `Remove ${file.title} from bookmarks` : `Bookmark ${file.title}`}
+          aria-pressed={isBookmarked}
+          className="score-card-bookmark"
+          style={{
             position: 'absolute', top: 8, right: 8, zIndex: 10,
             width: 28, height: 28, borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -225,11 +245,11 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
             opacity: isBookmarked || hovered ? 1 : 0,
             backdropFilter: 'blur(4px)',
             boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
-          }}>
-            {isBookmarked ? <BookmarkCheck size={11} /> : <Bookmark size={11} />}
-          </button>
-        </div>
-      </Link>
+          }}
+        >
+          {isBookmarked ? <BookmarkCheck size={11} aria-hidden="true" /> : <Bookmark size={11} aria-hidden="true" />}
+        </button>
+      </div>
 
       {/* ── Info ── */}
       <div style={{ padding: '11px 12px 10px', display: 'flex', flexDirection: 'column', flex: 1, gap: 2 }}>
@@ -276,7 +296,7 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
               <><span style={{ opacity: 0.3 }}>·</span><Download size={8} />{file.download_count}</>
             )}
           </span>
-          <button onClick={handleDownload} aria-label="Download" style={{
+          <button onClick={handleDownload} aria-label={`Download ${file.title}`} style={{
             width: 26, height: 26, borderRadius: 7,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             background: hovered ? '#F2EDE9' : 'transparent',
@@ -284,7 +304,7 @@ export function ScoreCard({ file, bookmarked = false, index = 0 }: ScoreCardProp
             color: hovered ? '#5D4037' : '#C4B5AF',
             cursor: 'pointer', transition: 'all 0.15s',
           }}>
-            <Download size={12} />
+            <Download size={12} aria-hidden="true" />
           </button>
         </div>
       </div>

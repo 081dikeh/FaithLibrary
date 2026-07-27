@@ -62,7 +62,7 @@ export default function ResetPasswordPage() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 justify-center mb-10">
           <div className="relative w-8 h-9">
-            <Image src="/FaithLibrary_logo.png" alt="FaithLibrary" fill className="object-contain" />
+            <Image src="/FaithLibrary_logo.png" alt="" fill className="object-contain" />
           </div>
           <span className="font-display text-xl font-semibold text-[#3E2723]">
             Faith<span className="text-[#8D6E63] font-normal italic">Library</span>

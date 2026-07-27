@@ -228,7 +228,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
         </div>
       )}
 
-      <main id="library" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <CategoryFilter active={tags} query={query} />
           {!query && tags.length === 0 && (

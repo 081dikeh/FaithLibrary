@@ -25,6 +25,14 @@ export function CategoryFilter({ active, query }: CategoryFilterProps) {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [])
+
   const toggleTag = (tag: string) => {
     const next = active.includes(tag) ? active.filter(t => t !== tag) : [...active, tag]
     pushFilters(next)
@@ -49,6 +57,9 @@ export function CategoryFilter({ active, query }: CategoryFilterProps) {
       <div ref={containerRef} style={{ position: 'relative' }}>
         <button
           onClick={() => setOpen(v => !v)}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-controls="category-filter-panel"
           style={{
             display: 'flex', alignItems: 'center', gap: 7,
             padding: '7px 14px', borderRadius: 8,
@@ -60,7 +71,7 @@ export function CategoryFilter({ active, query }: CategoryFilterProps) {
             boxShadow: 'var(--shadow-xs)',
           }}
         >
-          <SlidersHorizontal size={13} />
+          <SlidersHorizontal size={13} aria-hidden="true" />
           Filter
           {active.length > 0 && (
             <span style={{
@@ -70,7 +81,7 @@ export function CategoryFilter({ active, query }: CategoryFilterProps) {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>{active.length}</span>
           )}
-          <ChevronDown size={12} style={{
+          <ChevronDown size={12} aria-hidden="true" style={{
             transition: 'transform 0.2s',
             transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
             marginLeft: 2,
@@ -78,7 +89,7 @@ export function CategoryFilter({ active, query }: CategoryFilterProps) {
         </button>
 
         {open && (
-          <div className="animate-scale-in" style={{
+          <div id="category-filter-panel" role="group" aria-label="Filter by category" className="animate-scale-in" style={{
             position: 'absolute', top: 'calc(100% + 8px)', left: 0,
             zIndex: 50, width: 268,
             background: 'var(--surface)',
@@ -102,6 +113,7 @@ export function CategoryFilter({ active, query }: CategoryFilterProps) {
                 }} />
                 <input
                   autoFocus
+                  aria-label="Search categories"
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search categories…"
@@ -129,7 +141,7 @@ export function CategoryFilter({ active, query }: CategoryFilterProps) {
                   {group.tags.map(tag => {
                     const on = active.includes(tag)
                     return (
-                      <button key={tag} onClick={() => toggleTag(tag)} style={{
+                      <button key={tag} onClick={() => toggleTag(tag)} role="checkbox" aria-checked={on} style={{
                         width: '100%', textAlign: 'left',
                         padding: '7px 14px',
                         fontSize: '0.8125rem',
@@ -142,7 +154,7 @@ export function CategoryFilter({ active, query }: CategoryFilterProps) {
                         fontFamily: 'var(--font-ui)',
                       }}>
                         <span>{tag}</span>
-                        {on && <Check size={12} style={{ color: 'var(--walnut)', flexShrink: 0 }} />}
+                        {on && <Check size={12} aria-hidden="true" style={{ color: 'var(--walnut)', flexShrink: 0 }} />}
                       </button>
                     )
                   })}
@@ -175,7 +187,7 @@ export function CategoryFilter({ active, query }: CategoryFilterProps) {
 
       {/* Active tag pills */}
       {active.map(tag => (
-        <button key={tag} onClick={() => toggleTag(tag)} style={{
+        <button key={tag} onClick={() => toggleTag(tag)} aria-label={`Remove ${tag} filter`} style={{
           display: 'flex', alignItems: 'center', gap: 6,
           padding: '6px 12px', borderRadius: 8,
           fontSize: '0.75rem', fontWeight: 500,
@@ -184,7 +196,7 @@ export function CategoryFilter({ active, query }: CategoryFilterProps) {
           transition: 'all 0.15s',
         }}>
           {tag}
-          <X size={10} style={{ opacity: 0.7 }} />
+          <X size={10} aria-hidden="true" style={{ opacity: 0.7 }} />
         </button>
       ))}
 

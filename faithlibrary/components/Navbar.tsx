@@ -77,7 +77,7 @@ export function Navbar() {
 
   return (
     <>
-      <nav style={{
+      <nav aria-label="Primary" style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
         background: scrolled ? 'rgba(28,14,10,0.97)' : '#1C0E0A',
         backdropFilter: scrolled ? 'blur(20px) saturate(180%)' : 'none',
@@ -93,7 +93,7 @@ export function Navbar() {
             {/* Logo */}
             <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
               <div style={{ position: 'relative', width: 28, height: 32, opacity: 0.9 }} className="logo-on-dark">
-                <Image src="/FaithLibrary_logo.png" alt="FaithLibrary" fill className="object-contain" priority />
+                <Image src="/FaithLibrary_logo.png" alt="" fill className="object-contain" priority />
               </div>
               <span style={{
                 fontFamily: 'var(--font-display)', fontSize: '1.15rem',
@@ -108,18 +108,18 @@ export function Navbar() {
               {navLinks.map(link => {
                 const active = pathname === link.href
                 return (
-                  <Link key={link.href} href={link.href} style={{
+                  <Link key={link.href} href={link.href} aria-current={active ? 'page' : undefined} style={{
                     display: 'flex', alignItems: 'center', gap: 6,
                     padding: '6px 12px', borderRadius: 8,
                     fontSize: '0.8125rem', fontWeight: 500,
-                    color: active ? '#F7F4F2' : '#7A6055',
+                    color: active ? '#F7F4F2' : '#9C8579',
                     background: active ? 'rgba(255,255,255,0.08)' : 'transparent',
                     textDecoration: 'none',
                     transition: 'all 0.15s',
                     letterSpacing: '-0.01em',
                   }}
                     onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.color = '#D7CCC8'; (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)' } }}
-                    onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.color = '#7A6055'; (e.currentTarget as HTMLElement).style.background = 'transparent' } }}
+                    onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.color = '#9C8579'; (e.currentTarget as HTMLElement).style.background = 'transparent' } }}
                   >
                     {link.label}
                   </Link>
@@ -137,17 +137,17 @@ export function Navbar() {
                   display: 'flex', alignItems: 'center', gap: 8,
                   padding: '6px 12px', borderRadius: 8,
                   background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                  color: '#5A4035', cursor: 'pointer', fontSize: '0.8rem',
+                  color: '#A8927F', cursor: 'pointer', fontSize: '0.8rem',
                   transition: 'all 0.15s',
                 }}
                 onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(255,255,255,0.08)'; el.style.color = '#A08070' }}
-                onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(255,255,255,0.04)'; el.style.color = '#5A4035' }}
+                onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(255,255,255,0.04)'; el.style.color = '#A8927F' }}
               >
-                <Search size={13} />
+                <Search size={13} aria-hidden="true" />
                 <span style={{ color: 'inherit' }} className="hidden lg:block">Search</span>
                 <kbd style={{
                   padding: '2px 6px', borderRadius: 5, fontSize: '0.6rem',
-                  background: 'rgba(255,255,255,0.07)', color: '#5A4035',
+                  background: 'rgba(255,255,255,0.07)', color: '#A8927F',
                   border: '1px solid rgba(255,255,255,0.08)',
                 }} className="hidden lg:block">⌘K</kbd>
               </button>
@@ -196,10 +196,10 @@ export function Navbar() {
                       width: 32, height: 32, borderRadius: 8,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)',
-                      color: '#5A4035', textDecoration: 'none', transition: 'all 0.15s',
+                      color: '#A8927F', textDecoration: 'none', transition: 'all 0.15s',
                     }}
                       onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.1)'; el.style.color = '#D7CCC8' }}
-                      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.04)'; el.style.color = '#5A4035' }}
+                      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.04)'; el.style.color = '#A8927F' }}
                     >{icon}</Link>
                   ))}
 
@@ -207,10 +207,10 @@ export function Navbar() {
                     width: 32, height: 32, borderRadius: 8,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)',
-                    color: '#5A4035', cursor: 'pointer', transition: 'all 0.15s',
+                    color: '#A8927F', cursor: 'pointer', transition: 'all 0.15s',
                   }}
                     onMouseEnter={e => { const el = e.currentTarget; el.style.background = 'rgba(255,255,255,0.1)'; el.style.color = '#D7CCC8' }}
-                    onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(255,255,255,0.04)'; el.style.color = '#5A4035' }}
+                    onMouseLeave={e => { const el = e.currentTarget; el.style.background = 'rgba(255,255,255,0.04)'; el.style.color = '#A8927F' }}
                   >
                     <LogOut size={15} />
                   </button>
@@ -219,11 +219,11 @@ export function Navbar() {
                 <>
                   <Link href="/login" style={{
                     padding: '6px 14px', fontSize: '0.8125rem', fontWeight: 500,
-                    color: '#7A6055', textDecoration: 'none', borderRadius: 8,
+                    color: '#9C8579', textDecoration: 'none', borderRadius: 8,
                     transition: 'color 0.15s',
                   }}
                     onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#D7CCC8' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#7A6055' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = '#9C8579' }}
                   >Log in</Link>
                   <Link href="/signup" style={{
                     display: 'flex', alignItems: 'center', gap: 6,
@@ -242,18 +242,28 @@ export function Navbar() {
 
             {/* Mobile right */}
             <div className="flex md:hidden" style={{ alignItems: 'center', gap: 2 }}>
-              <button onClick={() => setSearchOpen(v => !v)} aria-label="Search" style={{
-                width: 34, height: 34, borderRadius: 8, border: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: 'transparent', color: '#7A6055', cursor: 'pointer',
-              }}><Search size={17} /></button>
-              <button onClick={() => setMenuOpen(v => !v)} aria-label="Menu" style={{
-                width: 34, height: 34, borderRadius: 8, border: 'none',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: menuOpen ? 'rgba(255,255,255,0.08)' : 'transparent',
-                color: '#D7CCC8', cursor: 'pointer',
-              }}>
-                {menuOpen ? <X size={18} /> : <Menu size={18} />}
+              <button
+                onClick={() => setSearchOpen(v => !v)}
+                aria-label="Search"
+                aria-expanded={searchOpen}
+                aria-controls="navbar-mobile-search"
+                style={{
+                  width: 34, height: 34, borderRadius: 8, border: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'transparent', color: '#9C8579', cursor: 'pointer',
+                }}><Search size={17} aria-hidden="true" /></button>
+              <button
+                onClick={() => setMenuOpen(v => !v)}
+                aria-label="Menu"
+                aria-expanded={menuOpen}
+                aria-controls="navbar-mobile-menu"
+                style={{
+                  width: 34, height: 34, borderRadius: 8, border: 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: menuOpen ? 'rgba(255,255,255,0.08)' : 'transparent',
+                  color: '#D7CCC8', cursor: 'pointer',
+                }}>
+                {menuOpen ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
               </button>
             </div>
           </div>
@@ -261,7 +271,7 @@ export function Navbar() {
 
         {/* ── Search bar ── */}
         {searchOpen && (
-          <div style={{
+          <div id="navbar-mobile-search" style={{
             borderTop: '1px solid rgba(255,255,255,0.06)',
             background: 'rgba(28,14,10,0.98)',
             padding: '10px 20px 12px',
@@ -270,11 +280,12 @@ export function Navbar() {
               <div style={{ position: 'relative', flex: 1 }}>
                 <Search size={14} style={{
                   position: 'absolute', left: 12, top: '50%',
-                  transform: 'translateY(-50%)', color: '#5A4035', pointerEvents: 'none',
+                  transform: 'translateY(-50%)', color: '#A8927F', pointerEvents: 'none',
                 }} />
                 <input
                   ref={searchRef}
                   type="text"
+                  aria-label="Search by title, composer, or tag"
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search by title, composer, tag…"
@@ -293,7 +304,7 @@ export function Navbar() {
               }}>Search</button>
               <button type="button" onClick={() => setSearchOpen(false)} style={{
                 width: 36, height: 36, borderRadius: 9, border: '1px solid rgba(255,255,255,0.08)',
-                background: 'rgba(255,255,255,0.05)', color: '#7A6055',
+                background: 'rgba(255,255,255,0.05)', color: '#9C8579',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', flexShrink: 0,
               }}><X size={14} /></button>
@@ -303,7 +314,7 @@ export function Navbar() {
 
         {/* ── Mobile menu ── */}
         {menuOpen && (
-          <div className="md:hidden animate-slide-down" style={{
+          <div id="navbar-mobile-menu" className="md:hidden animate-slide-down" style={{
             borderTop: '1px solid rgba(255,255,255,0.06)',
             background: 'rgba(28,14,10,0.99)',
             padding: '8px 12px 16px',
@@ -312,11 +323,11 @@ export function Navbar() {
             {navLinks.map(link => {
               const active = pathname === link.href
               return (
-                <Link key={link.href} href={link.href} style={{
+                <Link key={link.href} href={link.href} aria-current={active ? 'page' : undefined} style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '11px 14px', borderRadius: 10,
                   fontSize: '0.9rem', fontWeight: 500,
-                  color: active ? '#F7F4F2' : '#7A6055',
+                  color: active ? '#F7F4F2' : '#9C8579',
                   background: active ? 'rgba(255,255,255,0.08)' : 'transparent',
                   textDecoration: 'none',
                 }}>
@@ -350,13 +361,13 @@ export function Navbar() {
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '11px 14px', borderRadius: 10,
                     fontSize: '0.875rem', fontWeight: 500,
-                    color: '#7A6055', textDecoration: 'none',
+                    color: '#9C8579', textDecoration: 'none',
                   }}>{icon} {label}</Link>
                 ))}
                 <button onClick={handleSignOut} style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '11px 14px', borderRadius: 10,
-                  fontSize: '0.875rem', fontWeight: 500, color: '#7A6055',
+                  fontSize: '0.875rem', fontWeight: 500, color: '#9C8579',
                   background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
                   fontFamily: 'var(--font-ui)',
                 }}>

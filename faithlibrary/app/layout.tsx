@@ -41,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="grain min-h-screen">
+        <a href="#main-content" className="skip-link">Skip to content</a>
         {children}
         <MobileNav />
         <CommandSearch />

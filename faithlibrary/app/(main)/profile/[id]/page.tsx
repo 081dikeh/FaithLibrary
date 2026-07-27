@@ -94,7 +94,7 @@ export default async function ProfilePage({ params, searchParams }: ProfilePageP
       </div>
 
       {/* ── Score grid ── */}
-      <main style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 24px 56px' }}>
+      <main id="main-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 24px 56px' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 700, color: '#3E2723' }}>
             Published Scores

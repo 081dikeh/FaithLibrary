@@ -37,26 +37,28 @@ export function Pagination({ current, total, buildHref }: PaginationProps) {
   }
 
   return (
-    <div style={{
+    <nav aria-label="Pagination" style={{
       display: 'flex', alignItems: 'center',
       justifyContent: 'center', gap: 5, paddingTop: 32,
     }}>
       {current > 1 && (
-        <a href={buildHref(current - 1)} style={base}>
-          <ChevronLeft size={14} />
+        <a href={buildHref(current - 1)} aria-label="Previous page" style={base}>
+          <ChevronLeft size={14} aria-hidden="true" />
         </a>
       )}
 
       {pages.map((p, i) =>
         p === '...'
           ? (
-            <span key={`d${i}`} style={{
+            <span key={`d${i}`} aria-hidden="true" style={{
               width: 36, height: 36,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: '#C4B5AF', fontSize: '0.875rem',
             }}>…</span>
           ) : (
             <a key={p} href={buildHref(p as number)}
+              aria-label={`Page ${p}`}
+              aria-current={p === current ? 'page' : undefined}
               style={p === current ? active : base}>
               {p}
             </a>
@@ -64,10 +66,10 @@ export function Pagination({ current, total, buildHref }: PaginationProps) {
       )}
 
       {current < total && (
-        <a href={buildHref(current + 1)} style={base}>
-          <ChevronRight size={14} />
+        <a href={buildHref(current + 1)} aria-label="Next page" style={base}>
+          <ChevronRight size={14} aria-hidden="true" />
         </a>
       )}
-    </div>
+    </nav>
   )
 }

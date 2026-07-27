@@ -67,8 +67,9 @@ export function EditFileForm({ file }: EditFileFormProps) {
 
       {/* Title */}
       <div>
-        <label className="label">Title *</label>
+        <label htmlFor="edit-title" className="label">Title *</label>
         <input
+          id="edit-title"
           value={title}
           onChange={e => setTitle(e.target.value)}
           className="input"
@@ -78,8 +79,9 @@ export function EditFileForm({ file }: EditFileFormProps) {
 
       {/* Description */}
       <div>
-        <label className="label">Description</label>
+        <label htmlFor="edit-description" className="label">Description</label>
         <textarea
+          id="edit-description"
           value={description}
           onChange={e => setDescription(e.target.value)}
           rows={3}
@@ -90,18 +92,19 @@ export function EditFileForm({ file }: EditFileFormProps) {
 
       {/* Tags */}
       <div>
-        <label className="label">Categories & Tags</label>
+        <label id="edit-tags-label" className="label">Categories & Tags</label>
         <TagDropdown
           selected={tags}
           onChange={setTags}
           placeholder="Select categories…"
+          aria-labelledby="edit-tags-label"
         />
       </div>
 
       {/* Visibility */}
       <div>
-        <label className="label">Visibility</label>
-        <div className="flex gap-3">
+        <label id="edit-visibility-label" className="label">Visibility</label>
+        <div role="radiogroup" aria-labelledby="edit-visibility-label" className="flex gap-3">
           {[
             { val: true,  icon: <Globe size={14} />,  label: 'Public',  sub: 'Visible to everyone' },
             { val: false, icon: <Lock size={14} />,   label: 'Private', sub: 'Only visible to you' },
@@ -109,6 +112,8 @@ export function EditFileForm({ file }: EditFileFormProps) {
             <button
               key={String(opt.val)}
               type="button"
+              role="radio"
+              aria-checked={isPublic === opt.val}
               onClick={() => setIsPublic(opt.val)}
               className={`
                 flex-1 flex items-start gap-2.5 p-3.5 rounded-xl border-2

@@ -37,7 +37,7 @@ export default async function CollectionsPage() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {!collections || collections.length === 0 ? (
           <div className="flex flex-col items-center gap-4 py-24 text-center">
             <div className="w-16 h-16 rounded-full bg-[#EFE9E7] flex items-center

@@ -44,7 +44,7 @@ export default async function RequestsPage() {
         </div>
       </div>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+      <main id="main-content" className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <RequestList
           requests={requests ?? []}
           userUpvotes={Array.from(userUpvotes)}

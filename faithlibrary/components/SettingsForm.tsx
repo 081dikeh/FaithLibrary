@@ -47,12 +47,13 @@ export function SettingsForm({ userId, email, currentName }: SettingsFormProps) 
 
       {/* Email — read only */}
       <div>
-        <label style={{
+        <label htmlFor="settings-email" style={{
           display: 'block', fontSize: '0.72rem', fontWeight: 700,
           letterSpacing: '0.07em', textTransform: 'uppercase',
           color: '#8D6E63', marginBottom: 6, fontFamily: 'var(--font-ui)',
         }}>Email</label>
         <input
+          id="settings-email"
           type="email" value={email} disabled
           style={{
             width: '100%', fontFamily: 'var(--font-ui)', fontSize: '0.875rem',
@@ -69,12 +70,13 @@ export function SettingsForm({ userId, email, currentName }: SettingsFormProps) 
 
       {/* Display name */}
       <div>
-        <label style={{
+        <label htmlFor="settings-display-name" style={{
           display: 'block', fontSize: '0.72rem', fontWeight: 700,
           letterSpacing: '0.07em', textTransform: 'uppercase',
           color: '#5D4037', marginBottom: 6, fontFamily: 'var(--font-ui)',
         }}>Display Name</label>
         <input
+          id="settings-display-name"
           type="text" value={name}
           onChange={e => setName(e.target.value)}
           placeholder="How you appear to others"

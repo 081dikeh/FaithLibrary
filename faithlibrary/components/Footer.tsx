@@ -43,7 +43,7 @@ export function Footer() {
             }}>
               <div style={{ position: 'relative', width: 26, height: 30, opacity: 0.85 }}
                 className="logo-on-dark">
-                <Image src="/FaithLibrary_logo.png" alt="FaithLibrary" fill className="object-contain" />
+                <Image src="/FaithLibrary_logo.png" alt="" fill className="object-contain" />
               </div>
               <span style={{
                 fontFamily: 'var(--font-display)', fontSize: '1.1rem',

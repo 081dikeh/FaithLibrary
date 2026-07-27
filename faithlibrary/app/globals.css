@@ -23,6 +23,48 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
+
+/* Guarantee a visible keyboard focus indicator everywhere, even on elements
+   that set outline:none inline (buttons, .btn, .input, and various custom
+   dropdowns/inputs). The !important is intentional: it overrides inline
+   `style={{ outline: 'none' }}` on individual components without requiring
+   every one of them to be edited. Mouse/touch users never see this, only
+   keyboard/switch/voice-control users navigating via Tab. */
+:focus-visible {
+  outline: 2px solid var(--walnut) !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+}
+
+/* Skip-to-content link: visually hidden until focused, lets keyboard users
+   bypass the navbar and jump straight to <main>. */
+.skip-link {
+  position: absolute;
+  top: -48px;
+  left: 12px;
+  z-index: 100;
+  background: var(--roasted);
+  color: var(--bone);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+.skip-link:focus {
+  top: 12px;
+}
+
+/* Reveal hover-only controls on ScoreCard when the thumbnail link is
+   reached via keyboard, not just mouse hover (opacity is otherwise driven
+   by inline styles keyed to a `hovered` JS state that never fires for
+   keyboard focus). */
+.score-card-thumb-link:focus-within .score-card-quick-download,
+.score-card-thumb-link:focus-within .score-card-bookmark {
+  opacity: 1 !important;
+}
 body {
   font-family: var(--font-ui);
   background-color: var(--bone);

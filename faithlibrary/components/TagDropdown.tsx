@@ -8,9 +8,10 @@ interface TagDropdownProps {
   selected:     string[]
   onChange:     (tags: string[]) => void
   placeholder?: string
+  'aria-labelledby'?: string
 }
 
-export function TagDropdown({ selected, onChange, placeholder = 'Select categories & tags…' }: TagDropdownProps) {
+export function TagDropdown({ selected, onChange, placeholder = 'Select categories & tags…', 'aria-labelledby': ariaLabelledBy }: TagDropdownProps) {
   const [open,   setOpen]   = useState(false)
   const [search, setSearch] = useState('')
   const containerRef        = useRef<HTMLDivElement>(null)
@@ -48,6 +49,7 @@ export function TagDropdown({ selected, onChange, placeholder = 'Select categori
       {/* Trigger */}
       <div
         role="button" tabIndex={0}
+        aria-labelledby={ariaLabelledBy}
         onClick={() => setOpen(v => !v)}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(v => !v) } }}
         aria-expanded={open} aria-haspopup="listbox"
@@ -131,6 +133,7 @@ export function TagDropdown({ selected, onChange, placeholder = 'Select categori
               <input
                 ref={searchRef}
                 type="text" value={search}
+                aria-label="Search categories"
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search categories…"
                 onClick={e => e.stopPropagation()}

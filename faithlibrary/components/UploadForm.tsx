@@ -110,10 +110,14 @@ export function UploadForm() {
 
       {/* ── Drop zone ── */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-label={file ? `Selected file: ${file.name}. Press Enter to choose a different file.` : 'Choose a score file to upload. PDF, MXL, or MusicXML.'}
         onDragOver={e => { e.preventDefault(); setDragging(true) }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         onClick={() => fileRef.current?.click()}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileRef.current?.click() } }}
         style={{
           border: `2px dashed ${file ? '#5D4037' : dragging ? '#8D6E63' : '#C4B5AF'}`,
           borderRadius: 16, padding: '32px 20px',
@@ -125,7 +129,7 @@ export function UploadForm() {
           position: 'relative',
         }}
       >
-        <input ref={fileRef} type="file" style={{ display: 'none' }}
+        <input ref={fileRef} type="file" aria-hidden="true" tabIndex={-1} style={{ display: 'none' }}
           accept=".pdf,.mxl,.xml,.musicxml"
           onChange={e => e.target.files?.[0] && acceptFile(e.target.files[0])} />
 
@@ -144,6 +148,7 @@ export function UploadForm() {
             </div>
             <button
               onClick={e => { e.stopPropagation(); setFile(null) }}
+              aria-label="Remove selected file"
               style={{
                 position: 'absolute', top: 12, right: 12,
                 width: 28, height: 28, borderRadius: 8,
@@ -184,10 +189,10 @@ export function UploadForm() {
 
       {/* ── Title ── */}
       <div>
-        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
+        <label htmlFor="upload-title" style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
           Title <span style={{ color: '#E57373', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>*</span>
         </label>
-        <input value={form.title}
+        <input id="upload-title" value={form.title}
           onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
           placeholder="e.g. Sanctus in D Major — SATB"
           style={inputBase} onFocus={onFocus} onBlur={onBlur} />
@@ -195,10 +200,10 @@ export function UploadForm() {
 
       {/* ── Description ── */}
       <div>
-        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
+        <label htmlFor="upload-description" style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
           Description
         </label>
-        <textarea value={form.description}
+        <textarea id="upload-description" value={form.description}
           onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
           placeholder="Composer, voice parts, key, arrangement notes…"
           rows={3}
@@ -214,10 +219,10 @@ export function UploadForm() {
           { key: 'voice_parts', label: 'Voice Parts', ph: 'e.g. SATB, SSA' },
         ].map(({ key, label, ph }) => (
           <div key={key}>
-            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
+            <label htmlFor={`upload-${key}`} style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
               {label}
             </label>
-            <input value={(form as any)[key]}
+            <input id={`upload-${key}`} value={(form as any)[key]}
               onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
               placeholder={ph} style={inputBase} onFocus={onFocus} onBlur={onBlur} />
           </div>
@@ -226,12 +231,13 @@ export function UploadForm() {
 
       {/* ── Tags ── */}
       <div>
-        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
+        <label id="upload-tags-label" style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
           Categories & Tags <span style={{ color: '#E57373', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>*</span>
         </label>
         <TagDropdown selected={form.tags}
           onChange={tags => setForm(p => ({ ...p, tags }))}
-          placeholder="Select mass part, season, or occasion…" />
+          placeholder="Select mass part, season, or occasion…"
+          aria-labelledby="upload-tags-label" />
         <p style={{ marginTop: 6, fontSize: '0.75rem', color: '#9E8070', fontFamily: 'var(--font-ui)' }}>
           Pick all that apply — e.g. Communion + Easter + Meditation / Reflection
         </p>
@@ -239,15 +245,16 @@ export function UploadForm() {
 
       {/* ── Visibility ── */}
       <div>
-        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 8 }}>
+        <label id="upload-visibility-label" style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 8 }}>
           Visibility
         </label>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div role="radiogroup" aria-labelledby="upload-visibility-label" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {[
             { val: true,  icon: <Globe size={16} />, label: 'Public',  sub: 'Visible to everyone' },
             { val: false, icon: <Lock  size={16} />, label: 'Private', sub: 'Only visible to you' },
           ].map(opt => (
             <button key={String(opt.val)} type="button"
+              role="radio" aria-checked={form.is_public === opt.val}
               onClick={() => setForm(p => ({ ...p, is_public: opt.val }))}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12,

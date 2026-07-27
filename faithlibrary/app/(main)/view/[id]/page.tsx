@@ -120,7 +120,7 @@ export default async function ViewPage({ params }: ViewPageProps) {
       }}>
         <div style={{ display: 'flex', gap: 24, alignItems: 'flex-start' }} className="view-layout">
           {/* PDF Viewer */}
-          <main style={{ flex: 1, minWidth: 0 }}>
+          <main id="main-content" style={{ flex: 1, minWidth: 0 }}>
             <div style={{
               background: '#1E1E1E', borderRadius: 16,
               overflow: 'hidden', boxShadow: 'var(--shadow-deep)',

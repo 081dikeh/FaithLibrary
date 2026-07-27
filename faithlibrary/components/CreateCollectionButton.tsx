@@ -82,10 +82,11 @@ export function CreateCollectionButton() {
             <div className="p-6 space-y-4">
               {/* Color picker */}
               <div>
-                <label className="label">Cover colour</label>
-                <div className="flex flex-wrap gap-2">
+                <label id="collection-color-label" className="label">Cover colour</label>
+                <div role="radiogroup" aria-labelledby="collection-color-label" className="flex flex-wrap gap-2">
                   {COVER_COLORS.map(c => (
-                    <button key={c} onClick={() => setColor(c)}
+                    <button key={c} type="button" onClick={() => setColor(c)}
+                      role="radio" aria-checked={color === c} aria-label={`Cover colour ${c}`}
                       className={`w-8 h-8 rounded-lg transition-all duration-150 ${
                         color === c ? 'ring-2 ring-offset-2 ring-[#5D4037] scale-110' : 'hover:scale-105'
                       }`}
@@ -96,8 +97,9 @@ export function CreateCollectionButton() {
 
               {/* Title */}
               <div>
-                <label className="label">Title *</label>
+                <label htmlFor="collection-title" className="label">Title *</label>
                 <input
+                  id="collection-title"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
                   placeholder="e.g. Christmas Mass 2025"
@@ -108,8 +110,9 @@ export function CreateCollectionButton() {
 
               {/* Description */}
               <div>
-                <label className="label">Description</label>
+                <label htmlFor="collection-description" className="label">Description</label>
                 <textarea
+                  id="collection-description"
                   value={desc}
                   onChange={e => setDesc(e.target.value)}
                   placeholder="Optional — what's this collection for?"

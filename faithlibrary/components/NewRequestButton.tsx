@@ -65,8 +65,9 @@ export function NewRequestButton() {
 
             <div className="p-6 space-y-4">
               <div>
-                <label className="label">Score title *</label>
+                <label htmlFor="request-title" className="label">Score title *</label>
                 <input
+                  id="request-title"
                   value={title}
                   onChange={e => setTitle(e.target.value)}
                   placeholder="e.g. Ave Maria by Schubert — SATB"
@@ -76,8 +77,9 @@ export function NewRequestButton() {
               </div>
 
               <div>
-                <label className="label">More details</label>
+                <label htmlFor="request-details" className="label">More details</label>
                 <textarea
+                  id="request-details"
                   value={desc}
                   onChange={e => setDesc(e.target.value)}
                   placeholder="Composer, arrangement, voice parts, key…"
@@ -87,11 +89,12 @@ export function NewRequestButton() {
               </div>
 
               <div>
-                <label className="label">Category / tags</label>
+                <label id="request-tags-label" className="label">Category / tags</label>
                 <TagDropdown
                   selected={tags}
                   onChange={setTags}
                   placeholder="What type of score is this?"
+                  aria-labelledby="request-tags-label"
                 />
               </div>
 

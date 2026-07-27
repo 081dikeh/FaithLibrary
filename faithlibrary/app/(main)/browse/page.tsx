@@ -139,7 +139,7 @@ export default async function BrowsePage({ searchParams }: BrowseProps) {
         </div>
       </div>
 
-      <main style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 24px 56px' }}>
+      <main id="main-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 24px 56px' }}>
         {/* Controls */}
         <div style={{ marginBottom: 28 }}>
           <BrowseControls

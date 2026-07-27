@@ -171,24 +171,26 @@ export function BulkUploadForm() {
           <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
             {/* Tags */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
+              <label id="bulk-tags-label" style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
                 Categories & Tags <span style={{ color: '#E57373', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>*</span>
               </label>
               <TagDropdown selected={tags} onChange={setTags}
+                aria-labelledby="bulk-tags-label"
                 placeholder="Select categories for all files…" />
             </div>
 
             {/* Visibility */}
             <div>
-              <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 8 }}>
+              <label id="bulk-visibility-label" style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 8 }}>
                 Visibility
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div role="radiogroup" aria-labelledby="bulk-visibility-label" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                 {[
                   { val: true,  icon: <Globe size={15} />, label: 'Public',  sub: 'Visible to everyone' },
                   { val: false, icon: <Lock  size={15} />, label: 'Private', sub: 'Only visible to you'  },
                 ].map(opt => (
                   <button key={String(opt.val)} type="button"
+                    role="radio" aria-checked={isPublic === opt.val}
                     onClick={() => setIsPublic(opt.val)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10,

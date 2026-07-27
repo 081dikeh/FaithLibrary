@@ -230,7 +230,7 @@ export default async function DashboardPage({ searchParams }: DashboardProps) {
       </div>
 
       {/* ── Main content ── */}
-      <main style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 24px 56px' }}>
+      <main id="main-content" style={{ maxWidth: 1400, margin: '0 auto', padding: '32px 24px 56px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
           <RecentlyViewed userId={user.id} />

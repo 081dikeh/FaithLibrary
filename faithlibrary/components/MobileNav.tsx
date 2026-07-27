@@ -25,7 +25,9 @@ export function MobileNav() {
   ) return null
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden
+    <nav
+      aria-label="Mobile"
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden
                     bg-[#3E2723]/98 backdrop-blur-lg border-t border-[#5D4037]/60
                     safe-area-pb"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
@@ -38,6 +40,7 @@ export function MobileNav() {
             <Link
               key={link.href}
               href={link.href}
+              aria-current={active ? 'page' : undefined}
               className={`flex flex-col items-center gap-0.5 px-3 py-1.5
                           rounded-xl transition-all duration-200 min-w-0 flex-1 ${
                 active
