@@ -7,6 +7,7 @@ import { TagDropdown } from '@/components/TagDropdown'
 import { Upload, X, CheckCircle2, AlertCircle, FileText, Loader2, Globe, Lock, CloudUpload } from 'lucide-react'
 import { isPdfFile, FILE_TYPE_ERROR_MESSAGE } from '@/lib/validation'
 import { LICENSE_OPTIONS, type LicenseStatus } from '@/lib/license'
+import { notifyMatchingRequesters } from '@/lib/matchRequests'
 
 interface FormState {
   title: string; description: string; composer: string
@@ -78,14 +79,22 @@ export function UploadForm() {
         }
       } catch { /* thumbnail is optional */ }
       setProgress(88)
-      const { error: dbErr } = await supabase.from('files').insert({
+      const { data: inserted, error: dbErr } = await supabase.from('files').insert({
         user_id: user.id, title: form.title.trim(), description: form.description.trim() || null,
         composer: form.composer.trim() || null, arranger: form.arranger.trim() || null,
         voice_parts: form.voice_parts.trim() || null, category: form.tags[0] ?? 'General',
         tags: form.tags, is_public: form.is_public, file_url: publicUrl, thumbnail_url: thumbnailUrl,
         license_status: form.license_status,
-      })
+      }).select('id').single()
       if (dbErr) throw new Error(dbErr.message + (dbErr.details ? ' — ' + dbErr.details : '') + (dbErr.hint ? ' — Hint: ' + dbErr.hint : ''))
+
+      if (inserted && form.is_public) {
+        // Best-effort — a notification failure shouldn't block a successful upload.
+        notifyMatchingRequesters(supabase, {
+          fileId: inserted.id, fileTitle: form.title.trim(), tags: form.tags, excludeUserId: user.id,
+        }).catch(() => {})
+      }
+
       setProgress(100); setStatus('success')
       setTimeout(() => router.push('/dashboard'), 1400)
     } catch (err: any) {

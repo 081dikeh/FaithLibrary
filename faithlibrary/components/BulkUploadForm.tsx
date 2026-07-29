@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { isPdfFile } from '@/lib/validation'
 import { LICENSE_OPTIONS, type LicenseStatus } from '@/lib/license'
+import { notifyMatchingRequesters } from '@/lib/matchRequests'
 
 type FileStatus = 'pending' | 'uploading' | 'done' | 'error'
 interface QueueItem { id: string; file: File; title: string; status: FileStatus; progress: number; error?: string }
@@ -72,13 +73,20 @@ export function BulkUploadForm() {
         }
       } catch { /* optional */ }
       updateItem(item.id, { progress: 85 })
-      const { error: de } = await supabase.from('files').insert({
+      const { data: inserted, error: de } = await supabase.from('files').insert({
         user_id: userId, title: item.title.trim() || item.file.name,
         category: tags[0] ?? 'General', tags, is_public: isPublic,
         license_status: licenseStatus,
         file_url: publicUrl, thumbnail_url: thumbnailUrl,
-      })
+      }).select('id').single()
       if (de) throw new Error(de.message)
+
+      if (inserted && isPublic) {
+        notifyMatchingRequesters(supabase, {
+          fileId: inserted.id, fileTitle: item.title.trim() || item.file.name, tags, excludeUserId: userId,
+        }).catch(() => {})
+      }
+
       updateItem(item.id, { status: 'done', progress: 100 })
     } catch (err: any) {
       updateItem(item.id, { status: 'error', progress: 0, error: err.message ?? 'Upload failed' })

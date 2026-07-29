@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { isPdfFile, FILE_TYPE_ERROR_MESSAGE } from '@/lib/validation'
 import { isValidLicenseStatus } from '@/lib/license'
+import { notifyMatchingRequesters } from '@/lib/matchRequests'
 
 export async function POST(request: NextRequest) {
   try {
@@ -76,6 +77,16 @@ export async function POST(request: NextRequest) {
 
     if (dbError) {
       return NextResponse.json({ error: dbError.message }, { status: 500 })
+    }
+
+    if (fileRecord?.is_public) {
+      // Best-effort — a notification failure shouldn't fail the upload response.
+      notifyMatchingRequesters(supabase, {
+        fileId: fileRecord.id,
+        fileTitle: fileRecord.title,
+        tags: fileRecord.tags ?? [],
+        excludeUserId: user.id,
+      }).catch(() => {})
     }
 
     return NextResponse.json({

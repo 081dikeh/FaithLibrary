@@ -7,6 +7,7 @@ import { Navbar } from '@/components/Navbar'
 import { ScoreCard, ScoreCardSkeleton } from '@/components/ScoreCard'
 import { CategoryFilter } from '@/components/CategoryFilter'
 import { FeaturedScores } from '@/components/FeaturedScores'
+import { SeasonalSuggestions } from '@/components/SeasonalSuggestions'
 import { HomeStats } from '@/components/HomeStats'
 import { ScoreOfWeek } from '@/components/ScoreOfWeek'
 import { Footer } from '@/components/Footer'
@@ -221,6 +222,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
         </section>
       )}
 
+      {showHero && <Suspense fallback={null}><SeasonalSuggestions /></Suspense>}
       {showHero && <Suspense fallback={null}><FeaturedScores /></Suspense>}
       {showHero && <Suspense fallback={null}><ScoreOfWeek /></Suspense>}
 
