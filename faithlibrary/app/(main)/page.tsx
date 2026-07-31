@@ -7,7 +7,6 @@ import { Navbar } from '@/components/Navbar'
 import { ScoreCard, ScoreCardSkeleton } from '@/components/ScoreCard'
 import { CategoryFilter } from '@/components/CategoryFilter'
 import { FeaturedScores } from '@/components/FeaturedScores'
-import { SeasonalSuggestions } from '@/components/SeasonalSuggestions'
 import { HomeStats } from '@/components/HomeStats'
 import { ScoreOfWeek } from '@/components/ScoreOfWeek'
 import { Footer } from '@/components/Footer'
@@ -125,25 +124,22 @@ export default async function HomePage({ searchParams }: HomeProps) {
             }}
           />
 
-          <div className="relative max-w-4xl mx-auto text-center">
+          <div className="relative max-w-4xl mx-auto text-center p-4 sm:px-6">
             <div
-              className="inline-flex items-center gap-2 px-3.5 py-4 rounded-full bg-[#5D4037]/60 border border-[#8D6E63]/30 text-[#D7CCC8] text-xs font-medium mb-6 animate-fade-in"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#5D4037]/60 border border-[#8D6E63]/30 text-[#D7CCC8] text-xs font-medium mb-6 animate-fade-in max-w-full"
               style={{ fontFamily: 'var(--font-ui)', letterSpacing: '0.02em' }}
             >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#8D6E63] animate-pulse" />
-              Sacred music commons — free forever
+              <span className="w-1.5 h-1.5 rounded-full bg-[#8D6E63] animate-pulse shrink-0" />
+              <span className="truncate sm:whitespace-normal">Sacred music commons — free forever</span>
             </div>
 
             <div className="flex justify-center mb-7 animate-fade-up">
-              <div
-                className="logo-on-dark opacity-70"
-                style={{ position: 'relative', width: 64, height: 80 }}
-              >
-                <Image src="/FaithLibrary_logo.png" alt="" fill sizes="64px" className="object-contain" />
+              <div className="relative w-16 h-20 logo-on-dark opacity-70">
+                <Image src="/FaithLibrary_logo.png" alt="" fill className="object-contain" />
               </div>
             </div>
 
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-[#F5F5F5] leading-[1.1] mb-5 animate-fade-up delay-100">
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-6xl font-bold text-[#F5F5F5] leading-[1.15] sm:leading-[1.1] mb-5 animate-fade-up delay-100">
               Discover & Share
               <span className="block text-[#D7CCC8] font-normal italic mt-2">Choral Music</span>
             </h1>
@@ -158,16 +154,19 @@ export default async function HomePage({ searchParams }: HomeProps) {
               A growing commons of hymns, choral scores, and sacred compositions — free to explore, upload, and share with the world.
             </p>
 
-            <div className="flex flex-wrap justify-center gap-3 mb-12 animate-fade-up delay-200">
-              <Link href="/browse" className="btn btn-primary" style={{ fontSize: '0.9rem', padding: '0.75rem 1.75rem' }}>
+            <div
+              className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 mb-12 animate-fade-up delay-200 p-4"
+              style={{ gap: '1rem', rowGap: '0.75rem' }}
+            >
+              <Link href="/browse" className="btn btn-primary w-full sm:w-auto" style={{ fontSize: '0.9rem', padding: '0.75rem 1.75rem' }}>
                 <BookOpen size={16} /> Browse Library
               </Link>
-              <Link href="/signup" className="btn" style={{ background: 'transparent', color: '#D7CCC8', borderColor: 'rgba(141,110,99,0.5)', fontSize: '0.9rem', padding: '0.75rem 1.75rem' }}>
+              <Link href="/signup" className="btn w-full sm:w-auto" style={{ background: 'transparent', color: '#D7CCC8', borderColor: 'rgba(141,110,99,0.5)', fontSize: '0.9rem', padding: '0.75rem 1.75rem' }}>
                 <Upload size={16} /> Upload a Score
               </Link>
             </div>
 
-            <Suspense fallback={<div className="flex justify-center gap-10 animate-pulse">{[...Array(3)].map((_, i) => (<div key={i} className="text-center"><div className="h-6 w-12 bg-[#5D4037]/40 rounded mx-auto mb-1" /><div className="h-3 w-16 bg-[#5D4037]/20 rounded mx-auto" /></div>))}</div>}>
+            <Suspense fallback={<div className="flex justify-center gap-6 sm:gap-10 animate-pulse">{[...Array(3)].map((_, i) => (<div key={i} className="text-center"><div className="h-6 w-12 bg-[#5D4037]/40 rounded mx-auto mb-1" /><div className="h-3 w-16 bg-[#5D4037]/20 rounded mx-auto" /></div>))}</div>}>
               <HomeStats />
             </Suspense>
           </div>
@@ -222,7 +221,6 @@ export default async function HomePage({ searchParams }: HomeProps) {
         </section>
       )}
 
-      {showHero && <Suspense fallback={null}><SeasonalSuggestions /></Suspense>}
       {showHero && <Suspense fallback={null}><FeaturedScores /></Suspense>}
       {showHero && <Suspense fallback={null}><ScoreOfWeek /></Suspense>}
 
@@ -233,7 +231,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
         </div>
       )}
 
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+      <main id="library" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <CategoryFilter active={tags} query={query} />
           {!query && tags.length === 0 && (
