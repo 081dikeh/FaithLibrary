@@ -49,6 +49,9 @@ export function PDFViewerClient({ url }: { url: string }) {
             url,
             cMapUrl: '/cmaps/',
             cMapPacked: true,
+            disableRange: true,
+            disableStream: true,
+            disableAutoFetch: true,
           }).promise
           if (cancelled) { doc.destroy(); return }
           setPdfDoc(doc)

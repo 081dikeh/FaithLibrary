@@ -14,6 +14,16 @@ if (typeof window !== 'undefined') {
   })
 }
 
+// Module-level constant — must be stable across renders or react-pdf
+// will treat it as a new options object and re-fetch the document.
+const PDF_OPTIONS = {
+  disableRange: true,
+  disableStream: true,
+  disableAutoFetch: true,
+  cMapUrl: '/cmaps/',
+  cMapPacked: true,
+}
+
 interface PrintViewerProps {
   file: { id: string; title: string; composer?: string | null; arranger?: string | null; voice_parts?: string | null; file_url: string }
 }
@@ -67,7 +77,13 @@ export function PrintViewer({ file }: PrintViewerProps) {
             <div className="w-8 h-8 rounded-full border-2 border-[#D7CCC8] border-t-[#5D4037] animate-spin" />
           </div>
         )}
-        <Document file={file.file_url} onLoadSuccess={onLoad} loading="" error="">
+        <Document
+          file={file.file_url}
+          onLoadSuccess={onLoad}
+          loading=""
+          error=""
+          options={PDF_OPTIONS}
+        >
           {numPages > 0 && Array.from({ length: numPages }, (_, i) => (
             <div key={i + 1} className="flex justify-center mb-4 print:mb-0">
               <Page pageNumber={i + 1} scale={1.0} loading=""

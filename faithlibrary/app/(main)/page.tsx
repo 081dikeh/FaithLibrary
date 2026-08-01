@@ -124,7 +124,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
             }}
           />
 
-          <div className="relative max-w-4xl mx-auto text-center p-4 sm:px-6">
+          <div className="relative max-w-4xl mx-auto text-center">
             <div
               className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#5D4037]/60 border border-[#8D6E63]/30 text-[#D7CCC8] text-xs font-medium mb-6 animate-fade-in max-w-full"
               style={{ fontFamily: 'var(--font-ui)', letterSpacing: '0.02em' }}
@@ -134,9 +134,13 @@ export default async function HomePage({ searchParams }: HomeProps) {
             </div>
 
             <div className="flex justify-center mb-7 animate-fade-up">
-              <div className="relative w-16 h-20 logo-on-dark opacity-70">
-                <Image src="/FaithLibrary_logo.png" alt="" fill className="object-contain" />
-              </div>
+              <Image
+                src="/FaithLibrary_logo.png"
+                alt=""
+                width={64}
+                height={80}
+                className="logo-on-dark opacity-70 object-contain"
+              />
             </div>
 
             <h1 className="font-display text-3xl sm:text-4xl lg:text-6xl font-bold text-[#F5F5F5] leading-[1.15] sm:leading-[1.1] mb-5 animate-fade-up delay-100">
@@ -155,7 +159,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
             </p>
 
             <div
-              className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 mb-12 animate-fade-up delay-200 p-4"
+              className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 mb-12 animate-fade-up delay-200"
               style={{ gap: '1rem', rowGap: '0.75rem' }}
             >
               <Link href="/browse" className="btn btn-primary w-full sm:w-auto" style={{ fontSize: '0.9rem', padding: '0.75rem 1.75rem' }}>
