@@ -398,12 +398,23 @@ export default async function HomePage({ searchParams }: HomeProps) {
 
       {!showHero && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-2">
-          {query && (
+          {query ? (
             <>
               <p className="text-sm text-[#8D6E63]" style={{ fontFamily: 'var(--font-ui)' }}>Showing results for</p>
-              <h2 className="font-display text-2xl text-[#3E2723]">&quot;{query}&quot;</h2>
+              <h2 className="font-display text-2xl text-[#3E2723] mb-1">&quot;{query}&quot;</h2>
             </>
+          ) : (
+            <h2 className="font-display text-2xl text-[#3E2723] mb-1">Filtered Results</h2>
           )}
+
+          {(category || season || voicing) && (
+            <div className="flex flex-wrap items-center gap-2 mt-2 mb-1">
+              {category && <ActiveFilterChip label={category} clearHref={buildClearHref({ query, season, voicing, sort })} />}
+              {season   && <ActiveFilterChip label={season}   clearHref={buildClearHref({ query, category, voicing, sort })} />}
+              {voicing  && <ActiveFilterChip label={voicing}  clearHref={buildClearHref({ query, category, season, sort })} />}
+            </div>
+          )}
+
           <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-[#8D6E63] hover:text-[#5D4037] transition-colors mt-2" style={{ fontFamily: 'var(--font-ui)' }}>
             ← Back to home
           </Link>
@@ -432,6 +443,27 @@ export default async function HomePage({ searchParams }: HomeProps) {
 
       <Footer />
     </div>
+  )
+}
+
+function buildClearHref(kept: { query?: string; category?: string; season?: string; voicing?: string; sort: string }) {
+  const params = new URLSearchParams()
+  if (kept.query)    params.set('q', kept.query)
+  if (kept.category) params.set('category', kept.category)
+  if (kept.season)   params.set('season', kept.season)
+  if (kept.voicing)  params.set('voice', kept.voicing)
+  if (kept.sort !== 'newest') params.set('sort', kept.sort)
+  return `/${params.toString() ? '?' + params : ''}`
+}
+
+function ActiveFilterChip({ label, clearHref }: { label: string; clearHref: string }) {
+  return (
+    <Link
+      href={clearHref}
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F0E4DA] border border-[#D7CCC8] text-xs font-medium text-[#5D4037] hover:border-[#8D6E63] transition-colors"
+    >
+      {label} <span className="opacity-60">✕</span>
+    </Link>
   )
 }
 
