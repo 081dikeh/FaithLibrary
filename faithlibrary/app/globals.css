@@ -1,9 +1,7 @@
 /* app/globals.css */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
 :root {
   --walnut:      #5D4037;
@@ -23,48 +21,6 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-
-/* Guarantee a visible keyboard focus indicator everywhere, even on elements
-   that set outline:none inline (buttons, .btn, .input, and various custom
-   dropdowns/inputs). The !important is intentional: it overrides inline
-   `style={{ outline: 'none' }}` on individual components without requiring
-   every one of them to be edited. Mouse/touch users never see this, only
-   keyboard/switch/voice-control users navigating via Tab. */
-:focus-visible {
-  outline: 2px solid var(--walnut) !important;
-  outline-offset: 2px !important;
-  border-radius: 4px;
-}
-
-/* Skip-to-content link: visually hidden until focused, lets keyboard users
-   bypass the navbar and jump straight to <main>. */
-.skip-link {
-  position: absolute;
-  top: -48px;
-  left: 12px;
-  z-index: 100;
-  background: var(--roasted);
-  color: var(--bone);
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-family: var(--font-ui);
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: top 0.15s ease;
-}
-.skip-link:focus {
-  top: 12px;
-}
-
-/* Reveal hover-only controls on ScoreCard when the thumbnail link is
-   reached via keyboard, not just mouse hover (opacity is otherwise driven
-   by inline styles keyed to a `hovered` JS state that never fires for
-   keyboard focus). */
-.score-card-thumb-link:focus-within .score-card-quick-download,
-.score-card-thumb-link:focus-within .score-card-bookmark {
-  opacity: 1 !important;
-}
 body {
   font-family: var(--font-ui);
   background-color: var(--bone);
@@ -164,7 +120,6 @@ h1,h2,h3,h4  { font-family: var(--font-display); line-height: 1.2; }
 .line-clamp-2 { overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
 .line-clamp-3 { overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
 main { animation:fadeIn .25s ease; }
-@media(max-width:640px){ h1{font-size:clamp(1.75rem,7vw,2.5rem)!important} h2{font-size:clamp(1.25rem,5vw,1.75rem)!important} }
 
 /* ═══════════════════════════════════════════════════════
    SCORE GRID & SCORE CARD — used on dashboard + homepage

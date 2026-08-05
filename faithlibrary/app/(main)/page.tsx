@@ -1,26 +1,41 @@
 // app/(main)/page.tsx
 import { Suspense } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/Navbar'
 import { ScoreCard, ScoreCardSkeleton } from '@/components/ScoreCard'
-import { CategoryFilter } from '@/components/CategoryFilter'
 import { FeaturedScores } from '@/components/FeaturedScores'
-import { HomeStats } from '@/components/HomeStats'
 import { ScoreOfWeek } from '@/components/ScoreOfWeek'
 import { Footer } from '@/components/Footer'
 import { Pagination } from '@/components/Pagination'
-import { ArrowRight, Upload, Search, BookOpen } from 'lucide-react'
+import { TAG_GROUPS, LITURGICAL_SEASONS } from '@/lib/categories'
+import {
+  ArrowRight, Upload, Search, BookOpen, SlidersHorizontal, Sparkles,
+  DoorOpen, Gift, Coffee, ArrowRightCircle, Heart, Music2, Church,
+} from 'lucide-react'
 import type { FileRecord } from '@/lib/types'
 
 const PAGE_SIZE = 10
+const VOICING_OPTIONS = ['SATB', 'SATB divisi', 'SAB', 'SSA', 'SSAA', 'TTBB', 'TB', 'Unison', 'Descant']
+const SORT_OPTIONS = [
+  { value: 'newest',    label: 'Newest first' },
+  { value: 'downloads', label: 'Most downloaded' },
+  { value: 'az',        label: 'Title A → Z' },
+  { value: 'za',        label: 'Title Z → A' },
+]
+const CATEGORY_GROUPS = TAG_GROUPS.filter(g => g.label !== 'Liturgical Seasons')
 
 interface HomeProps {
-  searchParams: Promise<{ q?: string; tag?: string | string[]; page?: string }>
+  searchParams: Promise<{
+    q?: string; category?: string; season?: string; voice?: string; sort?: string; page?: string
+  }>
 }
 
-async function ScoreGrid({ query, tags, page }: { query?: string; tags: string[]; page: number }) {
+async function ScoreGrid({
+  query, category, season, voicing, sort, page,
+}: {
+  query?: string; category?: string; season?: string; voicing?: string; sort: string; page: number
+}) {
   const supabase = await createClient()
   const from = (page - 1) * PAGE_SIZE
   const to   = from + PAGE_SIZE - 1
@@ -29,10 +44,19 @@ async function ScoreGrid({ query, tags, page }: { query?: string; tags: string[]
     .from('files')
     .select('*, profiles(full_name)', { count: 'exact' })
     .eq('is_public', true)
-    .order('created_at', { ascending: false })
 
-  if (query) q = q.or(`title.ilike.%${query}%,description.ilike.%${query}%,composer.ilike.%${query}%,arranger.ilike.%${query}%`)
-  if (tags.length > 0) q = q.overlaps('tags', tags)
+  if (query)    q = q.or(`title.ilike.%${query}%,description.ilike.%${query}%,composer.ilike.%${query}%,arranger.ilike.%${query}%`)
+  if (category) q = q.contains('tags', [category])
+  if (season)   q = q.contains('tags', [season])
+  if (voicing)  q = q.ilike('voice_parts', `%${voicing}%`)
+
+  switch (sort) {
+    case 'downloads': q = q.order('download_count', { ascending: false }); break
+    case 'az':        q = q.order('title',           { ascending: true });  break
+    case 'za':        q = q.order('title',           { ascending: false }); break
+    default:          q = q.order('created_at',      { ascending: false }); break
+  }
+
   q = q.range(from, to)
 
   const { data: files, error, count } = await q
@@ -68,8 +92,11 @@ async function ScoreGrid({ query, tags, page }: { query?: string; tags: string[]
 
   const buildHref = (p: number) => {
     const ps = new URLSearchParams()
-    if (query) ps.set('q', query)
-    tags.forEach(t => ps.append('tag', t))
+    if (query)    ps.set('q', query)
+    if (category) ps.set('category', category)
+    if (season)   ps.set('season', season)
+    if (voicing)  ps.set('voice', voicing)
+    if (sort !== 'newest') ps.set('sort', sort)
     ps.set('page', String(p))
     return `/?${ps}`
   }
@@ -98,84 +125,228 @@ async function ScoreGrid({ query, tags, page }: { query?: string; tags: string[]
   )
 }
 
+const CATEGORY_SHOWCASE = [
+  { tag: 'Entrance',          label: 'Entrance Hymns',   icon: DoorOpen },
+  { tag: 'Offertory',         label: 'Offertory Hymns',  icon: Gift },
+  { tag: 'Communion',         label: 'Communion Hymns',  icon: Coffee },
+  { tag: 'Recessional',       label: 'Recessional',      icon: ArrowRightCircle },
+  { tag: 'Marian Hymns',      label: 'Marian Hymns',     icon: Heart },
+  { tag: 'Praise & Worship',  label: 'Praise & Worship', icon: Music2 },
+  { tag: 'Wedding',           label: 'Weddings',         icon: Sparkles },
+  { tag: 'Funeral / Requiem', label: 'Requiem',          icon: Church },
+]
+
+async function CategoryShowcase() {
+  const supabase = await createClient()
+
+  const counts = await Promise.all(
+    CATEGORY_SHOWCASE.map(c =>
+      supabase
+        .from('files')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_public', true)
+        .contains('tags', [c.tag])
+    )
+  )
+
+  const items = CATEGORY_SHOWCASE.map((c, i) => ({ ...c, count: counts[i].count ?? 0 }))
+  if (items.every(i => i.count === 0)) return null
+
+  return (
+    <section className="bg-white border-b border-[#D7CCC8]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-14 sm:py-16">
+        <div className="flex items-end justify-between mb-8 gap-4">
+          <div>
+            <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#3E2723]">Explore by Category</h2>
+            <p className="text-sm text-[#8D6E63] mt-1" style={{ fontFamily: 'var(--font-ui)' }}>
+              Find music by where and how it&apos;s sung.
+            </p>
+          </div>
+          <Link href="/browse" className="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-[#5D4037] hover:text-[#3E2723] transition-colors flex-shrink-0" style={{ fontFamily: 'var(--font-ui)' }}>
+            View all <ArrowRight size={14} />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          {items.map(({ tag, label, icon: Icon, count }) => (
+            <Link
+              key={tag}
+              href={`/?category=${encodeURIComponent(tag)}`}
+              className="group flex items-center gap-3 p-4 rounded-xl border border-[#EFE9E7] hover:border-[#D7CCC8] hover:shadow-[var(--shadow-card)] transition-all"
+            >
+              <div className="w-10 h-10 rounded-lg bg-[#FBF8F6] flex items-center justify-center text-[#8D6E63] group-hover:bg-[#3E2723] group-hover:text-[#F5F5F5] transition-colors shrink-0">
+                <Icon size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-[#3E2723] truncate" style={{ fontFamily: 'var(--font-ui)' }}>{label}</p>
+                <p className="text-xs text-[#B09080]" style={{ fontFamily: 'var(--font-ui)' }}>{count} score{count !== 1 ? 's' : ''}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <Link href="/browse" className="sm:hidden mt-6 flex items-center justify-center gap-1.5 text-sm font-semibold text-[#5D4037]" style={{ fontFamily: 'var(--font-ui)' }}>
+          View all categories <ArrowRight size={14} />
+        </Link>
+      </div>
+    </section>
+  )
+}
+
+const selectClass =
+  'w-full h-11 pl-3 pr-8 rounded-lg border border-[#EFE9E7] bg-[#FBF8F6] ' +
+  'text-sm text-[#3E2723] outline-none appearance-none cursor-pointer ' +
+  'focus:border-[#8D6E63] transition-colors'
+
+function ChevronDownIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#B09080]">
+      <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export default async function HomePage({ searchParams }: HomeProps) {
   const params   = await searchParams
   const query    = params.q
-  const rawTags  = params.tag
-  const tags     = rawTags ? (Array.isArray(rawTags) ? rawTags : [rawTags]) : []
+  const category = params.category
+  const season   = params.season
+  const voicing  = params.voice
+  const sort     = params.sort ?? 'newest'
   const page     = Math.max(1, parseInt(params.page ?? '1', 10))
-  const showHero = !query && tags.length === 0 && page === 1
+  const showHero = !query && !category && !season && !voicing && page === 1
 
   return (
     <div className="min-h-screen grain">
       <Navbar />
 
       {showHero && (
-        <section className="relative overflow-hidden bg-[#3E2723] pt-20 pb-24 px-4 sm:px-6">
-          <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-[#5D4037]/30 blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-16 -left-16 w-72 h-72 rounded-full bg-[#8D6E63]/15 blur-3xl pointer-events-none" />
-
-          {/* signature: faint staff lines, like an open hymnal */}
-          <div
-            aria-hidden
-            className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-40 pointer-events-none opacity-[0.06]"
-            style={{
-              backgroundImage: 'repeating-linear-gradient(to bottom, #F5F5F5 0px, #F5F5F5 1px, transparent 1px, transparent 22px)',
-            }}
-          />
-
-          <div className="relative max-w-4xl mx-auto text-center">
+        <section className="relative px-4 sm:px-6 pt-10 sm:pt-14 pb-8" style={{ background: '#FBF8F6' }}>
+          <div className="max-w-4xl">
             <div
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#5D4037]/60 border border-[#8D6E63]/30 text-[#D7CCC8] text-xs font-medium mb-6 animate-fade-in max-w-full"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F0E4DA] border border-[#D7CCC8]/70 text-[#5D4037] text-xs font-medium mb-6 animate-fade-in max-w-full"
               style={{ fontFamily: 'var(--font-ui)', letterSpacing: '0.02em' }}
             >
               <span className="w-1.5 h-1.5 rounded-full bg-[#8D6E63] animate-pulse shrink-0" />
               <span className="truncate sm:whitespace-normal">Sacred music commons — free forever</span>
             </div>
 
-            <div className="flex justify-center mb-7 animate-fade-up">
-              <Image
-                src="/FaithLibrary_logo.png"
-                alt=""
-                width={64}
-                height={80}
-                className="logo-on-dark opacity-70 object-contain"
-              />
-            </div>
-
-            <h1 className="font-display text-3xl sm:text-4xl lg:text-6xl font-bold text-[#F5F5F5] leading-[1.15] sm:leading-[1.1] mb-5 animate-fade-up delay-100">
-              Discover & Share
-              <span className="block text-[#D7CCC8] font-normal italic mt-2">Choral Music</span>
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-[#3E2723] leading-[1.15] mb-4 animate-fade-up delay-100">
+              Every choir has a library.
+              <span className="block text-[#8D6E63] mt-1">Most just can&apos;t find it.</span>
             </h1>
 
-            <div className="flex items-center justify-center gap-3 mb-6 animate-fade-up delay-100">
-              <span className="h-px w-10 bg-[#8D6E63]/40" />
-              <span className="w-1.5 h-1.5 rounded-full bg-[#8D6E63]/60" />
-              <span className="h-px w-10 bg-[#8D6E63]/40" />
-            </div>
-
-            <p className="text-[#8D6E63] text-sm sm:text-base max-w-lg mx-auto mb-9 leading-relaxed animate-fade-up delay-150" style={{ fontFamily: 'var(--font-ui)' }}>
-              A growing commons of hymns, choral scores, and sacred compositions — free to explore, upload, and share with the world.
+            <p className="text-[#6B5A52] text-sm sm:text-base max-w-xl mb-3 leading-relaxed animate-fade-up delay-150" style={{ fontFamily: 'var(--font-ui)' }}>
+              Search thousands of hymns, Mass parts, and choral scores by title, composer, or the words your choir already sings.
             </p>
 
-            <div
-              className="flex flex-col sm:flex-row flex-wrap justify-center gap-4 mb-12 animate-fade-up delay-200"
-              style={{ gap: '1rem', rowGap: '0.75rem' }}
+            <p
+              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#8A6224] mb-8 animate-fade-up delay-150"
+              style={{ fontFamily: 'var(--font-ui)' }}
             >
-              <Link href="/browse" className="btn btn-primary w-full sm:w-auto" style={{ fontSize: '0.9rem', padding: '0.75rem 1.75rem' }}>
-                <BookOpen size={16} /> Browse Library
-              </Link>
-              <Link href="/signup" className="btn w-full sm:w-auto" style={{ background: 'transparent', color: '#D7CCC8', borderColor: 'rgba(141,110,99,0.5)', fontSize: '0.9rem', padding: '0.75rem 1.75rem' }}>
-                <Upload size={16} /> Upload a Score
-              </Link>
-            </div>
+              <Sparkles size={13} className="shrink-0" />
+              Can&apos;t recall the title? Type any words you remember from the lyrics.
+            </p>
+          </div>
 
-            <Suspense fallback={<div className="flex justify-center gap-6 sm:gap-10 animate-pulse">{[...Array(3)].map((_, i) => (<div key={i} className="text-center"><div className="h-6 w-12 bg-[#5D4037]/40 rounded mx-auto mb-1" /><div className="h-3 w-16 bg-[#5D4037]/20 rounded mx-auto" /></div>))}</div>}>
-              <HomeStats />
-            </Suspense>
+          {/* Search + filter bar */}
+          <div className="max-w-4xl animate-fade-up delay-200">
+            <form action="/" method="GET">
+              <div className="flex items-center gap-2 bg-white border border-[#D7CCC8] rounded-full p-1.5 pl-5 shadow-[var(--shadow-card)] focus-within:border-[#5D4037] transition-colors mb-4">
+                <Search size={16} className="text-[#8D6E63] shrink-0" />
+                <input
+                  type="text"
+                  name="q"
+                  placeholder="Search a title, composer, or words you remember…"
+                  className="flex-1 min-w-0 bg-transparent text-sm text-[#3E2723] placeholder:text-[#B09080] outline-none py-2.5"
+                  style={{ fontFamily: 'var(--font-ui)' }}
+                />
+                <button
+                  type="submit"
+                  className="shrink-0 bg-[#3E2723] hover:bg-[#5D4037] text-[#F5F5F5] text-sm font-semibold px-5 py-2.5 rounded-full transition-colors"
+                  style={{ fontFamily: 'var(--font-ui)' }}
+                >
+                  Search
+                </button>
+              </div>
+
+              <div className="bg-white border border-[#EFE9E7] rounded-2xl p-5 shadow-[var(--shadow-card)]">
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4 items-end">
+                  <div>
+                    <label htmlFor="h-category" className="block text-[0.68rem] font-bold uppercase tracking-wider text-[#B09080] mb-1.5">Category</label>
+                    <div className="relative">
+                      <select id="h-category" name="category" defaultValue="" className={selectClass}>
+                        <option value="">All Categories</option>
+                        {CATEGORY_GROUPS.map(group => (
+                          <optgroup key={group.label} label={group.label}>
+                            {group.tags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+                          </optgroup>
+                        ))}
+                      </select>
+                      <ChevronDownIcon />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="h-season" className="block text-[0.68rem] font-bold uppercase tracking-wider text-[#B09080] mb-1.5">Season</label>
+                    <div className="relative">
+                      <select id="h-season" name="season" defaultValue="" className={selectClass}>
+                        <option value="">All Seasons</option>
+                        {LITURGICAL_SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
+                      </select>
+                      <ChevronDownIcon />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="h-voice" className="block text-[0.68rem] font-bold uppercase tracking-wider text-[#B09080] mb-1.5">Voicing</label>
+                    <div className="relative">
+                      <select id="h-voice" name="voice" defaultValue="" className={selectClass}>
+                        <option value="">All Voicings</option>
+                        {VOICING_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+                      </select>
+                      <ChevronDownIcon />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="h-sort" className="block text-[0.68rem] font-bold uppercase tracking-wider text-[#B09080] mb-1.5">Sort By</label>
+                    <div className="relative">
+                      <select id="h-sort" name="sort" defaultValue="newest" className={selectClass}>
+                        {SORT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                      </select>
+                      <ChevronDownIcon />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="h-11 flex items-center justify-center gap-2 bg-[#3E2723] hover:bg-[#5D4037] text-[#F5F5F5] text-sm font-semibold rounded-lg transition-colors col-span-2 sm:col-span-4 lg:col-span-1"
+                  >
+                    <SlidersHorizontal size={15} /> Apply
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t border-[#EFE9E7]">
+                  <Suspense fallback={<div className="h-4 w-24 bg-[#EFE9E7] rounded animate-pulse" />}>
+                    <LibraryCount />
+                  </Suspense>
+                  <div className="flex items-center gap-4">
+                    <Link href="/browse" className="text-xs sm:text-sm font-semibold text-[#5D4037] hover:text-[#3E2723] transition-colors flex items-center gap-1">
+                      <BookOpen size={13} /> Browse all
+                    </Link>
+                    <Link href="/signup" className="text-xs sm:text-sm font-semibold text-[#5D4037] hover:text-[#3E2723] transition-colors flex items-center gap-1">
+                      <Upload size={13} /> Upload a score
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </form>
           </div>
         </section>
       )}
+
+      {showHero && <Suspense fallback={null}><CategoryShowcase /></Suspense>}
 
       {showHero && (
         <section className="bg-white border-b border-[#D7CCC8]">
@@ -194,10 +365,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
 
             <div
               className="rounded-2xl border border-[#EFE9E7] overflow-hidden"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-              }}
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}
             >
               {[
                 { numeral: 'I', icon: '🔍', title: 'Discover', desc: 'Browse hundreds of Mass parts, hymns, and choral scores organised by category and season.' },
@@ -228,37 +396,56 @@ export default async function HomePage({ searchParams }: HomeProps) {
       {showHero && <Suspense fallback={null}><FeaturedScores /></Suspense>}
       {showHero && <Suspense fallback={null}><ScoreOfWeek /></Suspense>}
 
-      {query && (
+      {!showHero && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-8 pb-2">
-          <p className="text-sm text-[#8D6E63]" style={{ fontFamily: 'var(--font-ui)' }}>Showing results for</p>
-          <h2 className="font-display text-2xl text-[#3E2723]">"{query}"</h2>
+          {query && (
+            <>
+              <p className="text-sm text-[#8D6E63]" style={{ fontFamily: 'var(--font-ui)' }}>Showing results for</p>
+              <h2 className="font-display text-2xl text-[#3E2723]">&quot;{query}&quot;</h2>
+            </>
+          )}
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-[#8D6E63] hover:text-[#5D4037] transition-colors mt-2" style={{ fontFamily: 'var(--font-ui)' }}>
+            ← Back to home
+          </Link>
         </div>
       )}
 
       <main id="library" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <CategoryFilter active={tags} query={query} />
-          {!query && tags.length === 0 && (
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <h2 className="font-display text-lg font-semibold text-[#3E2723] hidden sm:block">Latest Additions</h2>
-              <Link href="/browse" className="btn btn-secondary btn-sm">View all <ArrowRight size={13} /></Link>
-            </div>
-          )}
-        </div>
+        {showHero && (
+          <div className="flex items-center justify-between gap-4 mb-8">
+            <h2 className="font-display text-lg font-semibold text-[#3E2723]">Latest Additions</h2>
+            <Link href="/browse" className="btn btn-secondary btn-sm">View all <ArrowRight size={13} /></Link>
+          </div>
+        )}
 
         <Suspense
-          key={`${query ?? ''}-${tags.join(',')}-${page}`}
+          key={`${query ?? ''}-${category ?? ''}-${season ?? ''}-${voicing ?? ''}-${sort}-${page}`}
           fallback={
             <div className="score-grid">
               {[...Array(10)].map((_, i) => <ScoreCardSkeleton key={i} index={i} />)}
             </div>
           }
         >
-          <ScoreGrid query={query} tags={tags} page={page} />
+          <ScoreGrid query={query} category={category} season={season} voicing={voicing} sort={sort} page={page} />
         </Suspense>
       </main>
 
       <Footer />
     </div>
+  )
+}
+
+async function LibraryCount() {
+  const supabase = await createClient()
+  const { count } = await supabase
+    .from('files')
+    .select('*', { count: 'exact', head: true })
+    .eq('is_public', true)
+
+  return (
+    <p className="text-sm" style={{ fontFamily: 'var(--font-ui)' }}>
+      <span className="font-bold text-[#3E2723]">{count ?? 0}+</span>{' '}
+      <span className="text-[#8D6E63]">scores in the library</span>
+    </p>
   )
 }
