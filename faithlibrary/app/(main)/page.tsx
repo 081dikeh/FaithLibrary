@@ -1,5 +1,6 @@
 // app/(main)/page.tsx
 import { Suspense } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/Navbar'
@@ -206,6 +207,80 @@ function ChevronDownIcon() {
   )
 }
 
+async function HeroCoverStack() {
+  const supabase = await createClient()
+  const { data: files } = await supabase
+    .from('files')
+    .select('id, title, composer, thumbnail_url')
+    .eq('is_public', true)
+    .not('thumbnail_url', 'is', null)
+    .order('download_count', { ascending: false })
+    .limit(4)
+
+  if (!files || files.length < 3) return <HeroCoverFallback />
+
+  const layouts = [
+    { rotate: '-6deg',  z: 1, x: '0%',  y: '10%', size: 'w-[42%]' },
+    { rotate: '4deg',   z: 3, x: '32%', y: '0%',  size: 'w-[46%]' },
+    { rotate: '-2deg',  z: 2, x: '18%', y: '38%', size: 'w-[40%]' },
+    { rotate: '9deg',   z: 4, x: '54%', y: '30%', size: 'w-[38%]' },
+  ]
+
+  return (
+    <div className="relative h-80 w-full">
+      {files.slice(0, 4).map((file, i) => {
+        const layout = layouts[i]
+        return (
+          <div
+            key={file.id}
+            className={`absolute ${layout.size} rounded-lg overflow-hidden border-4 border-white shadow-[0_12px_28px_rgba(62,39,35,0.18)] bg-white transition-transform hover:scale-105 hover:z-10`}
+            style={{ left: layout.x, top: layout.y, transform: `rotate(${layout.rotate})`, zIndex: layout.z }}
+          >
+            <div className="relative aspect-[3/4]">
+              <Image
+                src={file.thumbnail_url as string}
+                alt={file.title}
+                fill
+                sizes="220px"
+                className="object-cover"
+              />
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// Fallback for when there aren't enough thumbnails yet — still fills the
+// space with something on-brand instead of leaving it blank.
+function HeroCoverFallback() {
+  const cards = [
+    { rotate: '-6deg', z: 1, x: '4%',  y: '14%' },
+    { rotate: '4deg',  z: 3, x: '34%', y: '2%'  },
+    { rotate: '-2deg', z: 2, x: '20%', y: '40%' },
+  ]
+  return (
+    <div className="relative h-80 w-full">
+      {cards.map((c, i) => (
+        <div
+          key={i}
+          className="absolute w-[42%] aspect-[3/4] rounded-lg border-4 border-white shadow-[0_12px_28px_rgba(62,39,35,0.16)] bg-[#FBF8F6] overflow-hidden"
+          style={{ left: c.x, top: c.y, transform: `rotate(${c.rotate})`, zIndex: c.z }}
+        >
+          <div
+            className="h-full w-full opacity-[0.35]"
+            style={{
+              backgroundImage: 'repeating-linear-gradient(to bottom, #8D6E63 0px, #8D6E63 1px, transparent 1px, transparent 12px)',
+            }}
+          />
+          <Music2 size={22} className="absolute top-4 left-4 text-[#8D6E63]" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default async function HomePage({ searchParams }: HomeProps) {
   const params   = await searchParams
   const query    = params.q
@@ -222,35 +297,44 @@ export default async function HomePage({ searchParams }: HomeProps) {
 
       {showHero && (
         <section className="relative px-4 sm:px-6 pt-10 sm:pt-14 pb-8" style={{ background: '#FBF8F6' }}>
-          <div className="max-w-4xl">
-            <div
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F0E4DA] border border-[#D7CCC8]/70 text-[#5D4037] text-xs font-medium mb-6 animate-fade-in max-w-full"
-              style={{ fontFamily: 'var(--font-ui)', letterSpacing: '0.02em' }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-[#8D6E63] animate-pulse shrink-0" />
-              <span className="truncate sm:whitespace-normal">Sacred music commons — free forever</span>
+          <div className="max-w-6xl mx-auto lg:flex lg:items-center lg:gap-10">
+            <div className="max-w-xl">
+              <div
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F0E4DA] border border-[#D7CCC8]/70 text-[#5D4037] text-xs font-medium mb-6 animate-fade-in max-w-full"
+                style={{ fontFamily: 'var(--font-ui)', letterSpacing: '0.02em' }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#8D6E63] animate-pulse shrink-0" />
+                <span className="truncate sm:whitespace-normal">Sacred music commons — free forever</span>
+              </div>
+
+              <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-[#3E2723] leading-[1.15] mb-4 animate-fade-up delay-100">
+                Every choir has a library.
+                <span className="block text-[#8D6E63] mt-1">Most just can&apos;t find it.</span>
+              </h1>
+
+              <p className="text-[#6B5A52] text-sm sm:text-base max-w-xl mb-3 leading-relaxed animate-fade-up delay-150" style={{ fontFamily: 'var(--font-ui)' }}>
+                Search thousands of hymns, Mass parts, and choral scores by title, composer, or the words your choir already sings.
+              </p>
+
+              <p
+                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#8A6224] mb-8 animate-fade-up delay-150"
+                style={{ fontFamily: 'var(--font-ui)' }}
+              >
+                <Sparkles size={13} className="shrink-0" />
+                Can&apos;t recall the title? Type any words you remember from the lyrics.
+              </p>
             </div>
 
-            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-[#3E2723] leading-[1.15] mb-4 animate-fade-up delay-100">
-              Every choir has a library.
-              <span className="block text-[#8D6E63] mt-1">Most just can&apos;t find it.</span>
-            </h1>
-
-            <p className="text-[#6B5A52] text-sm sm:text-base max-w-xl mb-3 leading-relaxed animate-fade-up delay-150" style={{ fontFamily: 'var(--font-ui)' }}>
-              Search thousands of hymns, Mass parts, and choral scores by title, composer, or the words your choir already sings.
-            </p>
-
-            <p
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#8A6224] mb-8 animate-fade-up delay-150"
-              style={{ fontFamily: 'var(--font-ui)' }}
-            >
-              <Sparkles size={13} className="shrink-0" />
-              Can&apos;t recall the title? Type any words you remember from the lyrics.
-            </p>
+            {/* Real score covers — fills the dead space with actual library content */}
+            <div className="hidden lg:block flex-1 min-w-0">
+              <Suspense fallback={null}>
+                <HeroCoverStack />
+              </Suspense>
+            </div>
           </div>
 
           {/* Search + filter bar */}
-          <div className="max-w-4xl animate-fade-up delay-200">
+          <div className="max-w-4xl mx-auto animate-fade-up delay-200">
             <form action="/" method="GET">
               <div className="flex items-center gap-2 bg-white border border-[#D7CCC8] rounded-full p-1.5 pl-5 shadow-[var(--shadow-card)] focus-within:border-[#5D4037] transition-colors mb-4">
                 <Search size={16} className="text-[#8D6E63] shrink-0" />
