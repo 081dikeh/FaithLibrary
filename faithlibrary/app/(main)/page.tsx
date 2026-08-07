@@ -300,7 +300,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
 
       {showHero && (
         <section className="relative px-4 sm:px-6 pt-10 sm:pt-14 pb-8" style={{ background: '#FBF8F6' }}>
-          <div className="max-w-6xl mx-auto lg:flex lg:items-start lg:gap-10 mb-10 lg:mb-16">
+          <div className="max-w-6xl mx-auto lg:flex lg:items-start lg:gap-10">
             <div className="max-w-xl">
               <div
                 className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F0E4DA] border border-[#D7CCC8]/70 text-[#5D4037] text-xs font-medium mb-6 animate-fade-in max-w-full"
@@ -336,8 +336,10 @@ export default async function HomePage({ searchParams }: HomeProps) {
             </div>
           </div>
 
-          {/* Search + filter bar */}
-          <div className="max-w-4xl mx-auto animate-fade-up delay-200">
+          {/* Search + filter bar — relative z-10 guarantees this always
+              paints above the cover-stack tiles (z-index 1-4), even where
+              they visually overlap. */}
+          <div className="relative z-10 max-w-4xl mx-auto lg:-mt-16 animate-fade-up delay-200">
             <form action="/" method="GET">
               <div className="flex items-center gap-2 bg-white border border-[#D7CCC8] rounded-full p-1.5 pl-5 shadow-[var(--shadow-card)] focus-within:border-[#5D4037] transition-colors mb-4">
                 <Search size={16} className="text-[#8D6E63] shrink-0" />
