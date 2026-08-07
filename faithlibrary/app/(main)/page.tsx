@@ -223,14 +223,14 @@ async function HeroCoverStack() {
   // width via aspect-[3/4]) is then always a fixed, safe fraction of the
   // container's own height — no overflow at any viewport size.
   const layouts = [
-    { rotate: '-6deg',  z: 1, x: '2%',  y: '6%',  size: 'w-[38%]' },
-    { rotate: '4deg',   z: 3, x: '34%', y: '0%',  size: 'w-[40%]' },
-    { rotate: '-2deg',  z: 2, x: '18%', y: '34%', size: 'w-[34%]' },
-    { rotate: '9deg',   z: 4, x: '56%', y: '22%', size: 'w-[32%]' },
+    { rotate: '-6deg',  z: 1, x: '2%',  y: '6%',  size: 'w-[46%]' },
+    { rotate: '4deg',   z: 3, x: '36%', y: '0%',  size: 'w-[48%]' },
+    { rotate: '-2deg',  z: 2, x: '18%', y: '34%', size: 'w-[42%]' },
+    { rotate: '9deg',   z: 4, x: '58%', y: '22%', size: 'w-[38%]' },
   ]
 
   return (
-    <div className="relative w-full max-w-md mx-auto lg:mx-0 lg:ml-auto aspect-square">
+    <div className="relative w-full max-w-xl mx-auto lg:mx-0 lg:ml-auto aspect-square">
       {files.slice(0, 4).map((file, i) => {
         const layout = layouts[i]
         return (
@@ -244,7 +244,7 @@ async function HeroCoverStack() {
                 src={file.thumbnail_url as string}
                 alt={file.title}
                 fill
-                sizes="180px"
+                sizes="280px"
                 className="object-cover"
               />
             </div>
@@ -264,11 +264,11 @@ function HeroCoverFallback() {
     { rotate: '-2deg', z: 2, x: '20%', y: '36%' },
   ]
   return (
-    <div className="relative w-full max-w-md mx-auto lg:mx-0 lg:ml-auto aspect-square">
+    <div className="relative w-full max-w-xl mx-auto lg:mx-0 lg:ml-auto aspect-square">
       {cards.map((c, i) => (
         <div
           key={i}
-          className="absolute w-[38%] aspect-[3/4] rounded-lg border-4 border-white shadow-[0_12px_28px_rgba(62,39,35,0.16)] bg-[#FBF8F6] overflow-hidden"
+          className="absolute w-[46%] aspect-[3/4] rounded-lg border-4 border-white shadow-[0_12px_28px_rgba(62,39,35,0.16)] bg-[#FBF8F6] overflow-hidden"
           style={{ left: c.x, top: c.y, transform: `rotate(${c.rotate})`, zIndex: c.z }}
         >
           <div
