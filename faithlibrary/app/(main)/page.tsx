@@ -219,15 +219,18 @@ async function HeroCoverStack() {
 
   if (!files || files.length < 3) return <HeroCoverFallback />
 
+  // Container is a capped-width square: tile height (derived from tile
+  // width via aspect-[3/4]) is then always a fixed, safe fraction of the
+  // container's own height — no overflow at any viewport size.
   const layouts = [
-    { rotate: '-6deg',  z: 1, x: '0%',  y: '10%', size: 'w-[42%]' },
-    { rotate: '4deg',   z: 3, x: '32%', y: '0%',  size: 'w-[46%]' },
-    { rotate: '-2deg',  z: 2, x: '18%', y: '38%', size: 'w-[40%]' },
-    { rotate: '9deg',   z: 4, x: '54%', y: '30%', size: 'w-[38%]' },
+    { rotate: '-6deg',  z: 1, x: '2%',  y: '6%',  size: 'w-[38%]' },
+    { rotate: '4deg',   z: 3, x: '34%', y: '0%',  size: 'w-[40%]' },
+    { rotate: '-2deg',  z: 2, x: '18%', y: '34%', size: 'w-[34%]' },
+    { rotate: '9deg',   z: 4, x: '56%', y: '22%', size: 'w-[32%]' },
   ]
 
   return (
-    <div className="relative h-80 w-full">
+    <div className="relative w-full max-w-md mx-auto lg:mx-0 lg:ml-auto aspect-square">
       {files.slice(0, 4).map((file, i) => {
         const layout = layouts[i]
         return (
@@ -241,7 +244,7 @@ async function HeroCoverStack() {
                 src={file.thumbnail_url as string}
                 alt={file.title}
                 fill
-                sizes="220px"
+                sizes="180px"
                 className="object-cover"
               />
             </div>
@@ -256,16 +259,16 @@ async function HeroCoverStack() {
 // space with something on-brand instead of leaving it blank.
 function HeroCoverFallback() {
   const cards = [
-    { rotate: '-6deg', z: 1, x: '4%',  y: '14%' },
-    { rotate: '4deg',  z: 3, x: '34%', y: '2%'  },
-    { rotate: '-2deg', z: 2, x: '20%', y: '40%' },
+    { rotate: '-6deg', z: 1, x: '6%',  y: '10%' },
+    { rotate: '4deg',  z: 3, x: '36%', y: '0%'  },
+    { rotate: '-2deg', z: 2, x: '20%', y: '36%' },
   ]
   return (
-    <div className="relative h-80 w-full">
+    <div className="relative w-full max-w-md mx-auto lg:mx-0 lg:ml-auto aspect-square">
       {cards.map((c, i) => (
         <div
           key={i}
-          className="absolute w-[42%] aspect-[3/4] rounded-lg border-4 border-white shadow-[0_12px_28px_rgba(62,39,35,0.16)] bg-[#FBF8F6] overflow-hidden"
+          className="absolute w-[38%] aspect-[3/4] rounded-lg border-4 border-white shadow-[0_12px_28px_rgba(62,39,35,0.16)] bg-[#FBF8F6] overflow-hidden"
           style={{ left: c.x, top: c.y, transform: `rotate(${c.rotate})`, zIndex: c.z }}
         >
           <div
@@ -297,7 +300,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
 
       {showHero && (
         <section className="relative px-4 sm:px-6 pt-10 sm:pt-14 pb-8" style={{ background: '#FBF8F6' }}>
-          <div className="max-w-6xl mx-auto lg:flex lg:items-center lg:gap-10">
+          <div className="max-w-6xl mx-auto lg:flex lg:items-start lg:gap-10 mb-10 lg:mb-16">
             <div className="max-w-xl">
               <div
                 className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F0E4DA] border border-[#D7CCC8]/70 text-[#5D4037] text-xs font-medium mb-6 animate-fade-in max-w-full"
@@ -326,7 +329,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
             </div>
 
             {/* Real score covers — fills the dead space with actual library content */}
-            <div className="hidden lg:block flex-1 min-w-0">
+            <div className="hidden lg:block flex-1 min-w-0 lg:mt-2">
               <Suspense fallback={null}>
                 <HeroCoverStack />
               </Suspense>
