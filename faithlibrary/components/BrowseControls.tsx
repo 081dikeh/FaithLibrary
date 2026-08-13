@@ -1,297 +1,187 @@
 // components/BrowseControls.tsx
-'use client'
-import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Search, ChevronDown, X, SlidersHorizontal, Check } from 'lucide-react'
-import { TAG_GROUPS } from '@/lib/categories'
+import Link from 'next/link'
+import { Search, SlidersHorizontal, X } from 'lucide-react'
+import { TAG_GROUPS, LITURGICAL_SEASONS } from '@/lib/categories'
+
+const VOICING_OPTIONS = ['SATB', 'SATB divisi', 'SAB', 'SSA', 'SSAA', 'TTBB', 'TB', 'Unison', 'Descant']
 
 const SORT_OPTIONS = [
   { value: 'newest',    label: 'Newest first' },
   { value: 'downloads', label: 'Most downloaded' },
-  { value: 'az',        label: 'A → Z' },
-  { value: 'za',        label: 'Z → A' },
+  { value: 'az',        label: 'Title A → Z' },
+  { value: 'za',        label: 'Title Z → A' },
 ]
 
+// Category groups, minus Liturgical Seasons — that gets its own dropdown
+const CATEGORY_GROUPS = TAG_GROUPS.filter(g => g.label !== 'Liturgical Seasons')
+
 interface BrowseControlsProps {
-  query?:     string
-  activeTags: string[]
-  activeSort: string
+  query?:      string
+  category?:   string
+  season?:     string
+  voicing?:    string
+  activeSort:  string
 }
 
-export function BrowseControls({ query, activeTags, activeSort }: BrowseControlsProps) {
-  const router = useRouter()
-  const [searchVal,  setSearchVal]  = useState(query ?? '')
-  const [sortOpen,   setSortOpen]   = useState(false)
-  const [filterOpen, setFilterOpen] = useState(false)
-  const [tagSearch,  setTagSearch]  = useState('')
-  const sortRef   = useRef<HTMLDivElement>(null)
-  const filterRef = useRef<HTMLDivElement>(null)
+const selectClass =
+  'w-full h-11 pl-3 pr-8 rounded-lg border border-[var(--border)] bg-[var(--surface)] ' +
+  'text-sm text-[var(--text-primary)] outline-none appearance-none cursor-pointer ' +
+  'focus:border-[var(--walnut)] transition-colors'
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (sortRef.current   && !sortRef.current.contains(e.target as Node))   setSortOpen(false)
-      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+const selectWrapClass = 'relative'
 
-  const push = (overrides: { q?: string; tags?: string[]; sort?: string }) => {
-    const params = new URLSearchParams()
-    const q    = 'q'    in overrides ? overrides.q    : query
-    const tags = 'tags' in overrides ? overrides.tags : activeTags
-    const sort = 'sort' in overrides ? overrides.sort : activeSort
-    if (q) params.set('q', q)
-    tags?.forEach(t => params.append('tag', t))
-    if (sort && sort !== 'newest') params.set('sort', sort)
-    router.push(`/browse${params.toString() ? '?' + params : ''}`)
-  }
+function ChevronDownIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-muted)]"
+    >
+      <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    push({ q: searchVal.trim() || undefined })
-  }
-  const toggleTag = (tag: string) => {
-    const next = activeTags.includes(tag) ? activeTags.filter(t => t !== tag) : [...activeTags, tag]
-    push({ tags: next })
-  }
-  const clearTag = (tag: string) => push({ tags: activeTags.filter(t => t !== tag) })
-  const filteredGroups = TAG_GROUPS.map(g => ({
-    ...g, tags: g.tags.filter(t => t.toLowerCase().includes(tagSearch.toLowerCase())),
-  })).filter(g => g.tags.length > 0)
-  const sortLabel = SORT_OPTIONS.find(o => o.value === activeSort)?.label ?? 'Newest first'
-
-  const dropdownStyle: React.CSSProperties = {
-    position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-    background: 'var(--surface)', border: '1px solid var(--border)',
-    borderRadius: 14, boxShadow: 'var(--shadow-lift)',
-    overflow: 'hidden', zIndex: 50,
-  }
-
-  const controlBtnStyle = (active = false): React.CSSProperties => ({
-    display: 'flex', alignItems: 'center', gap: 7,
-    height: 38, padding: '0 14px', borderRadius: 8,
-    fontSize: '0.8125rem', fontWeight: 500,
-    cursor: 'pointer', whiteSpace: 'nowrap',
-    transition: 'all 0.18s',
-    border: `1.5px solid ${active ? 'var(--walnut)' : 'var(--border)'}`,
-    background: active ? 'var(--walnut)' : 'var(--surface)',
-    color: active ? 'var(--bone)' : 'var(--text-secondary)',
-    boxShadow: 'var(--shadow-xs)',
-    flexShrink: 0,
-  })
+export function BrowseControls({ query, category, season, voicing, activeSort }: BrowseControlsProps) {
+  const hasActiveFilter = !!(category || season || voicing)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {/* Row 1 */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+    <div className="flex flex-col gap-4">
+      {/* Search row — its own card, its own submit */}
+      <form action="/browse" method="GET">
+        {/* preserve current filters when searching */}
+        {category && <input type="hidden" name="category" value={category} />}
+        {season   && <input type="hidden" name="season"   value={season} />}
+        {voicing  && <input type="hidden" name="voice"     value={voicing} />}
+        {activeSort !== 'newest' && <input type="hidden" name="sort" value={activeSort} />}
 
-          {/* Search */}
-          <form onSubmit={handleSearch} style={{ flex: 1, display: 'flex', gap: 8, minWidth: 200 }}>
-            <div style={{ position: 'relative', flex: 1 }}>
-              <Search size={14} style={{
-                position: 'absolute', left: 12, top: '50%',
-                transform: 'translateY(-50%)', color: 'var(--text-muted)',
-              }} />
-              <input
-                type="text"
-                value={searchVal}
-                onChange={e => setSearchVal(e.target.value)}
-                placeholder="Search titles, composers, descriptions…"
-                style={{
-                  width: '100%', height: 38,
-                  paddingLeft: 36, paddingRight: 12,
-                  fontSize: '0.875rem',
-                  background: 'var(--surface)',
-                  border: '1.5px solid var(--border)',
-                  borderRadius: 8, color: 'var(--text-primary)',
-                  outline: 'none', fontFamily: 'var(--font-ui)',
-                  transition: 'border-color 0.18s, box-shadow 0.18s',
-                  boxShadow: 'var(--shadow-xs)',
-                }}
-                onFocus={e => {
-                  e.target.style.borderColor = 'var(--walnut)'
-                  e.target.style.boxShadow = '0 0 0 3px var(--accent-glow)'
-                }}
-                onBlur={e => {
-                  e.target.style.borderColor = 'var(--border)'
-                  e.target.style.boxShadow = 'var(--shadow-xs)'
-                }}
-              />
-            </div>
-            <button type="submit" style={{
-              ...controlBtnStyle(),
-              background: 'var(--walnut)', borderColor: 'var(--walnut)',
-              color: 'var(--bone)',
-            }}>Search</button>
-            {query && (
-              <button type="button" onClick={() => { setSearchVal(''); push({ q: undefined }) }}
-                style={controlBtnStyle()}>
-                <X size={13} />
-              </button>
-            )}
-          </form>
+        <div
+          className="flex items-center gap-2 bg-[var(--surface)] border border-[var(--border)] rounded-full p-1.5 pl-5 shadow-[var(--shadow-card)] focus-within:border-[var(--walnut)] transition-colors"
+        >
+          <Search size={16} className="text-[var(--ochre)] shrink-0" />
+          <input
+            type="text"
+            name="q"
+            defaultValue={query}
+            placeholder="Search by title, composer, or lyrics…"
+            className="flex-1 min-w-0 bg-transparent text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none py-2.5"
+            style={{ fontFamily: 'var(--font-ui)' }}
+          />
+          <button
+            type="submit"
+            className="shrink-0 bg-[var(--walnut)] hover:bg-[var(--roasted)] text-[var(--bone)] text-sm font-semibold px-5 py-2.5 rounded-full transition-colors"
+            style={{ fontFamily: 'var(--font-ui)' }}
+          >
+            Search
+          </button>
+        </div>
+      </form>
 
-          {/* Sort dropdown */}
-          <div ref={sortRef} style={{ position: 'relative', flexShrink: 0 }}>
-            <button onClick={() => setSortOpen(v => !v)} style={controlBtnStyle()}>
-              {sortLabel}
-              <ChevronDown size={12} style={{
-                transition: 'transform 0.2s',
-                transform: sortOpen ? 'rotate(180deg)' : 'none',
-              }} />
-            </button>
-            {sortOpen && (
-              <div className="animate-scale-in" style={{ ...dropdownStyle, width: 192 }}>
-                {SORT_OPTIONS.map(opt => (
-                  <button key={opt.value}
-                    onClick={() => { push({ sort: opt.value }); setSortOpen(false) }}
-                    style={{
-                      width: '100%', textAlign: 'left',
-                      padding: '9px 14px',
-                      fontSize: '0.8125rem',
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      background: activeSort === opt.value ? 'var(--surface-3)' : 'transparent',
-                      color: activeSort === opt.value ? 'var(--walnut)' : 'var(--text-primary)',
-                      fontWeight: activeSort === opt.value ? 600 : 400,
-                      border: 'none', cursor: 'pointer',
-                      transition: 'background 0.12s',
-                      fontFamily: 'var(--font-ui)',
-                    }}>
-                    {opt.label}
-                    {activeSort === opt.value && <Check size={12} style={{ color: 'var(--walnut)' }} />}
-                  </button>
+      {/* Filter bar — its own card, its own submit */}
+      <form
+        action="/browse"
+        method="GET"
+        className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 shadow-[var(--shadow-card)]"
+      >
+        {query && <input type="hidden" name="q" value={query} />}
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4 items-end">
+          <div>
+            <label htmlFor="category" className="block text-[0.68rem] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">
+              Category
+            </label>
+            <div className={selectWrapClass}>
+              <select id="category" name="category" defaultValue={category ?? ''} className={selectClass}>
+                <option value="">All Categories</option>
+                {CATEGORY_GROUPS.map(group => (
+                  <optgroup key={group.label} label={group.label}>
+                    {group.tags.map(tag => <option key={tag} value={tag}>{tag}</option>)}
+                  </optgroup>
                 ))}
-              </div>
-            )}
+              </select>
+              <ChevronDownIcon />
+            </div>
           </div>
 
-          {/* Filter dropdown */}
-          <div ref={filterRef} style={{ position: 'relative', flexShrink: 0 }}>
-            <button onClick={() => setFilterOpen(v => !v)}
-              style={controlBtnStyle(activeTags.length > 0)}>
-              <SlidersHorizontal size={13} />
-              Filter
-              {activeTags.length > 0 && (
-                <span style={{
-                  width: 18, height: 18, borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.22)', color: 'white',
-                  fontSize: '0.7rem', fontWeight: 700,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>{activeTags.length}</span>
-              )}
-              <ChevronDown size={12} style={{
-                transition: 'transform 0.2s',
-                transform: filterOpen ? 'rotate(180deg)' : 'none',
-              }} />
-            </button>
-
-            {filterOpen && (
-              <div className="animate-scale-in" style={{
-                ...dropdownStyle, width: 272,
-                maxHeight: 400, display: 'flex', flexDirection: 'column',
-              }}>
-                <div style={{
-                  padding: '10px 12px 8px',
-                  borderBottom: '1px solid var(--border)', flexShrink: 0,
-                }}>
-                  <div style={{ position: 'relative' }}>
-                    <Search size={12} style={{
-                      position: 'absolute', left: 10, top: '50%',
-                      transform: 'translateY(-50%)', color: 'var(--text-muted)',
-                    }} />
-                    <input
-                      autoFocus
-                      value={tagSearch}
-                      onChange={e => setTagSearch(e.target.value)}
-                      placeholder="Search categories…"
-                      style={{
-                        width: '100%', paddingLeft: 28, paddingRight: 10, paddingTop: 6, paddingBottom: 6,
-                        fontSize: '0.8rem', background: 'var(--surface-3)',
-                        border: '1px solid var(--border)', borderRadius: 7,
-                        color: 'var(--text-primary)', outline: 'none',
-                        fontFamily: 'var(--font-ui)',
-                      }}
-                    />
-                  </div>
-                </div>
-                <div style={{ overflowY: 'auto', flex: 1 }}>
-                  {filteredGroups.map(group => (
-                    <div key={group.label}>
-                      <p style={{
-                        padding: '10px 14px 4px',
-                        fontSize: '0.62rem', fontWeight: 700,
-                        letterSpacing: '0.1em', textTransform: 'uppercase',
-                        color: 'var(--text-muted)', opacity: 0.7,
-                      }}>{group.label}</p>
-                      {group.tags.map(tag => {
-                        const on = activeTags.includes(tag)
-                        return (
-                          <button key={tag} onClick={() => toggleTag(tag)} style={{
-                            width: '100%', textAlign: 'left',
-                            padding: '7px 14px', fontSize: '0.8125rem',
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-                            background: on ? 'var(--surface-3)' : 'transparent',
-                            color: on ? 'var(--walnut)' : 'var(--text-primary)',
-                            fontWeight: on ? 600 : 400,
-                            border: 'none', cursor: 'pointer',
-                            transition: 'background 0.12s', fontFamily: 'var(--font-ui)',
-                          }}>
-                            <span>{tag}</span>
-                            {on && <Check size={12} style={{ color: 'var(--walnut)', flexShrink: 0 }} />}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ))}
-                </div>
-                {activeTags.length > 0 && (
-                  <div style={{
-                    padding: '8px 14px', borderTop: '1px solid var(--border)',
-                    background: 'var(--surface-2)', flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                      {activeTags.length} active
-                    </span>
-                    <button onClick={() => push({ tags: [] })} style={{
-                      fontSize: '0.75rem', color: '#dc2626', fontWeight: 500,
-                      background: 'none', border: 'none', cursor: 'pointer',
-                    }}>Clear all</button>
-                  </div>
-                )}
-              </div>
-            )}
+          <div>
+            <label htmlFor="season" className="block text-[0.68rem] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">
+              Season
+            </label>
+            <div className={selectWrapClass}>
+              <select id="season" name="season" defaultValue={season ?? ''} className={selectClass}>
+                <option value="">All Seasons</option>
+                {LITURGICAL_SEASONS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+              <ChevronDownIcon />
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Row 2: active tag pills */}
-      {activeTags.length > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginRight: 2 }}>Filtered by:</span>
-          {activeTags.map(tag => (
-            <button key={tag} onClick={() => clearTag(tag)} style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '5px 10px', borderRadius: 7,
-              fontSize: '0.75rem', fontWeight: 500,
-              background: 'var(--surface-3)', border: '1px solid var(--border)',
-              color: 'var(--walnut)', cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}>
-              {tag} <X size={10} style={{ opacity: 0.7 }} />
-            </button>
-          ))}
-          {activeTags.length > 1 && (
-            <button onClick={() => push({ tags: [] })} style={{
-              fontSize: '0.75rem', color: 'var(--text-muted)',
-              background: 'none', border: 'none', cursor: 'pointer',
-              padding: '5px 8px', borderRadius: 7, transition: 'color 0.15s',
-            }}>Clear all</button>
-          )}
+          <div>
+            <label htmlFor="voice" className="block text-[0.68rem] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">
+              Voicing
+            </label>
+            <div className={selectWrapClass}>
+              <select id="voice" name="voice" defaultValue={voicing ?? ''} className={selectClass}>
+                <option value="">All Voicings</option>
+                {VOICING_OPTIONS.map(v => <option key={v} value={v}>{v}</option>)}
+              </select>
+              <ChevronDownIcon />
+            </div>
+          </div>
+
+          <div>
+            <label htmlFor="sort" className="block text-[0.68rem] font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1.5">
+              Sort By
+            </label>
+            <div className={selectWrapClass}>
+              <select id="sort" name="sort" defaultValue={activeSort} className={selectClass}>
+                {SORT_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+              </select>
+              <ChevronDownIcon />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="h-11 flex items-center justify-center gap-2 bg-[var(--roasted)] hover:bg-[var(--walnut)] text-[var(--bone)] text-sm font-semibold rounded-lg transition-colors col-span-2 sm:col-span-4 lg:col-span-1"
+          >
+            <SlidersHorizontal size={15} /> Apply
+          </button>
         </div>
-      )}
+
+        {hasActiveFilter && (
+          <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-[var(--border)]">
+            <span className="text-xs text-[var(--text-muted)]">Filtered by:</span>
+            {category && <FilterPill label={category} clearHref={buildClearHref({ query, season, voicing, sort: activeSort })} />}
+            {season   && <FilterPill label={season}   clearHref={buildClearHref({ query, category, voicing, sort: activeSort })} />}
+            {voicing  && <FilterPill label={voicing}  clearHref={buildClearHref({ query, category, season, sort: activeSort })} />}
+            <Link href="/browse" className="text-xs text-[var(--ochre)] hover:text-[var(--walnut)] font-medium ml-1">
+              Clear all
+            </Link>
+          </div>
+        )}
+      </form>
     </div>
+  )
+}
+
+function buildClearHref(kept: { query?: string; category?: string; season?: string; voicing?: string; sort: string }) {
+  const params = new URLSearchParams()
+  if (kept.query)    params.set('q', kept.query)
+  if (kept.category) params.set('category', kept.category)
+  if (kept.season)   params.set('season', kept.season)
+  if (kept.voicing)  params.set('voice', kept.voicing)
+  if (kept.sort !== 'newest') params.set('sort', kept.sort)
+  return `/browse${params.toString() ? '?' + params : ''}`
+}
+
+function FilterPill({ label, clearHref }: { label: string; clearHref: string }) {
+  return (
+    <Link
+      href={clearHref}
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--surface-3)] border border-[var(--border)] text-xs font-medium text-[var(--walnut)] hover:border-[var(--walnut)] transition-colors"
+    >
+      {label} <X size={10} className="opacity-70" />
+    </Link>
   )
 }

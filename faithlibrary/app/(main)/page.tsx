@@ -46,7 +46,10 @@ async function ScoreGrid({
     .select('*, profiles(full_name)', { count: 'exact' })
     .eq('is_public', true)
 
-  if (query)    q = q.or(`title.ilike.%${query}%,description.ilike.%${query}%,composer.ilike.%${query}%,arranger.ilike.%${query}%`)
+  if (query) {
+    const safe = query.replace(/[,()]/g, ' ').replace(/[%_\\]/g, '\\$&').trim()
+    q = q.or(`title.ilike.%${safe}%,description.ilike.%${safe}%,composer.ilike.%${safe}%,arranger.ilike.%${safe}%`)
+  }
   if (category) q = q.contains('tags', [category])
   if (season)   q = q.contains('tags', [season])
   if (voicing)  q = q.ilike('voice_parts', `%${voicing}%`)
