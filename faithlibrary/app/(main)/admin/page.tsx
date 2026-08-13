@@ -89,7 +89,7 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
 
         {/* Stats */}
         <AdminStats stats={stats} />
@@ -101,7 +101,7 @@ export default async function AdminPage() {
             <AdminRequestsTable requests={requests ?? []} />
 
             {/* Files */}
-            <AdminFileTable files={recentFiles ?? []} />
+            <AdminFileTable files={recentFiles ?? []} isAdmin={isAdmin} />
           </div>
 
           {/* Sidebar */}

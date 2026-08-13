@@ -6,11 +6,19 @@ import { useRouter } from 'next/navigation'
 import { Star, StarOff, Trash2, ExternalLink, Eye, EyeOff } from 'lucide-react'
 import Link from 'next/link'
 
-interface AdminFileTableProps {
-  files: any[]
+import type { FileRecord } from '@/lib/types'
+
+type AdminFile = FileRecord & {
+  profiles?: { full_name: string | null } | null
+  is_featured?: boolean
 }
 
-export function AdminFileTable({ files: initialFiles }: AdminFileTableProps) {
+interface AdminFileTableProps {
+  files: AdminFile[]
+  isAdmin: boolean
+}
+
+export function AdminFileTable({ files: initialFiles, isAdmin }: AdminFileTableProps) {
   const supabase = createClient()
   const router   = useRouter()
   const [files, setFiles] = useState(initialFiles)
@@ -26,11 +34,33 @@ export function AdminFileTable({ files: initialFiles }: AdminFileTableProps) {
   }
 
   const deleteFile = async (id: string, fileUrl: string) => {
+    if (!isAdmin) return // UI-level guard only; the real enforcement is the RLS policy
     if (!confirm('Delete this file permanently?')) return
+
     const path = fileUrl.split('/faithlibrary-files/')[1]
-    if (path) await supabase.storage.from('faithlibrary-files').remove([path])
-    await supabase.from('files').delete().eq('id', id)
+    if (path) {
+      const { error: storageError } = await supabase.storage.from('faithlibrary-files').remove([path])
+      if (storageError) {
+        alert(`Could not delete the file from storage: ${storageError.message}`)
+        return
+      }
+    }
+
+    const { error: dbError } = await supabase.from('files').delete().eq('id', id)
+    if (dbError) {
+      // Most likely cause: Row-Level Security is blocking this delete because
+      // the current user isn't the file's owner. See the RLS policy note below.
+      alert(
+        `Could not delete this score from the database: ${dbError.message}\n\n` +
+        `If this keeps happening, your Supabase RLS policy on "files" probably ` +
+        `only allows the uploader to delete their own rows — it needs an ` +
+        `exception for admins/moderators too.`
+      )
+      return
+    }
+
     setFiles(prev => prev.filter(f => f.id !== id))
+    router.refresh()
   }
 
   return (
@@ -97,7 +127,7 @@ export function AdminFileTable({ files: initialFiles }: AdminFileTableProps) {
                       <ExternalLink size={13} />
                     </Link>
                     <button
-                      onClick={() => toggleFeatured(file.id, file.is_featured)}
+                      onClick={() => toggleFeatured(file.id, !!file.is_featured)}
                       className={`btn-icon ${file.is_featured ? 'text-amber-400' : 'text-[#D7CCC8]'}`}
                       style={{ padding: '0.3rem' }}
                       title={file.is_featured ? 'Unfeature' : 'Feature'}
@@ -112,13 +142,16 @@ export function AdminFileTable({ files: initialFiles }: AdminFileTableProps) {
                     >
                       {file.is_public ? <Eye size={13} /> : <EyeOff size={13} />}
                     </button>
-                    <button
-                      onClick={() => deleteFile(file.id, file.file_url)}
-                      className="btn-icon text-red-400 hover:text-red-600"
-                      style={{ padding: '0.3rem' }}
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                    {isAdmin && (
+                      <button
+                        onClick={() => deleteFile(file.id, file.file_url)}
+                        className="btn-icon text-red-400 hover:text-red-600"
+                        style={{ padding: '0.3rem' }}
+                        title="Delete permanently"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -129,4 +162,3 @@ export function AdminFileTable({ files: initialFiles }: AdminFileTableProps) {
     </div>
   )
 }
-
