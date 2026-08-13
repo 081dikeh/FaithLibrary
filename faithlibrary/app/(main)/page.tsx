@@ -440,51 +440,6 @@ export default async function HomePage({ searchParams }: HomeProps) {
 
       {showHero && <Suspense fallback={null}><CategoryShowcase /></Suspense>}
 
-      {showHero && (
-        <section className="bg-white border-b border-[#D7CCC8]">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
-            <div className="text-center mb-12">
-              <p
-                className="text-xs font-semibold uppercase mb-3"
-                style={{ fontFamily: 'var(--font-ui)', letterSpacing: '0.15em', color: '#8D6E63' }}
-              >
-                How it works
-              </p>
-              <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#3E2723]">
-                Three steps to sacred sound
-              </h2>
-            </div>
-
-            <div
-              className="rounded-2xl border border-[#EFE9E7] overflow-hidden"
-              style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))' }}
-            >
-              {[
-                { numeral: 'I', icon: '🔍', title: 'Discover', desc: 'Browse hundreds of Mass parts, hymns, and choral scores organised by category and season.' },
-                { numeral: 'II', icon: '📄', title: 'View & Print', desc: 'Read scores in-browser with our PDF viewer. Print or download in one click.' },
-                { numeral: 'III', icon: '🎵', title: 'Share', desc: 'Upload your own compositions or arrangements and share them with the global community.' },
-              ].map((item, i) => (
-                <div
-                  key={item.title}
-                  className="group text-center px-8 py-10 transition-colors duration-300 hover:bg-[#FBF8F6]"
-                  style={{ borderLeft: i > 0 ? '1px solid #EFE9E7' : 'none' }}
-                >
-                  <span
-                    className="inline-flex items-center justify-center w-9 h-9 rounded-full mb-5 text-xs font-bold"
-                    style={{ fontFamily: 'var(--font-display)', color: '#8D6E63', border: '1px solid #D7CCC8' }}
-                  >
-                    {item.numeral}
-                  </span>
-                  <div className="text-3xl mb-4 transition-transform duration-300 group-hover:scale-110">{item.icon}</div>
-                  <h3 className="font-display text-lg font-semibold text-[#3E2723] mb-2">{item.title}</h3>
-                  <p className="text-sm text-[#8D6E63] leading-relaxed" style={{ fontFamily: 'var(--font-ui)' }}>{item.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       {showHero && <Suspense fallback={null}><FeaturedScores /></Suspense>}
       {showHero && <Suspense fallback={null}><ScoreOfWeek /></Suspense>}
 
