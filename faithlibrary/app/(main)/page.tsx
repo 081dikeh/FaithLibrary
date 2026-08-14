@@ -323,25 +323,38 @@ export default async function HomePage({ searchParams }: HomeProps) {
 
       {showHero && (
         <section
-          className="relative min-h-screen flex items-center px-4 sm:px-6 pb-10"
-          style={{ background: '#FBF8F6', paddingTop: 58 }}
+          className="relative pt-[86px] pb-14 lg:min-h-screen lg:flex lg:items-center lg:pt-[58px] lg:pb-10 px-4 sm:px-6"
+          style={{ background: '#FBF8F6' }}
         >
           <div className="max-w-6xl mx-auto lg:flex lg:items-center lg:gap-10 w-full">
             <div className="max-w-xl">
               <div
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F0E4DA] border border-[#D7CCC8]/70 text-[#5D4037] text-xs font-medium mb-6 animate-fade-in max-w-full"
-                style={{ fontFamily: 'var(--font-ui)', letterSpacing: '0.02em' }}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F0E4DA] border border-[#D7CCC8]/70 text-[#5D4037] font-medium mb-6 animate-fade-in max-w-full"
+                style={{ fontFamily: 'var(--font-ui)', letterSpacing: '0.01em', fontSize: '13px' }}
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-[#8D6E63] animate-pulse shrink-0" />
                 <span className="truncate sm:whitespace-normal">Sacred music commons — free forever</span>
               </div>
 
-              <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-bold text-[#3E2723] leading-[1.15] mb-4 animate-fade-up delay-100">
-                Every choir has a library.
-                <span className="block text-[#8D6E63] mt-1">Most just can&apos;t find it.</span>
+              <h1 className="font-display font-bold text-[#3E2723] mb-4 animate-fade-up delay-100">
+                <span
+                  className="block"
+                  style={{ fontSize: 'clamp(32px, 3.6vw, 52px)', lineHeight: 1.1, letterSpacing: '-0.02em' }}
+                >
+                  Every choir has a library.
+                </span>
+                <span
+                  className="block text-[#8D6E63] mt-1"
+                  style={{ fontSize: 'clamp(24px, 2.7vw, 38px)', lineHeight: 1.15, letterSpacing: '-0.015em', fontWeight: 400 }}
+                >
+                  Most just can&apos;t find it.
+                </span>
               </h1>
 
-              <p className="text-[#6B5A52] text-sm sm:text-base max-w-xl mb-3 leading-relaxed animate-fade-up delay-150" style={{ fontFamily: 'var(--font-ui)' }}>
+              <p
+                className="text-[#6B5A52] max-w-xl mb-3 animate-fade-up delay-150"
+                style={{ fontFamily: 'var(--font-ui)', fontSize: 'clamp(15px, 1.25vw, 17.5px)', lineHeight: 1.62 }}
+              >
                 Search thousands of hymns, Mass parts, and choral scores by title, composer, or the words your choir already sings.
               </p>
 
@@ -355,18 +368,21 @@ export default async function HomePage({ searchParams }: HomeProps) {
                       type="text"
                       name="q"
                       placeholder="Search a title, composer, or words you remember…"
-                      className="flex-1 min-w-0 bg-transparent text-sm text-[#3E2723] placeholder:text-[#B09080] outline-none py-3"
-                      style={{ fontFamily: 'var(--font-ui)' }}
+                      className="flex-1 min-w-0 bg-transparent text-[#3E2723] placeholder:text-[#B09080] outline-none py-3"
+                      style={{ fontFamily: 'var(--font-ui)', fontSize: '16.5px' }}
                     />
                     <button
                       type="submit"
-                      className="shrink-0 bg-[#3E2723] hover:bg-[#5D4037] text-[#F5F5F5] text-sm font-semibold px-5 py-2.5 rounded-2xl transition-colors"
-                      style={{ fontFamily: 'var(--font-ui)' }}
+                      className="shrink-0 bg-[#3E2723] hover:bg-[#5D4037] text-[#F5F5F5] font-semibold px-5 py-2.5 rounded-2xl transition-colors"
+                      style={{ fontFamily: 'var(--font-ui)', fontSize: '15px' }}
                     >
                       Search
                     </button>
                   </div>
-                  <div className="flex items-center gap-2 mt-1.5 px-3.5 py-2.5 rounded-2xl bg-[#F0E4DA] text-[#8A6224] text-xs sm:text-sm font-medium">
+                  <div
+                    className="flex items-center gap-2 mt-1.5 px-3.5 py-2.5 rounded-2xl bg-[#F0E4DA] text-[#8A6224] font-medium"
+                    style={{ fontSize: '13.5px' }}
+                  >
                     <Sparkles size={13} className="shrink-0" />
                     Can&apos;t recall the title? Type any words you remember from the lyrics.
                   </div>
