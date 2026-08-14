@@ -322,8 +322,11 @@ export default async function HomePage({ searchParams }: HomeProps) {
       <Navbar />
 
       {showHero && (
-        <section className="relative px-4 sm:px-6 pt-10 sm:pt-14 pb-10" style={{ background: '#FBF8F6' }}>
-          <div className="max-w-6xl mx-auto lg:flex lg:items-center lg:gap-10">
+        <section
+          className="relative min-h-screen flex items-center px-4 sm:px-6 pb-10"
+          style={{ background: '#FBF8F6', paddingTop: 58 }}
+        >
+          <div className="max-w-6xl mx-auto lg:flex lg:items-center lg:gap-10 w-full">
             <div className="max-w-xl">
               <div
                 className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F0E4DA] border border-[#D7CCC8]/70 text-[#5D4037] text-xs font-medium mb-6 animate-fade-in max-w-full"
@@ -377,8 +380,12 @@ export default async function HomePage({ searchParams }: HomeProps) {
               <VinylPlayer />
             </div>
           </div>
+        </section>
+      )}
 
-          <div className="max-w-6xl mx-auto mt-10 animate-fade-up delay-200">
+      {showHero && (
+        <section className="relative px-4 sm:px-6 py-10" style={{ background: '#FBF8F6' }}>
+          <div className="max-w-6xl mx-auto animate-fade-up delay-200">
             <form action="/" method="GET" className="bg-white border border-[#EFE9E7] rounded-2xl p-5 shadow-[var(--shadow-card)]">
               <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4 items-end">
                   <div>
