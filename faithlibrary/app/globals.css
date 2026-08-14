@@ -46,6 +46,17 @@ h1,h2,h3,h4  { font-family: var(--font-display); line-height: 1.2; }
 @keyframes scaleIn   { from{opacity:0;transform:scale(0.96)} to{opacity:1;transform:scale(1)} }
 @keyframes slideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
 @keyframes pulse     { 0%,100%{opacity:1} 50%{opacity:.5} }
+@keyframes vinylSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes vinylArm  { 0%, 100% { transform: rotate(-1.8deg); } 50% { transform: rotate(1.5deg); } }
+@keyframes vinylRise {
+  0%   { opacity: 0; transform: translate(0, 10px) scale(0.94); }
+  16%  { opacity: 1; }
+  58%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, 16px), -54px) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vinyl-spin, .vinyl-arm, .vinyl-rise { animation: none !important; }
+}
 
 .animate-fade-up    { opacity:0; animation:fadeUp    0.45s cubic-bezier(.22,1,.36,1) forwards; }
 .animate-fade-in    { opacity:0; animation:fadeIn    0.3s ease forwards; }

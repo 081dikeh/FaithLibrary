@@ -1,7 +1,7 @@
 // app/(main)/page.tsx
 import { Suspense } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
+import type { CSSProperties } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/Navbar'
 import { ScoreCard, ScoreCardSkeleton } from '@/components/ScoreCard'
@@ -210,79 +210,99 @@ function ChevronDownIcon() {
   )
 }
 
-async function HeroCoverStack() {
-  const supabase = await createClient()
-  const { data: files } = await supabase
-    .from('files')
-    .select('id, title, composer, thumbnail_url')
-    .eq('is_public', true)
-    .not('thumbnail_url', 'is', null)
-    .order('download_count', { ascending: false })
-    .limit(4)
+// Signature hero visual — a spinning vinyl record with a resting tonearm
+// and category tags gently rising around it, like notes lifting off the
+// grooves. Pure CSS/decoration: no DB dependency, no empty-state to worry
+// about, and it can't overflow into the search bar the way real content
+// tiles could.
+const VINYL_TAGS: { label: string; left: string; top: string; dx: string; delay: string; dur: string }[] = [
+  { label: 'Hymns',      left: '60%', top: '4%',  dx: '18px',  delay: '-1s',  dur: '12s' },
+  { label: 'SATB',       left: '6%',  top: '10%', dx: '-20px', delay: '-3.5s', dur: '12.5s' },
+  { label: 'Mass Parts', left: '72%', top: '45%', dx: '26px',  delay: '-8s',  dur: '13s' },
+  { label: 'Requiem',    left: '-2%', top: '63%', dx: '-18px', delay: '-10s', dur: '13.5s' },
+  { label: 'Worship',    left: '66%', top: '72%', dx: '20px',  delay: '-6s',  dur: '12s' },
+]
 
-  if (!files || files.length < 3) return <HeroCoverFallback />
-
-  // Container is a capped-width square: tile height (derived from tile
-  // width via aspect-[3/4]) is then always a fixed, safe fraction of the
-  // container's own height — no overflow at any viewport size.
-  const layouts = [
-    { rotate: '-6deg',  z: 1, x: '2%',  y: '6%',  size: 'w-[46%]' },
-    { rotate: '4deg',   z: 3, x: '36%', y: '0%',  size: 'w-[48%]' },
-    { rotate: '-2deg',  z: 2, x: '18%', y: '34%', size: 'w-[42%]' },
-    { rotate: '9deg',   z: 4, x: '58%', y: '22%', size: 'w-[38%]' },
-  ]
-
+function VinylPlayer() {
   return (
-    <div className="relative w-full max-w-xl mx-auto lg:mx-0 lg:ml-auto aspect-square">
-      {files.slice(0, 4).map((file, i) => {
-        const layout = layouts[i]
-        return (
-          <div
-            key={file.id}
-            className={`absolute ${layout.size} rounded-lg overflow-hidden border-4 border-white shadow-[0_12px_28px_rgba(62,39,35,0.18)] bg-white transition-transform hover:scale-105 hover:z-10`}
-            style={{ left: layout.x, top: layout.y, transform: `rotate(${layout.rotate})`, zIndex: layout.z }}
-          >
-            <div className="relative aspect-[3/4]">
-              <Image
-                src={file.thumbnail_url as string}
-                alt={file.title}
-                fill
-                sizes="280px"
-                className="object-cover"
-              />
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-// Fallback for when there aren't enough thumbnails yet — still fills the
-// space with something on-brand instead of leaving it blank.
-function HeroCoverFallback() {
-  const cards = [
-    { rotate: '-6deg', z: 1, x: '6%',  y: '10%' },
-    { rotate: '4deg',  z: 3, x: '36%', y: '0%'  },
-    { rotate: '-2deg', z: 2, x: '20%', y: '36%' },
-  ]
-  return (
-    <div className="relative w-full max-w-xl mx-auto lg:mx-0 lg:ml-auto aspect-square">
-      {cards.map((c, i) => (
+    <div className="relative w-full max-w-md mx-auto lg:mx-0 lg:ml-auto">
+      <div className="relative aspect-square rounded-[34px] bg-[#FBF8F6] border border-[#EFE9E7] shadow-[var(--shadow-lift)] p-[8.5%] flex items-center">
+        {/* record */}
         <div
-          key={i}
-          className="absolute w-[46%] aspect-[3/4] rounded-lg border-4 border-white shadow-[0_12px_28px_rgba(62,39,35,0.16)] bg-[#FBF8F6] overflow-hidden"
-          style={{ left: c.x, top: c.y, transform: `rotate(${c.rotate})`, zIndex: c.z }}
+          className="relative w-[80%] aspect-square rounded-full overflow-hidden"
+          style={{ boxShadow: 'inset 0 0 0 1px rgba(62,39,35,0.12), var(--shadow-lift)' }}
         >
           <div
-            className="h-full w-full opacity-[0.35]"
+            className="vinyl-spin absolute inset-0 rounded-full flex items-center justify-center"
             style={{
-              backgroundImage: 'repeating-linear-gradient(to bottom, #8D6E63 0px, #8D6E63 1px, transparent 1px, transparent 12px)',
+              background: 'repeating-radial-gradient(circle at 50% 50%, #2A2019 0 1px, #1C140F 1px 3.5px)',
+              animation: 'vinylSpin 9s linear infinite',
             }}
+          >
+            <div
+              className="w-[35%] aspect-square rounded-full flex flex-col items-center justify-center gap-1"
+              style={{ background: 'linear-gradient(145deg, #8D6E63, #5D4037)', boxShadow: 'inset 0 0 0 1px rgba(245,245,245,0.22)' }}
+            >
+              <span className="text-[11px] font-semibold text-[#F5F5F5]" style={{ fontFamily: 'var(--font-display)' }}>
+                Faith<em className="font-normal not-italic opacity-70">Library</em>
+              </span>
+              <span className="text-[7.5px] tracking-[0.16em] text-[#F5F5F5]/60">33 ⅓</span>
+            </div>
+          </div>
+          <div
+            className="absolute inset-0 rounded-full pointer-events-none"
+            style={{ background: 'linear-gradient(118deg, rgba(255,255,255,0.10) 0 20%, rgba(255,255,255,0.02) 34%, transparent 46%)' }}
           />
-          <Music2 size={22} className="absolute top-4 left-4 text-[#8D6E63]" />
+          <div className="absolute top-1/2 left-1/2 w-[7px] h-[7px] -mt-[3.5px] -ml-[3.5px] rounded-full bg-[#FBF8F6]" />
         </div>
-      ))}
+
+        {/* power indicator */}
+        <div className="absolute top-[11%] right-[9%] w-[34px] h-[34px] rounded-full bg-white border border-[#EFE9E7] shadow-[var(--shadow-card)] flex items-center justify-center">
+          <span className="w-2 h-2 rounded-full bg-[#8D6E63]" />
+        </div>
+
+        {/* tonearm */}
+        <div
+          className="vinyl-arm absolute"
+          style={{
+            top: 'calc(11% + 14px)', right: 'calc(9% + 17px)', width: '52%', height: 6,
+            transformOrigin: '100% 50%', animation: 'vinylArm 16s ease-in-out infinite',
+          }}
+        >
+          <div className="absolute inset-0 rounded-full bg-[#D7CCC8] shadow-[var(--shadow-card)]" />
+          <div className="absolute -left-1.5 -top-1.5 w-[30px] h-[18px] rounded-md bg-[#5D4037]" />
+          <div className="absolute -left-0.5 top-3 w-[2px] h-[7px] rounded-full bg-[#5D4037]" />
+        </div>
+
+        {/* eq / volume controls */}
+        <div className="absolute right-[9%] bottom-[11%] flex flex-col items-center gap-3">
+          <div className="w-[30px] h-[30px] rounded-full bg-white border border-[#EFE9E7] shadow-[var(--shadow-card)] flex items-start justify-center pt-1">
+            <span className="w-[2px] h-[9px] rounded-full bg-[#8D6E63]" />
+          </div>
+          <div className="w-[30px] h-3 rounded-full bg-[#F0E4DA] border border-[#EFE9E7] flex items-center px-0.5">
+            <span className="w-2 h-2 rounded-full bg-[#D7CCC8]" />
+          </div>
+        </div>
+      </div>
+
+      {/* rising category tags */}
+      {VINYL_TAGS.map(tag => {
+        const style = {
+          left: tag.left, top: tag.top,
+          animation: `vinylRise ${tag.dur} ease-in-out infinite`,
+          animationDelay: tag.delay,
+          '--dx': tag.dx,
+        } as CSSProperties
+        return (
+          <span
+            key={tag.label}
+            className="vinyl-rise absolute whitespace-nowrap px-2.5 py-1 rounded-full bg-white border border-[#EFE9E7] shadow-[var(--shadow-card)] text-[11px] tracking-wide text-[#5D4037]"
+            style={style}
+          >
+            {tag.label}
+          </span>
+        )
+      })}
     </div>
   )
 }
@@ -302,8 +322,8 @@ export default async function HomePage({ searchParams }: HomeProps) {
       <Navbar />
 
       {showHero && (
-        <section className="relative px-4 sm:px-6 pt-10 sm:pt-14 pb-8" style={{ background: '#FBF8F6' }}>
-          <div className="max-w-6xl mx-auto lg:flex lg:items-start lg:gap-10">
+        <section className="relative px-4 sm:px-6 pt-10 sm:pt-14 pb-10" style={{ background: '#FBF8F6' }}>
+          <div className="max-w-6xl mx-auto lg:flex lg:items-center lg:gap-10">
             <div className="max-w-xl">
               <div
                 className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F0E4DA] border border-[#D7CCC8]/70 text-[#5D4037] text-xs font-medium mb-6 animate-fade-in max-w-full"
@@ -322,48 +342,45 @@ export default async function HomePage({ searchParams }: HomeProps) {
                 Search thousands of hymns, Mass parts, and choral scores by title, composer, or the words your choir already sings.
               </p>
 
-              <p
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#8A6224] mb-8 animate-fade-up delay-150"
-                style={{ fontFamily: 'var(--font-ui)' }}
-              >
-                <Sparkles size={13} className="shrink-0" />
-                Can&apos;t recall the title? Type any words you remember from the lyrics.
-              </p>
+              {/* Search — its own card, with the "remembered lyrics" tip
+                  folded in underneath rather than floating separately. */}
+              <form action="/" method="GET" className="w-full mt-6 animate-fade-up delay-200">
+                <div className="bg-white border border-[#D7CCC8] rounded-3xl shadow-[var(--shadow-card)] p-2 focus-within:border-[#5D4037] transition-colors">
+                  <div className="flex items-center gap-2 pl-3">
+                    <Search size={16} className="text-[#8D6E63] shrink-0" />
+                    <input
+                      type="text"
+                      name="q"
+                      placeholder="Search a title, composer, or words you remember…"
+                      className="flex-1 min-w-0 bg-transparent text-sm text-[#3E2723] placeholder:text-[#B09080] outline-none py-3"
+                      style={{ fontFamily: 'var(--font-ui)' }}
+                    />
+                    <button
+                      type="submit"
+                      className="shrink-0 bg-[#3E2723] hover:bg-[#5D4037] text-[#F5F5F5] text-sm font-semibold px-5 py-2.5 rounded-2xl transition-colors"
+                      style={{ fontFamily: 'var(--font-ui)' }}
+                    >
+                      Search
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1.5 px-3.5 py-2.5 rounded-2xl bg-[#F0E4DA] text-[#8A6224] text-xs sm:text-sm font-medium">
+                    <Sparkles size={13} className="shrink-0" />
+                    Can&apos;t recall the title? Type any words you remember from the lyrics.
+                  </div>
+                </div>
+              </form>
             </div>
 
-            {/* Real score covers — fills the dead space with actual library content */}
-            <div className="hidden lg:block flex-1 min-w-0 lg:mt-2">
-              <Suspense fallback={null}>
-                <HeroCoverStack />
-              </Suspense>
+            {/* Signature visual — a spinning record, standing in for the
+                library itself: every choir's music, always on and ready. */}
+            <div className="hidden lg:block flex-1 min-w-0">
+              <VinylPlayer />
             </div>
           </div>
 
-          {/* Search + filter bar — relative z-10 guarantees this always
-              paints above the cover-stack tiles (z-index 1-4), even where
-              they visually overlap. */}
-          <div className="relative z-10 max-w-4xl mx-auto lg:-mt-16 animate-fade-up delay-200">
-            <form action="/" method="GET">
-              <div className="flex items-center gap-2 bg-white border border-[#D7CCC8] rounded-full p-1.5 pl-5 shadow-[var(--shadow-card)] focus-within:border-[#5D4037] transition-colors mb-4">
-                <Search size={16} className="text-[#8D6E63] shrink-0" />
-                <input
-                  type="text"
-                  name="q"
-                  placeholder="Search a title, composer, or words you remember…"
-                  className="flex-1 min-w-0 bg-transparent text-sm text-[#3E2723] placeholder:text-[#B09080] outline-none py-2.5"
-                  style={{ fontFamily: 'var(--font-ui)' }}
-                />
-                <button
-                  type="submit"
-                  className="shrink-0 bg-[#3E2723] hover:bg-[#5D4037] text-[#F5F5F5] text-sm font-semibold px-5 py-2.5 rounded-full transition-colors"
-                  style={{ fontFamily: 'var(--font-ui)' }}
-                >
-                  Search
-                </button>
-              </div>
-
-              <div className="bg-white border border-[#EFE9E7] rounded-2xl p-5 shadow-[var(--shadow-card)]">
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4 items-end">
+          <div className="max-w-6xl mx-auto mt-10 animate-fade-up delay-200">
+            <form action="/" method="GET" className="bg-white border border-[#EFE9E7] rounded-2xl p-5 shadow-[var(--shadow-card)]">
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4 items-end">
                   <div>
                     <label htmlFor="h-category" className="block text-[0.68rem] font-bold uppercase tracking-wider text-[#B09080] mb-1.5">Category</label>
                     <div className="relative">
@@ -432,13 +449,14 @@ export default async function HomePage({ searchParams }: HomeProps) {
                     </Link>
                   </div>
                 </div>
-              </div>
-            </form>
+              </form>
           </div>
         </section>
       )}
 
       {showHero && <Suspense fallback={null}><CategoryShowcase /></Suspense>}
+
+      {/* how-it-works removed */}
 
       {showHero && <Suspense fallback={null}><FeaturedScores /></Suspense>}
       {showHero && <Suspense fallback={null}><ScoreOfWeek /></Suspense>}
