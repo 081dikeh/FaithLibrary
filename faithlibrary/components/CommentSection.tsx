@@ -68,15 +68,20 @@ export function CommentSection({ fileId }: { fileId: string }) {
   const handlePost = async () => {
     if (!body.trim() || !userId) return
     setPosting(true)
-    await supabase.from('comments').insert({ file_id: fileId, user_id: userId, body: body.trim() })
-    setBody('')
+    const { error } = await supabase.from('comments').insert({ file_id: fileId, user_id: userId, body: body.trim() })
     setPosting(false)
+    if (error) {
+      alert(`Could not post your comment: ${error.message}`)
+      return
+    }
+    setBody('')
   }
 
   const handleDelete = async (id: string) => {
     setDeletingId(id)
-    await supabase.from('comments').delete().eq('id', id)
+    const { error } = await supabase.from('comments').delete().eq('id', id)
     setDeletingId(null)
+    if (error) alert(`Could not delete comment: ${error.message}`)
   }
 
   const fmt = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })

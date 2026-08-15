@@ -24,13 +24,23 @@ export function AdminFileTable({ files: initialFiles, isAdmin }: AdminFileTableP
   const [files, setFiles] = useState(initialFiles)
 
   const toggleFeatured = async (id: string, current: boolean) => {
-    await supabase.from('files').update({ is_featured: !current }).eq('id', id)
+    const { error } = await supabase.from('files').update({ is_featured: !current }).eq('id', id)
+    if (error) {
+      alert(`Could not update "featured" status: ${error.message}`)
+      return
+    }
     setFiles(prev => prev.map(f => f.id === id ? { ...f, is_featured: !current } : f))
+    router.refresh()
   }
 
   const togglePublic = async (id: string, current: boolean) => {
-    await supabase.from('files').update({ is_public: !current }).eq('id', id)
+    const { error } = await supabase.from('files').update({ is_public: !current }).eq('id', id)
+    if (error) {
+      alert(`Could not update visibility: ${error.message}`)
+      return
+    }
     setFiles(prev => prev.map(f => f.id === id ? { ...f, is_public: !current } : f))
+    router.refresh()
   }
 
   const deleteFile = async (id: string, fileUrl: string) => {

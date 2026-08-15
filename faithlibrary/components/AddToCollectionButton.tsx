@@ -57,9 +57,14 @@ export function AddToCollectionButton({ fileId }: AddToCollectionButtonProps) {
   const toggle = async (collectionId: string) => {
     setSaving(collectionId)
     if (added.has(collectionId)) {
-      await supabase.from('collection_files')
+      const { error } = await supabase.from('collection_files')
         .delete()
         .match({ collection_id: collectionId, file_id: fileId })
+      if (error) {
+        alert(`Could not remove from collection: ${error.message}`)
+        setSaving(null)
+        return
+      }
       setAdded(prev => { const s = new Set(prev); s.delete(collectionId); return s })
     } else {
       const { data: pos } = await supabase
@@ -70,11 +75,16 @@ export function AddToCollectionButton({ fileId }: AddToCollectionButtonProps) {
         .limit(1)
         .single()
 
-      await supabase.from('collection_files').insert({
+      const { error } = await supabase.from('collection_files').insert({
         collection_id: collectionId,
         file_id:       fileId,
         position:      (pos?.position ?? 0) + 1,
       })
+      if (error) {
+        alert(`Could not add to collection: ${error.message}`)
+        setSaving(null)
+        return
+      }
       setAdded(prev => new Set([...prev, collectionId]))
     }
     setSaving(null)

@@ -47,10 +47,12 @@ export function FileCard({ file, bookmarked = false, onBookmarkToggle, index = 0
     const user = session?.user ?? null
     if (!user) { window.location.href = '/login'; return }
     if (isBookmarked) {
-      await supabase.from('bookmarks').delete().match({ user_id: user.id, file_id: file.id })
+      const { error } = await supabase.from('bookmarks').delete().match({ user_id: user.id, file_id: file.id })
+      if (error) { alert(`Could not remove bookmark: ${error.message}`); setBmLoading(false); return }
       setIsBookmarked(false)
     } else {
-      await supabase.from('bookmarks').insert({ user_id: user.id, file_id: file.id })
+      const { error } = await supabase.from('bookmarks').insert({ user_id: user.id, file_id: file.id })
+      if (error) { alert(`Could not save bookmark: ${error.message}`); setBmLoading(false); return }
       setIsBookmarked(true)
     }
     onBookmarkToggle?.(file.id)
