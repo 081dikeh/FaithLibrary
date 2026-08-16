@@ -17,6 +17,7 @@ export interface FileRecord {
   thumbnail_url?: string | null   // ← ADD THIS if missing
   lyrics?:        string | null
   lyrics_source?: 'manual' | 'ocr' | null
+  license_status?: string | null
   download_count?: number | null
   created_at:     string
   updated_at?:    string
