@@ -9,7 +9,6 @@ import {
   Trash2, Save, Globe, Lock,
 } from 'lucide-react'
 import type { FileRecord } from '@/lib/types'
-import { LICENSE_OPTIONS, isValidLicenseStatus, type LicenseStatus } from '@/lib/license'
 
 interface EditFileFormProps { file: FileRecord }
 
@@ -19,11 +18,9 @@ export function EditFileForm({ file }: EditFileFormProps) {
 
   const [title,       setTitle]       = useState(file.title)
   const [description, setDescription] = useState(file.description ?? '')
+  const [lyrics,       setLyrics]      = useState(file.lyrics ?? '')
   const [tags,        setTags]        = useState<string[]>(file.tags ?? [])
   const [isPublic,    setIsPublic]    = useState(file.is_public)
-  const [licenseStatus, setLicenseStatus] = useState<LicenseStatus>(
-    isValidLicenseStatus(file.license_status) ? file.license_status : 'unknown'
-  )
   const [saving,      setSaving]      = useState(false)
   const [deleting,    setDeleting]    = useState(false)
   const [confirmDel,  setConfirmDel]  = useState(false)
@@ -43,7 +40,8 @@ export function EditFileForm({ file }: EditFileFormProps) {
         category:    tags[0] ?? 'General',
         tags,
         is_public:   isPublic,
-        license_status: licenseStatus,
+        lyrics:        lyrics.trim() || null,
+        lyrics_source: lyrics.trim() ? 'manual' : null,
       })
       .eq('id', file.id)
 
@@ -72,9 +70,8 @@ export function EditFileForm({ file }: EditFileFormProps) {
 
       {/* Title */}
       <div>
-        <label htmlFor="edit-title" className="label">Title *</label>
+        <label className="label">Title *</label>
         <input
-          id="edit-title"
           value={title}
           onChange={e => setTitle(e.target.value)}
           className="input"
@@ -84,9 +81,8 @@ export function EditFileForm({ file }: EditFileFormProps) {
 
       {/* Description */}
       <div>
-        <label htmlFor="edit-description" className="label">Description</label>
+        <label className="label">Description</label>
         <textarea
-          id="edit-description"
           value={description}
           onChange={e => setDescription(e.target.value)}
           rows={3}
@@ -95,21 +91,39 @@ export function EditFileForm({ file }: EditFileFormProps) {
         />
       </div>
 
+      {/* Lyrics — powers "search by remembered lyrics" */}
+      <div>
+        <label className="label">
+          Lyrics <span style={{ fontWeight: 500, color: '#9E8070' }}>(optional)</span>
+          {file.lyrics_source === 'ocr' && (
+            <span style={{ marginLeft: 8, fontSize: '0.7rem', fontWeight: 600, color: '#8D6E63' }}>
+              auto-read from the PDF — check it over
+            </span>
+          )}
+        </label>
+        <textarea
+          value={lyrics}
+          onChange={e => setLyrics(e.target.value)}
+          rows={4}
+          className="input resize-none"
+          placeholder="Paste the lyrics so people can find this score by a line they remember."
+        />
+      </div>
+
       {/* Tags */}
       <div>
-        <label id="edit-tags-label" className="label">Categories & Tags</label>
+        <label className="label">Categories & Tags</label>
         <TagDropdown
           selected={tags}
           onChange={setTags}
           placeholder="Select categories…"
-          aria-labelledby="edit-tags-label"
         />
       </div>
 
       {/* Visibility */}
       <div>
-        <label id="edit-visibility-label" className="label">Visibility</label>
-        <div role="radiogroup" aria-labelledby="edit-visibility-label" className="flex gap-3">
+        <label className="label">Visibility</label>
+        <div className="flex gap-3">
           {[
             { val: true,  icon: <Globe size={14} />,  label: 'Public',  sub: 'Visible to everyone' },
             { val: false, icon: <Lock size={14} />,   label: 'Private', sub: 'Only visible to you' },
@@ -117,8 +131,6 @@ export function EditFileForm({ file }: EditFileFormProps) {
             <button
               key={String(opt.val)}
               type="button"
-              role="radio"
-              aria-checked={isPublic === opt.val}
               onClick={() => setIsPublic(opt.val)}
               className={`
                 flex-1 flex items-start gap-2.5 p-3.5 rounded-xl border-2
@@ -140,21 +152,6 @@ export function EditFileForm({ file }: EditFileFormProps) {
             </button>
           ))}
         </div>
-      </div>
-
-      {/* Copyright status */}
-      <div>
-        <label htmlFor="edit-license" className="label">Copyright Status</label>
-        <select
-          id="edit-license"
-          value={licenseStatus}
-          onChange={e => setLicenseStatus(e.target.value as LicenseStatus)}
-          className="input cursor-pointer"
-        >
-          {LICENSE_OPTIONS.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
       </div>
 
       {/* Alerts */}

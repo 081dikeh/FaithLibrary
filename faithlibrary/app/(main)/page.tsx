@@ -48,7 +48,7 @@ async function ScoreGrid({
 
   if (query) {
     const safe = query.replace(/[,()]/g, ' ').replace(/[%_\\]/g, '\\$&').trim()
-    q = q.or(`title.ilike.%${safe}%,description.ilike.%${safe}%,composer.ilike.%${safe}%,arranger.ilike.%${safe}%`)
+    q = q.or(`title.ilike.%${safe}%,description.ilike.%${safe}%,composer.ilike.%${safe}%,arranger.ilike.%${safe}%,lyrics.ilike.%${safe}%`)
   }
   if (category) q = q.contains('tags', [category])
   if (season)   q = q.contains('tags', [season])

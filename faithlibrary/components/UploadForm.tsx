@@ -5,14 +5,11 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { TagDropdown } from '@/components/TagDropdown'
 import { Upload, X, CheckCircle2, AlertCircle, FileText, Loader2, Globe, Lock, CloudUpload } from 'lucide-react'
-import { isPdfFile, FILE_TYPE_ERROR_MESSAGE } from '@/lib/validation'
-import { LICENSE_OPTIONS, type LicenseStatus } from '@/lib/license'
-import { notifyMatchingRequesters } from '@/lib/matchRequests'
 
 interface FormState {
   title: string; description: string; composer: string
   arranger: string; voice_parts: string; tags: string[]; is_public: boolean
-  license_status: LicenseStatus
+  lyrics: string
 }
 
 export function UploadForm() {
@@ -21,23 +18,15 @@ export function UploadForm() {
   const fileRef  = useRef<HTMLInputElement>(null)
 
   const [file,     setFile]     = useState<File | null>(null)
-  const [fileError, setFileError] = useState('')
   const [dragging, setDragging] = useState(false)
   const [progress, setProgress] = useState(0)
   const [status,   setStatus]   = useState<'idle'|'uploading'|'success'|'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
   const [form, setForm] = useState<FormState>({
-    title: '', description: '', composer: '', arranger: '', voice_parts: '', tags: [], is_public: true,
-    license_status: 'unknown',
+    title: '', description: '', composer: '', arranger: '', voice_parts: '', tags: [], is_public: true, lyrics: '',
   })
 
   const acceptFile = useCallback((f: File) => {
-    if (!isPdfFile(f)) {
-      setFileError(FILE_TYPE_ERROR_MESSAGE)
-      setFile(null)
-      return
-    }
-    setFileError('')
     setFile(f)
     if (!form.title)
       setForm(prev => ({ ...prev, title: f.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ') }))
@@ -51,16 +40,16 @@ export function UploadForm() {
 
   const handleUpload = async () => {
     if (!file || !form.title.trim()) return
-    if (!isPdfFile(file)) { setStatus('error'); setErrorMsg(FILE_TYPE_ERROR_MESSAGE); return }
     setStatus('uploading'); setProgress(10); setErrorMsg('')
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
       setProgress(25)
-      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.pdf`
+      const ext  = file.name.split('.').pop() ?? 'pdf'
+      const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
       const { error: storageErr } = await supabase.storage
         .from('faithlibrary-files')
-        .upload(path, file, { contentType: 'application/pdf', cacheControl: '3600' })
+        .upload(path, file, { contentType: file.type || 'application/pdf', cacheControl: '3600' })
       if (storageErr) throw storageErr
       setProgress(70)
       const { data: { publicUrl } } = supabase.storage.from('faithlibrary-files').getPublicUrl(path)
@@ -84,15 +73,19 @@ export function UploadForm() {
         composer: form.composer.trim() || null, arranger: form.arranger.trim() || null,
         voice_parts: form.voice_parts.trim() || null, category: form.tags[0] ?? 'General',
         tags: form.tags, is_public: form.is_public, file_url: publicUrl, thumbnail_url: thumbnailUrl,
-        license_status: form.license_status,
+        lyrics: form.lyrics.trim() || null, lyrics_source: form.lyrics.trim() ? 'manual' : null,
       }).select('id').single()
       if (dbErr) throw new Error(dbErr.message + (dbErr.details ? ' — ' + dbErr.details : '') + (dbErr.hint ? ' — Hint: ' + dbErr.hint : ''))
 
-      if (inserted && form.is_public) {
-        // Best-effort — a notification failure shouldn't block a successful upload.
-        notifyMatchingRequesters(supabase, {
-          fileId: inserted.id, fileTitle: form.title.trim(), tags: form.tags, excludeUserId: user.id,
-        }).catch(() => {})
+      // Fire-and-forget: try to OCR the lyrics in the background. Never
+      // blocks the upload — if this fails, the score is still uploaded
+      // fine, it just won't be lyric-searchable until edited manually.
+      if (inserted?.id) {
+        fetch('/api/ocr-lyrics', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileId: inserted.id, fileUrl: publicUrl }),
+        }).catch(() => { /* best-effort only */ })
       }
 
       setProgress(100); setStatus('success')
@@ -107,12 +100,12 @@ export function UploadForm() {
     && status !== 'uploading' && status !== 'success'
 
   /* shared input focus handlers */
-  const onFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const onFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     e.target.style.borderColor = '#5D4037'
     e.target.style.boxShadow = '0 0 0 3px rgba(93,64,55,0.1)'
     e.target.style.background = '#fff'
   }
-  const onBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const onBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     e.target.style.borderColor = '#E0D8D4'
     e.target.style.boxShadow = 'none'
     e.target.style.background = '#FAFAF9'
@@ -131,15 +124,10 @@ export function UploadForm() {
 
       {/* ── Drop zone ── */}
       <div
-        role="button"
-        tabIndex={0}
-        aria-label={file ? `Selected file: ${file.name}. Press Enter to choose a different file.` : 'Choose a PDF score file to upload.'}
-        aria-describedby={fileError ? 'upload-file-error' : undefined}
         onDragOver={e => { e.preventDefault(); setDragging(true) }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         onClick={() => fileRef.current?.click()}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileRef.current?.click() } }}
         style={{
           border: `2px dashed ${file ? '#5D4037' : dragging ? '#8D6E63' : '#C4B5AF'}`,
           borderRadius: 16, padding: '32px 20px',
@@ -151,8 +139,8 @@ export function UploadForm() {
           position: 'relative',
         }}
       >
-        <input ref={fileRef} type="file" aria-hidden="true" tabIndex={-1} style={{ display: 'none' }}
-          accept=".pdf,application/pdf"
+        <input ref={fileRef} type="file" style={{ display: 'none' }}
+          accept=".pdf,.mxl,.xml,.musicxml"
           onChange={e => e.target.files?.[0] && acceptFile(e.target.files[0])} />
 
         {file ? (
@@ -170,7 +158,6 @@ export function UploadForm() {
             </div>
             <button
               onClick={e => { e.stopPropagation(); setFile(null) }}
-              aria-label="Remove selected file"
               style={{
                 position: 'absolute', top: 12, right: 12,
                 width: 28, height: 28, borderRadius: 8,
@@ -193,35 +180,28 @@ export function UploadForm() {
                 {dragging ? 'Release to drop' : 'Drop your score here'}
               </p>
               <p style={{ fontSize: '0.8rem', color: '#9E8070', fontFamily: 'var(--font-ui)' }}>
-                or click to browse · PDF only
+                or click to browse · PDF, MXL, MusicXML
               </p>
             </div>
             <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
-              <span style={{
-                padding: '3px 10px', borderRadius: 99,
-                background: '#EFE9E7', border: '1px solid #D7CCC8',
-                fontSize: '0.68rem', fontWeight: 700, color: '#8D6E63',
-              }}>PDF</span>
+              {['PDF', 'MXL', 'XML'].map(f => (
+                <span key={f} style={{
+                  padding: '3px 10px', borderRadius: 99,
+                  background: '#EFE9E7', border: '1px solid #D7CCC8',
+                  fontSize: '0.68rem', fontWeight: 700, color: '#8D6E63',
+                }}>{f}</span>
+              ))}
             </div>
           </>
         )}
       </div>
 
-      {fileError && (
-        <p id="upload-file-error" role="alert" style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          fontSize: '0.8125rem', color: '#C0392B', fontFamily: 'var(--font-ui)', marginTop: -12,
-        }}>
-          <AlertCircle size={14} aria-hidden="true" /> {fileError}
-        </p>
-      )}
-
       {/* ── Title ── */}
       <div>
-        <label htmlFor="upload-title" style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
+        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
           Title <span style={{ color: '#E57373', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>*</span>
         </label>
-        <input id="upload-title" value={form.title}
+        <input value={form.title}
           onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
           placeholder="e.g. Sanctus in D Major — SATB"
           style={inputBase} onFocus={onFocus} onBlur={onBlur} />
@@ -229,13 +209,26 @@ export function UploadForm() {
 
       {/* ── Description ── */}
       <div>
-        <label htmlFor="upload-description" style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
+        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
           Description
         </label>
-        <textarea id="upload-description" value={form.description}
+        <textarea value={form.description}
           onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
           placeholder="Composer, voice parts, key, arrangement notes…"
           rows={3}
+          style={{ ...inputBase, resize: 'none' }}
+          onFocus={onFocus as any} onBlur={onBlur as any} />
+      </div>
+
+      {/* ── Lyrics (optional, powers "search by remembered lyrics") ── */}
+      <div>
+        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
+          Lyrics <span style={{ fontWeight: 500, textTransform: 'none', letterSpacing: 0, color: '#9E8070' }}>(optional)</span>
+        </label>
+        <textarea value={form.lyrics}
+          onChange={e => setForm(p => ({ ...p, lyrics: e.target.value }))}
+          placeholder="Paste the lyrics here so people can find this score by a line they remember. We'll also try to auto-read them from the PDF, but this always takes priority."
+          rows={4}
           style={{ ...inputBase, resize: 'none' }}
           onFocus={onFocus as any} onBlur={onBlur as any} />
       </div>
@@ -248,10 +241,10 @@ export function UploadForm() {
           { key: 'voice_parts', label: 'Voice Parts', ph: 'e.g. SATB, SSA' },
         ].map(({ key, label, ph }) => (
           <div key={key}>
-            <label htmlFor={`upload-${key}`} style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
+            <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
               {label}
             </label>
-            <input id={`upload-${key}`} value={(form as any)[key]}
+            <input value={(form as any)[key]}
               onChange={e => setForm(p => ({ ...p, [key]: e.target.value }))}
               placeholder={ph} style={inputBase} onFocus={onFocus} onBlur={onBlur} />
           </div>
@@ -260,13 +253,12 @@ export function UploadForm() {
 
       {/* ── Tags ── */}
       <div>
-        <label id="upload-tags-label" style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
+        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
           Categories & Tags <span style={{ color: '#E57373', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>*</span>
         </label>
         <TagDropdown selected={form.tags}
           onChange={tags => setForm(p => ({ ...p, tags }))}
-          placeholder="Select mass part, season, or occasion…"
-          aria-labelledby="upload-tags-label" />
+          placeholder="Select mass part, season, or occasion…" />
         <p style={{ marginTop: 6, fontSize: '0.75rem', color: '#9E8070', fontFamily: 'var(--font-ui)' }}>
           Pick all that apply — e.g. Communion + Easter + Meditation / Reflection
         </p>
@@ -274,16 +266,15 @@ export function UploadForm() {
 
       {/* ── Visibility ── */}
       <div>
-        <label id="upload-visibility-label" style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 8 }}>
+        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 8 }}>
           Visibility
         </label>
-        <div role="radiogroup" aria-labelledby="upload-visibility-label" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           {[
             { val: true,  icon: <Globe size={16} />, label: 'Public',  sub: 'Visible to everyone' },
             { val: false, icon: <Lock  size={16} />, label: 'Private', sub: 'Only visible to you' },
           ].map(opt => (
             <button key={String(opt.val)} type="button"
-              role="radio" aria-checked={form.is_public === opt.val}
               onClick={() => setForm(p => ({ ...p, is_public: opt.val }))}
               style={{
                 display: 'flex', alignItems: 'center', gap: 12,
@@ -308,27 +299,6 @@ export function UploadForm() {
             </button>
           ))}
         </div>
-      </div>
-
-      {/* ── Copyright / license status ── */}
-      <div>
-        <label htmlFor="upload-license" style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
-          Copyright Status <span style={{ color: '#E57373', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>*</span>
-        </label>
-        <select
-          id="upload-license"
-          value={form.license_status}
-          onChange={e => setForm(p => ({ ...p, license_status: e.target.value as typeof p.license_status }))}
-          style={{ ...inputBase, cursor: 'pointer' }}
-          onFocus={onFocus} onBlur={onBlur}
-        >
-          {LICENSE_OPTIONS.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-        <p style={{ marginTop: 6, fontSize: '0.75rem', color: '#9E8070', fontFamily: 'var(--font-ui)' }}>
-          {LICENSE_OPTIONS.find(o => o.value === form.license_status)?.hint}
-        </p>
       </div>
 
       {/* ── Progress ── */}
