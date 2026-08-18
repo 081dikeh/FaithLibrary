@@ -5,12 +5,35 @@ import { isPdfFile, FILE_TYPE_ERROR_MESSAGE } from '@/lib/validation'
 import { isValidLicenseStatus } from '@/lib/license'
 import { notifyMatchingRequesters } from '@/lib/matchRequests'
 
+// This endpoint is meant to be called cross-origin, from whatever origin
+// external notation apps (FaithScore, and possibly others later) run on —
+// including localhost during their own development. A wildcard origin is
+// safe specifically because this route authenticates via an explicit
+// Bearer token, not cookies: allowing any origin to read the response
+// doesn't hand out anyone's session, since a caller still needs a real
+// FaithLibrary access token, which only exists if that user deliberately
+// signed in through the calling app. (This would NOT be safe on a
+// cookie-authenticated endpoint — don't copy this pattern onto one.)
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+}
+
+function json(body: unknown, init?: { status?: number }) {
+  return NextResponse.json(body, { ...init, headers: CORS_HEADERS })
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS })
+}
+
 export async function POST(request: NextRequest) {
   try {
     // 1. Get the Bearer token from the Authorization header
     const authHeader = request.headers.get('Authorization')
     if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Missing token' }, { status: 401 })
+      return json({ error: 'Missing token' }, { status: 401 })
     }
     const token = authHeader.replace('Bearer ', '')
 
@@ -27,7 +50,7 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await authClient.auth.getUser(token)
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
+      return json({ error: 'Invalid token' }, { status: 401 })
     }
 
     // 2b. A client whose every request (storage + postgrest) carries the
@@ -45,11 +68,11 @@ export async function POST(request: NextRequest) {
     const metadataRaw = formData.get('metadata') as string
 
     if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+      return json({ error: 'No file provided' }, { status: 400 })
     }
 
     if (!isPdfFile(file)) {
-      return NextResponse.json({ error: FILE_TYPE_ERROR_MESSAGE }, { status: 415 })
+      return json({ error: FILE_TYPE_ERROR_MESSAGE }, { status: 415 })
     }
 
     const metadata = JSON.parse(metadataRaw || '{}')
@@ -68,7 +91,7 @@ export async function POST(request: NextRequest) {
       })
 
     if (storageError) {
-      return NextResponse.json({ error: storageError.message }, { status: 500 })
+      return json({ error: storageError.message }, { status: 500 })
     }
 
     // 5. Get the public URL
@@ -94,7 +117,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (dbError) {
-      return NextResponse.json({ error: dbError.message }, { status: 500 })
+      return json({ error: dbError.message }, { status: 500 })
     }
 
     if (fileRecord?.is_public) {
@@ -107,13 +130,13 @@ export async function POST(request: NextRequest) {
       }).catch(() => {})
     }
 
-    return NextResponse.json({
+    return json({
       success: true,
       file: fileRecord,
     }, { status: 201 })
 
   } catch (err) {
     console.error('External upload error:', err)
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    return json({ error: 'Server error' }, { status: 500 })
   }
 }
