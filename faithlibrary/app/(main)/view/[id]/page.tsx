@@ -14,8 +14,9 @@ import { CommentSection } from '@/components/CommentSection'
 import { Download, Calendar, Tag, Music2, ArrowLeft, Globe, Lock, Printer, User, Scale } from 'lucide-react'
 import { getLicenseLabel } from '@/lib/license'
 import type { FileRecord } from '@/lib/types'
+import { SITE_URL } from '@/lib/site'
 
-const BASE_URL = 'https://faith-library.vercel.app'
+const BASE_URL = SITE_URL
 
 interface ViewPageProps {
   params: Promise<{ id: string }>

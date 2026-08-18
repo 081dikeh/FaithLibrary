@@ -1,6 +1,5 @@
 // lib/types.ts
-// lib/types.ts — add thumbnail_url to FileRecord if not already present
-// Find your FileRecord interface and add this field:
+import type { LicenseStatus } from '@/lib/license'
 
 export interface FileRecord {
   id:             string
@@ -14,10 +13,10 @@ export interface FileRecord {
   tags?:          string[]
   is_public:      boolean
   file_url:       string
-  thumbnail_url?: string | null   // ← ADD THIS if missing
+  thumbnail_url?: string | null
   lyrics?:        string | null
   lyrics_source?: 'manual' | 'ocr' | null
-  license_status?: string | null
+  license_status?: LicenseStatus | null
   download_count?: number | null
   created_at:     string
   updated_at?:    string

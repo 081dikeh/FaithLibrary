@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import { useQuery } from '@tanstack/react-query'
+import { sanitizeOrFilterInput } from '@/lib/searchFilter'
 
 export function useFiles(search?: string, category?: string) {
   const supabase = createClient()
@@ -14,7 +15,8 @@ export function useFiles(search?: string, category?: string) {
         .order('created_at', { ascending: false })
 
       if (search) {
-        query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
+        const safe = sanitizeOrFilterInput(search)
+        query = query.or(`title.ilike.%${safe}%,description.ilike.%${safe}%`)
       }
       if (category && category !== 'all') {
         query = query.eq('category', category)

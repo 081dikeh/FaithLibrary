@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Search, Music2, ArrowRight, X, Clock, Hash } from 'lucide-react'
 import { ALL_TAGS } from '@/lib/categories'
+import { sanitizeOrFilterInput } from '@/lib/searchFilter'
 import Link from 'next/link'
 
 interface Result {
@@ -52,11 +53,12 @@ export function CommandSearch() {
     if (!query.trim()) { setResults([]); return }
     const timer = setTimeout(async () => {
       setLoading(true)
+      const safe = sanitizeOrFilterInput(query)
       const { data } = await supabase
         .from('files')
         .select('id, title, composer, tags')
         .eq('is_public', true)
-        .or(`title.ilike.%${query}%,composer.ilike.%${query}%,arranger.ilike.%${query}%`)
+        .or(`title.ilike.%${safe}%,composer.ilike.%${safe}%,arranger.ilike.%${safe}%`)
         .limit(6)
       setResults(data ?? [])
       setLoading(false)

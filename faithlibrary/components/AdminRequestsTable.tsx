@@ -18,19 +18,30 @@ export function AdminRequestsTable({ requests: initial }: AdminRequestsTableProp
     setLoading(req.id)
 
     // Mark fulfilled
-    await supabase
+    const { error: statusError } = await supabase
       .from('requests')
       .update({ status: 'fulfilled' })
       .eq('id', req.id)
 
-    // Notify requester
-    await supabase.from('notifications').insert({
+    if (statusError) {
+      alert(`Could not mark request as fulfilled: ${statusError.message}`)
+      setLoading(null)
+      return
+    }
+
+    // Notify requester — best-effort. The status update above already
+    // succeeded, so a notification failure shouldn't roll that back or
+    // block the admin from seeing it marked fulfilled; just surface it.
+    const { error: notifyError } = await supabase.from('notifications').insert({
       user_id: req.user_id,
       type:    'request_fulfilled',
       title:   'Your score request has been fulfilled!',
       body:    `"${req.title}" is now available in the library.`,
       link:    '/',
     })
+    if (notifyError) {
+      alert(`Marked fulfilled, but couldn't notify the requester: ${notifyError.message}`)
+    }
 
     setRequests(prev =>
       prev.map(r => r.id === req.id ? { ...r, status: 'fulfilled' } : r)

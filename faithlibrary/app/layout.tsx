@@ -4,8 +4,9 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { MobileNav } from '@/components/MobileNav'
 import { CommandSearch } from '@/components/CommandSearch'
+import { SITE_URL } from '@/lib/site'
 
-const BASE_URL = 'https://faith-library.vercel.app'
+const BASE_URL = SITE_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),

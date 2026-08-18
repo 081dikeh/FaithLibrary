@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { TagDropdown } from '@/components/TagDropdown'
+import { LICENSE_OPTIONS, isValidLicenseStatus, type LicenseStatus } from '@/lib/license'
 import {
   Loader2, CheckCircle2, AlertCircle,
   Trash2, Save, Globe, Lock,
@@ -21,6 +22,9 @@ export function EditFileForm({ file }: EditFileFormProps) {
   const [lyrics,       setLyrics]      = useState(file.lyrics ?? '')
   const [tags,        setTags]        = useState<string[]>(file.tags ?? [])
   const [isPublic,    setIsPublic]    = useState(file.is_public)
+  const [licenseStatus, setLicenseStatus] = useState<LicenseStatus>(
+    isValidLicenseStatus(file.license_status) ? file.license_status : 'unknown'
+  )
   const [saving,      setSaving]      = useState(false)
   const [deleting,    setDeleting]    = useState(false)
   const [confirmDel,  setConfirmDel]  = useState(false)
@@ -42,6 +46,7 @@ export function EditFileForm({ file }: EditFileFormProps) {
         is_public:   isPublic,
         lyrics:        lyrics.trim() || null,
         lyrics_source: lyrics.trim() ? 'manual' : null,
+        license_status: licenseStatus,
       })
       .eq('id', file.id)
 
@@ -118,6 +123,24 @@ export function EditFileForm({ file }: EditFileFormProps) {
           onChange={setTags}
           placeholder="Select categories…"
         />
+      </div>
+
+      {/* Copyright / license status */}
+      <div>
+        <label className="label">Copyright Status</label>
+        <select
+          value={licenseStatus}
+          onChange={e => setLicenseStatus(e.target.value as LicenseStatus)}
+          className="input"
+          style={{ cursor: 'pointer' }}
+        >
+          {LICENSE_OPTIONS.map(opt => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        <p className="mt-1.5 text-xs text-[#9E8070]">
+          {LICENSE_OPTIONS.find(o => o.value === licenseStatus)?.hint}
+        </p>
       </div>
 
       {/* Visibility */}

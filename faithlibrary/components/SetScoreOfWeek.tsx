@@ -2,6 +2,7 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { sanitizeOrFilterInput } from '@/lib/searchFilter'
 import { Star, Search, Loader2, CheckCircle2 } from 'lucide-react'
 
 export function SetScoreOfWeek() {
@@ -14,15 +15,17 @@ export function SetScoreOfWeek() {
   const [saving,  setSaving]  = useState(false)
   const [done,    setDone]    = useState(false)
   const [searching, setSearching] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   const search = async () => {
     if (!query.trim()) return
     setSearching(true)
+    const safe = sanitizeOrFilterInput(query)
     const { data } = await supabase
       .from('files')
       .select('id, title, composer, tags')
       .eq('is_public', true)
-      .or(`title.ilike.%${query}%,composer.ilike.%${query}%`)
+      .or(`title.ilike.%${safe}%,composer.ilike.%${safe}%`)
       .limit(6)
     setResults(data ?? [])
     setSearching(false)
@@ -31,13 +34,20 @@ export function SetScoreOfWeek() {
   const save = async () => {
     if (!selected) return
     setSaving(true)
+    setErrorMsg('')
     const { data: { user } } = await supabase.auth.getUser()
 
-    await supabase.from('score_of_week').insert({
+    const { error } = await supabase.from('score_of_week').insert({
       file_id:    selected.id,
       note:       note.trim() || null,
       created_by: user?.id,
     })
+
+    if (error) {
+      setErrorMsg(`Could not set score of the week: ${error.message}`)
+      setSaving(false)
+      return
+    }
 
     setDone(true)
     setSaving(false)
@@ -128,6 +138,10 @@ export function SetScoreOfWeek() {
           ? <><Loader2 size={15} className="animate-spin" /> Saving…</>
           : <><Star size={15} /> Set as Score of the Week</>}
       </button>
+
+      {errorMsg && (
+        <p className="mt-2 text-xs text-red-600">{errorMsg}</p>
+      )}
     </div>
   )
 }

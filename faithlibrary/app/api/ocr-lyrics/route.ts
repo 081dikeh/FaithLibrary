@@ -34,13 +34,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ skipped: true, reason: 'GOOGLE_CLOUD_VISION_API_KEY not configured' })
   }
 
-  let fileId: string, fileUrl: string
+  let fileId: string
   try {
     const body = await request.json()
     fileId = body.fileId
-    fileUrl = body.fileUrl
-    if (!fileId || !fileUrl) {
-      return NextResponse.json({ error: 'fileId and fileUrl are required' }, { status: 400 })
+    if (!fileId) {
+      return NextResponse.json({ error: 'fileId is required' }, { status: 400 })
     }
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
@@ -55,18 +54,38 @@ export async function POST(request: NextRequest) {
     // project doesn't currently have configured.
     const supabase = await createClient()
 
-    // Don't clobber lyrics someone already typed in manually.
-    const { data: existing } = await supabase
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
+    // Look the file up ourselves rather than trusting a client-supplied
+    // fileUrl: without this, any caller — authenticated or not — could
+    // point this route at an arbitrary URL and get it fetched and run
+    // through (billed) Vision OCR, regardless of whether it's even a
+    // FaithLibrary file. Also enforces that only the file's own uploader
+    // can trigger OCR for it, matching how this is actually invoked
+    // (fire-and-forget, right after that same user's own upload).
+    const { data: file, error: fileError } = await supabase
       .from('files')
-      .select('lyrics_source')
+      .select('file_url, user_id, lyrics_source')
       .eq('id', fileId)
       .single()
-    if (existing?.lyrics_source === 'manual') {
+
+    if (fileError || !file) {
+      return NextResponse.json({ error: 'File not found' }, { status: 404 })
+    }
+    if (file.user_id !== user.id) {
+      return NextResponse.json({ error: 'Not authorized to OCR this file' }, { status: 403 })
+    }
+
+    // Don't clobber lyrics someone already typed in manually.
+    if (file.lyrics_source === 'manual') {
       return NextResponse.json({ skipped: true, reason: 'manual lyrics already present' })
     }
 
     // Fetch the PDF and inline it as base64 for the sync Vision endpoint.
-    const pdfRes = await fetch(fileUrl)
+    const pdfRes = await fetch(file.file_url)
     if (!pdfRes.ok) {
       return NextResponse.json({ error: `Could not fetch PDF: ${pdfRes.status}` }, { status: 502 })
     }

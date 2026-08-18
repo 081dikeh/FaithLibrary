@@ -15,7 +15,12 @@ export function AdminUserTable({ users: initialUsers }: AdminUserTableProps) {
 
   const setRole = async (userId: string, role: string) => {
     setSaving(userId)
-    await supabase.from('profiles').update({ role }).eq('id', userId)
+    const { error } = await supabase.from('profiles').update({ role }).eq('id', userId)
+    if (error) {
+      alert(`Could not update role: ${error.message}`)
+      setSaving(null)
+      return
+    }
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, role } : u))
     setSaving(null)
   }

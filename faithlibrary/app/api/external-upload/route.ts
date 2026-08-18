@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient as createServerClient } from '@/lib/supabase/server'
+import { createClient as createSupabaseJsClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { isPdfFile, FILE_TYPE_ERROR_MESSAGE } from '@/lib/validation'
 import { isValidLicenseStatus } from '@/lib/license'
@@ -13,13 +14,30 @@ export async function POST(request: NextRequest) {
     }
     const token = authHeader.replace('Bearer ', '')
 
-    // 2. Verify the token — create a client and set the session
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+    // 2. Verify the token identifies a real user.
+    //    NOTE: this uses the cookie-based server client purely to call
+    //    auth.getUser(token), which is a one-off verification request and
+    //    does NOT attach the token to that client's session. External
+    //    callers (e.g. a notation app) have no browser cookies, so any
+    //    .from()/.storage call made on `authClient` below would run as
+    //    the anon role and get rejected by RLS. We build a second,
+    //    request-scoped client further down that carries the bearer
+    //    token on every request instead, and use THAT for all writes.
+    const authClient = await createServerClient()
+    const { data: { user }, error: authError } = await authClient.auth.getUser(token)
 
     if (authError || !user) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
+
+    // 2b. A client whose every request (storage + postgrest) carries the
+    //     caller's JWT, so RLS policies see the real authenticated user
+    //     instead of anon.
+    const supabase = createSupabaseJsClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
+    )
 
     // 3. Parse the multipart form data
     const formData = await request.formData()
