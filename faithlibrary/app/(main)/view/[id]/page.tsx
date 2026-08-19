@@ -125,7 +125,7 @@ export default async function ViewPage({ params }: ViewPageProps) {
           <main id="main-content" style={{ flex: 1, minWidth: 0 }}>
             <div style={{
               background: '#1E1E1E', borderRadius: 16,
-              overflow: 'hidden', boxShadow: 'var(--shadow-deep)',
+              boxShadow: 'var(--shadow-deep)',
               padding: '20px 16px',
             }}>
               <PDFViewerClient url={f.file_url} />
