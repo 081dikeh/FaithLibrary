@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { TagDropdown } from '@/components/TagDropdown'
 import { LICENSE_OPTIONS, type LicenseStatus } from '@/lib/license'
-import { Upload, X, CheckCircle2, AlertCircle, FileText, Loader2, Globe, Lock, CloudUpload } from 'lucide-react'
+import { isMp3File, AUDIO_TYPE_ERROR_MESSAGE, MAX_AUDIO_BYTES, AUDIO_SIZE_ERROR_MESSAGE } from '@/lib/validation'
+import { Upload, X, CheckCircle2, AlertCircle, FileText, Loader2, Globe, Lock, CloudUpload, Music, Trash2 } from 'lucide-react'
 
 interface FormState {
   title: string; description: string; composer: string
@@ -17,12 +18,16 @@ export function UploadForm() {
   const router   = useRouter()
   const supabase = createClient()
   const fileRef  = useRef<HTMLInputElement>(null)
+  const audioRef = useRef<HTMLInputElement>(null)
 
   const [file,     setFile]     = useState<File | null>(null)
+  const [audioFile, setAudioFile] = useState<File | null>(null)
+  const [audioError, setAudioError] = useState('')
   const [dragging, setDragging] = useState(false)
   const [progress, setProgress] = useState(0)
   const [status,   setStatus]   = useState<'idle'|'uploading'|'success'|'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
+  const [audioWarning, setAudioWarning] = useState('')
   const [form, setForm] = useState<FormState>({
     title: '', description: '', composer: '', arranger: '', voice_parts: '', tags: [], is_public: true, lyrics: '',
     license_status: 'unknown',
@@ -40,9 +45,16 @@ export function UploadForm() {
     if (dropped) acceptFile(dropped)
   }
 
+  const acceptAudioFile = (f: File) => {
+    setAudioError('')
+    if (!isMp3File(f)) { setAudioError(AUDIO_TYPE_ERROR_MESSAGE); return }
+    if (f.size > MAX_AUDIO_BYTES) { setAudioError(AUDIO_SIZE_ERROR_MESSAGE); return }
+    setAudioFile(f)
+  }
+
   const handleUpload = async () => {
     if (!file || !form.title.trim()) return
-    setStatus('uploading'); setProgress(10); setErrorMsg('')
+    setStatus('uploading'); setProgress(10); setErrorMsg(''); setAudioWarning('')
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
@@ -69,14 +81,36 @@ export function UploadForm() {
           }
         }
       } catch { /* thumbnail is optional */ }
-      setProgress(88)
+      setProgress(85)
+
+      let audioUrl: string | null = null
+      let hadAudioWarning = false
+      if (audioFile) {
+        const audioPath = `${user.id}/audio/${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`
+        const { error: audioErr } = await supabase.storage
+          .from('faithlibrary-files')
+          .upload(audioPath, audioFile, { contentType: 'audio/mpeg', cacheControl: '3600' })
+        // Audio is optional — don't fail the whole upload over it, but do
+        // surface it, since silently dropping a file someone chose to
+        // attach is exactly the "silent failure" pattern we've been
+        // fixing everywhere else in this app.
+        if (audioErr) {
+          hadAudioWarning = true
+          setAudioWarning(`The score uploaded fine, but the audio file failed to upload: ${audioErr.message}. You can add it later from the edit page.`)
+        } else {
+          const { data: { publicUrl: aUrl } } = supabase.storage.from('faithlibrary-files').getPublicUrl(audioPath)
+          audioUrl = aUrl
+        }
+      }
+
+      setProgress(90)
       const { data: inserted, error: dbErr } = await supabase.from('files').insert({
         user_id: user.id, title: form.title.trim(), description: form.description.trim() || null,
         composer: form.composer.trim() || null, arranger: form.arranger.trim() || null,
         voice_parts: form.voice_parts.trim() || null, category: form.tags[0] ?? 'General',
         tags: form.tags, is_public: form.is_public, file_url: publicUrl, thumbnail_url: thumbnailUrl,
         lyrics: form.lyrics.trim() || null, lyrics_source: form.lyrics.trim() ? 'manual' : null,
-        license_status: form.license_status,
+        license_status: form.license_status, audio_url: audioUrl,
       }).select('id').single()
       if (dbErr) throw new Error(dbErr.message + (dbErr.details ? ' — ' + dbErr.details : '') + (dbErr.hint ? ' — Hint: ' + dbErr.hint : ''))
 
@@ -92,7 +126,7 @@ export function UploadForm() {
       }
 
       setProgress(100); setStatus('success')
-      setTimeout(() => router.push('/dashboard'), 1400)
+      setTimeout(() => router.push('/dashboard'), hadAudioWarning ? 3200 : 1400)
     } catch (err: any) {
       setErrorMsg(err.message ?? 'Upload failed. Please try again.')
       setStatus('error'); setProgress(0)
@@ -197,6 +231,67 @@ export function UploadForm() {
             </div>
           </>
         )}
+      </div>
+
+      {/* ── Audio recording (optional) ── */}
+      <div>
+        <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: '#5D4037', marginBottom: 6 }}>
+          Audio Recording <span style={{ color: '#9E8070', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optional)</span>
+        </label>
+        <input ref={audioRef} type="file" style={{ display: 'none' }}
+          accept=".mp3,audio/mpeg"
+          onChange={e => e.target.files?.[0] && acceptAudioFile(e.target.files[0])} />
+
+        {audioFile ? (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            border: '1.5px solid #E0D8D4', borderRadius: 12, padding: '12px 14px',
+            background: 'rgba(93,64,55,0.04)',
+          }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+              background: 'rgba(93,64,55,0.1)', color: '#5D4037',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}><Music size={16} /></div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontWeight: 700, color: '#3E2723', fontSize: '0.85rem', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {audioFile.name}
+              </p>
+              <p style={{ fontSize: '0.75rem', color: '#8D6E63', fontFamily: 'var(--font-ui)' }}>
+                {(audioFile.size / 1024 / 1024).toFixed(2)} MB
+              </p>
+            </div>
+            <button
+              onClick={() => { setAudioFile(null); setAudioError('') }}
+              style={{
+                width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: '#F2EDE9', border: '1px solid #D7CCC8',
+                color: '#8D6E63', cursor: 'pointer',
+              }}
+            ><Trash2 size={13} /></button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => audioRef.current?.click()}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+              border: '1.5px dashed #C4B5AF', borderRadius: 12, padding: '12px 14px',
+              background: '#FAFAF9', cursor: 'pointer', textAlign: 'left',
+              color: '#8D6E63', fontFamily: 'var(--font-ui)', fontSize: '0.85rem',
+            }}
+          >
+            <Music size={16} />
+            Attach an MP3 recording of this piece
+          </button>
+        )}
+        {audioError && (
+          <p style={{ marginTop: 6, fontSize: '0.75rem', color: '#DC2626' }}>{audioError}</p>
+        )}
+        <p style={{ marginTop: 6, fontSize: '0.75rem', color: '#9E8070', fontFamily: 'var(--font-ui)' }}>
+          Let people hear a reference recording alongside the score. MP3 only, up to 20MB.
+        </p>
       </div>
 
       {/* ── Title ── */}
@@ -353,6 +448,15 @@ export function UploadForm() {
         }}>
           <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
           Uploaded successfully! Redirecting to your dashboard…
+        </div>
+      )}
+      {audioWarning && (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 10,
+          padding: '13px 16px', borderRadius: 12,
+          background: '#FFFBEB', border: '1.5px solid #FDE68A', color: '#92400E', fontSize: '0.875rem',
+        }}>
+          <AlertCircle size={16} style={{ flexShrink: 0, marginTop: 1 }} /> {audioWarning}
         </div>
       )}
       {status === 'error' && (

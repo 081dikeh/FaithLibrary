@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { TagDropdown } from '@/components/TagDropdown'
 import { LICENSE_OPTIONS, isValidLicenseStatus, type LicenseStatus } from '@/lib/license'
+import { isMp3File, AUDIO_TYPE_ERROR_MESSAGE, MAX_AUDIO_BYTES, AUDIO_SIZE_ERROR_MESSAGE } from '@/lib/validation'
 import {
   Loader2, CheckCircle2, AlertCircle,
-  Trash2, Save, Globe, Lock,
+  Trash2, Save, Globe, Lock, Music, Play,
 } from 'lucide-react'
 import type { FileRecord } from '@/lib/types'
 
@@ -25,16 +26,46 @@ export function EditFileForm({ file }: EditFileFormProps) {
   const [licenseStatus, setLicenseStatus] = useState<LicenseStatus>(
     isValidLicenseStatus(file.license_status) ? file.license_status : 'unknown'
   )
+  const [audioFile,        setAudioFile]        = useState<File | null>(null)
+  const [audioError,       setAudioError]       = useState('')
+  const [removeAudio,      setRemoveAudio]      = useState(false)
   const [saving,      setSaving]      = useState(false)
   const [deleting,    setDeleting]    = useState(false)
   const [confirmDel,  setConfirmDel]  = useState(false)
   const [status,      setStatus]      = useState<'idle'|'success'|'error'>('idle')
   const [errorMsg,    setErrorMsg]    = useState('')
 
+  const acceptAudioFile = (f: File) => {
+    setAudioError('')
+    if (!isMp3File(f)) { setAudioError(AUDIO_TYPE_ERROR_MESSAGE); return }
+    if (f.size > MAX_AUDIO_BYTES) { setAudioError(AUDIO_SIZE_ERROR_MESSAGE); return }
+    setAudioFile(f)
+    setRemoveAudio(false)
+  }
+
   /* ── Save ── */
   const handleSave = async () => {
     if (!title.trim()) return
     setSaving(true); setStatus('idle')
+
+    let audioUrl: string | null | undefined = undefined // undefined = leave unchanged
+    if (removeAudio) {
+      audioUrl = null
+    } else if (audioFile) {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { setErrorMsg('Not authenticated'); setStatus('error'); setSaving(false); return }
+
+      const audioPath = `${user.id}/audio/${Date.now()}-${Math.random().toString(36).slice(2)}.mp3`
+      const { error: audioErr } = await supabase.storage
+        .from('faithlibrary-files')
+        .upload(audioPath, audioFile, { contentType: 'audio/mpeg', cacheControl: '3600' })
+      if (audioErr) {
+        setErrorMsg(`Could not upload audio: ${audioErr.message}`)
+        setStatus('error'); setSaving(false); return
+      }
+      const { data: { publicUrl } } = supabase.storage.from('faithlibrary-files').getPublicUrl(audioPath)
+      audioUrl = publicUrl
+    }
 
     const { error } = await supabase
       .from('files')
@@ -47,6 +78,7 @@ export function EditFileForm({ file }: EditFileFormProps) {
         lyrics:        lyrics.trim() || null,
         lyrics_source: lyrics.trim() ? 'manual' : null,
         license_status: licenseStatus,
+        ...(audioUrl !== undefined ? { audio_url: audioUrl } : {}),
       })
       .eq('id', file.id)
 
@@ -61,6 +93,12 @@ export function EditFileForm({ file }: EditFileFormProps) {
     const storagePath = file.file_url.split('/faithlibrary-files/')[1]
     if (storagePath) {
       await supabase.storage.from('faithlibrary-files').remove([storagePath])
+    }
+    if (file.audio_url) {
+      const audioPath = file.audio_url.split('/faithlibrary-files/')[1]
+      if (audioPath) {
+        await supabase.storage.from('faithlibrary-files').remove([audioPath])
+      }
     }
     const { error } = await supabase.from('files').delete().eq('id', file.id)
     if (error) {
@@ -113,6 +151,62 @@ export function EditFileForm({ file }: EditFileFormProps) {
           className="input resize-none"
           placeholder="Paste the lyrics so people can find this score by a line they remember."
         />
+      </div>
+
+      {/* Audio recording */}
+      <div>
+        <label className="label">
+          Audio Recording <span style={{ fontWeight: 500, color: '#9E8070' }}>(optional)</span>
+        </label>
+
+        {audioFile ? (
+          <div className="flex items-center gap-3 border border-[#E0D8D4] rounded-xl px-3.5 py-3 bg-[#5D4037]/5">
+            <div className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center bg-[#5D4037]/10 text-[#5D4037]">
+              <Music size={16} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-[#3E2723] truncate">{audioFile.name}</p>
+              <p className="text-xs text-[#8D6E63]">{(audioFile.size / 1024 / 1024).toFixed(2)} MB · will replace current audio on save</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAudioFile(null)}
+              className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center bg-[#F2EDE9] border border-[#D7CCC8] text-[#8D6E63]"
+            ><Trash2 size={13} /></button>
+          </div>
+        ) : file.audio_url && !removeAudio ? (
+          <div className="flex items-center gap-3 border border-[#E0D8D4] rounded-xl px-3.5 py-3">
+            <div className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center bg-[#EFE9E7] text-[#8D6E63]">
+              <Play size={14} />
+            </div>
+            <audio controls src={file.audio_url} className="flex-1 min-w-0 h-9" style={{ maxWidth: '100%' }} />
+            <label className="btn btn-secondary btn-sm cursor-pointer flex-shrink-0" style={{ padding: '0.35rem 0.7rem' }}>
+              Replace
+              <input type="file" accept=".mp3,audio/mpeg" className="hidden"
+                onChange={e => e.target.files?.[0] && acceptAudioFile(e.target.files[0])} />
+            </label>
+            <button
+              type="button"
+              onClick={() => setRemoveAudio(true)}
+              className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center bg-[#F2EDE9] border border-[#D7CCC8] text-[#8D6E63]"
+              title="Remove audio"
+            ><Trash2 size={13} /></button>
+          </div>
+        ) : (
+          <label className="flex items-center gap-2.5 border border-dashed border-[#C4B5AF] rounded-xl px-3.5 py-3 text-sm text-[#8D6E63] cursor-pointer bg-[#FAFAF9]">
+            <Music size={16} />
+            Attach an MP3 recording of this piece
+            <input type="file" accept=".mp3,audio/mpeg" className="hidden"
+              onChange={e => e.target.files?.[0] && acceptAudioFile(e.target.files[0])} />
+          </label>
+        )}
+        {removeAudio && (
+          <p className="mt-1.5 text-xs text-[#8D6E63]">
+            Audio will be removed when you save.{' '}
+            <button type="button" onClick={() => setRemoveAudio(false)} className="underline">Undo</button>
+          </p>
+        )}
+        {audioError && <p className="mt-1.5 text-xs text-red-600">{audioError}</p>}
       </div>
 
       {/* Tags */}

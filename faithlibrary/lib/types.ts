@@ -14,6 +14,7 @@ export interface FileRecord {
   is_public:      boolean
   file_url:       string
   thumbnail_url?: string | null
+  audio_url?:     string | null
   lyrics?:        string | null
   lyrics_source?: 'manual' | 'ocr' | null
   license_status?: LicenseStatus | null

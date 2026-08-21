@@ -23,3 +23,18 @@ export function isPdfFile(file: { name: string; type?: string }): boolean {
 }
 
 export const FILE_TYPE_ERROR_MESSAGE = 'Only PDF files are accepted right now.'
+
+// ── Audio (optional, alongside a score's PDF) ────────────────────────────
+export const ACCEPTED_AUDIO_EXTENSION = '.mp3'
+export const ACCEPTED_AUDIO_MIME_TYPES = ['audio/mpeg', 'audio/mp3']
+export const MAX_AUDIO_BYTES = 20 * 1024 * 1024 // 20MB — generous for a single mp3 recording
+
+export function isMp3File(file: { name: string; type?: string }): boolean {
+  const hasMp3Extension = file.name.toLowerCase().endsWith(ACCEPTED_AUDIO_EXTENSION)
+  const hasMp3MimeType = !file.type || ACCEPTED_AUDIO_MIME_TYPES.includes(file.type)
+  return hasMp3Extension && hasMp3MimeType
+}
+
+export const AUDIO_TYPE_ERROR_MESSAGE = 'Only MP3 files are accepted for audio.'
+export const AUDIO_SIZE_ERROR_MESSAGE = 'Audio files must be 20MB or smaller.'
+

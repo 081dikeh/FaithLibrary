@@ -11,7 +11,7 @@ import { AddToCollectionButton } from '@/components/AddToCollectionButton'
 import { RelatedScores } from '@/components/RelatedScores'
 import { ViewTracker } from '@/components/ViewTracker'
 import { CommentSection } from '@/components/CommentSection'
-import { Download, Calendar, Tag, Music2, ArrowLeft, Globe, Lock, Printer, User, Scale } from 'lucide-react'
+import { Download, Calendar, Tag, Music2, ArrowLeft, Globe, Lock, Printer, User, Scale, Headphones } from 'lucide-react'
 import { getLicenseLabel } from '@/lib/license'
 import type { FileRecord } from '@/lib/types'
 import { SITE_URL } from '@/lib/site'
@@ -134,6 +134,23 @@ export default async function ViewPage({ params }: ViewPageProps) {
 
           {/* Sidebar */}
           <aside style={{ width: 288, flexShrink: 0 }} className="view-sidebar">
+
+            {/* Audio recording */}
+            {f.audio_url && (
+              <div style={{
+                background: 'var(--surface)', borderRadius: 14,
+                border: '1px solid var(--border)', boxShadow: 'var(--shadow-card)',
+                padding: '14px 16px', marginBottom: 12,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <Headphones size={15} style={{ color: 'var(--walnut)' }} />
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--walnut)', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
+                    Listen
+                  </span>
+                </div>
+                <audio controls src={f.audio_url} style={{ width: '100%', height: 36 }} />
+              </div>
+            )}
 
             {/* Uploader card */}
             <div style={{
