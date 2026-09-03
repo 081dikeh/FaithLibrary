@@ -24,6 +24,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rateLimit'
 
 const VISION_ENDPOINT = 'https://vision.googleapis.com/v1/files:annotate'
 const MAX_LYRICS_CHARS = 4000
@@ -57,6 +58,18 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    }
+
+    // Rate-limit per user before spending any Vision API quota. This runs
+    // fire-and-forget after every upload, so a script hammering the upload
+    // flow (or retrying a failing OCR call in a loop) would otherwise burn
+    // through paid quota just as easily as a direct attack on this route.
+    const ocrLimit = await checkRateLimit(supabase, user.id, RATE_LIMITS.OCR_LYRICS)
+    if (!ocrLimit.allowed) {
+      return NextResponse.json(
+        { error: 'OCR rate limit exceeded. Please try again later.' },
+        { status: 429 }
+      )
     }
 
     // Look the file up ourselves rather than trusting a client-supplied

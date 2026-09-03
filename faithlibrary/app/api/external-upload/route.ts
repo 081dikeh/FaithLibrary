@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { isPdfFile, FILE_TYPE_ERROR_MESSAGE } from '@/lib/validation'
 import { isValidLicenseStatus } from '@/lib/license'
 import { notifyMatchingRequesters } from '@/lib/matchRequests'
+import { checkRateLimit, RATE_LIMITS } from '@/lib/rateLimit'
 
 // This endpoint is meant to be called cross-origin, from whatever origin
 // external notation apps (FaithScore, and possibly others later) run on —
@@ -61,6 +62,19 @@ export async function POST(request: NextRequest) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       { global: { headers: { Authorization: `Bearer ${token}` } } }
     )
+
+    // 2c. Rate-limit per authenticated user. This is the endpoint that
+    //     writes real storage + DB rows on behalf of an external caller
+    //     (FaithScore today, possibly other notation apps later), so it's
+    //     the one most worth capping — a compromised or buggy caller could
+    //     otherwise hammer storage quota indefinitely.
+    const uploadLimit = await checkRateLimit(supabase, user.id, RATE_LIMITS.EXTERNAL_UPLOAD)
+    if (!uploadLimit.allowed) {
+      return json(
+        { error: 'Upload rate limit exceeded. Please try again later.' },
+        { status: 429 }
+      )
+    }
 
     // 3. Parse the multipart form data
     const formData = await request.formData()
