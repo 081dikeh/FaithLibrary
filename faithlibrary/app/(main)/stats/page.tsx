@@ -1,4 +1,5 @@
 // app/(main)/stats/page.tsx
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
@@ -9,6 +10,11 @@ import {
 } from 'lucide-react'
 
 export const revalidate = 3600 // revalidate every hour
+
+export const metadata: Metadata = {
+  title: 'Library Stats',
+  description: 'Live totals for FaithLibrary — scores, contributors, and downloads across the catalog.',
+}
 
 export default async function StatsPage() {
   const supabase = await createClient()

@@ -27,13 +27,13 @@ export default async function EditPage({ params }: EditPageProps) {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main id="main-content" className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">
           <h1 className="font-display text-3xl font-bold text-[#3E2723]">Edit Score</h1>
           <p className="text-[#8D6E63] mt-1 text-sm">Update your score's details below.</p>
         </div>
         <EditFileForm file={file} />
-      </div>
+      </main>
     </div>
   )
 }

@@ -100,7 +100,8 @@ export function NotificationBell() {
     <div ref={containerRef} className="relative">
       <button onClick={() => setOpen(v => !v)}
         className="relative btn-icon text-[#D7CCC8] hover:text-white hover:bg-[#5D4037]/60"
-        style={{ borderRadius: '10px', padding: '0.45rem' }} aria-label="Notifications">
+        style={{ borderRadius: '10px', padding: '0.45rem' }}
+        aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}>
         <Bell size={17} />
         {unread > 0 && (
           <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-red-500 text-white text-[0.6rem] font-bold flex items-center justify-center leading-none">

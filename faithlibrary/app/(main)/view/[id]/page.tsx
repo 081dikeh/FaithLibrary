@@ -60,6 +60,29 @@ export default async function ViewPage({ params }: ViewPageProps) {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bone)' }} className="grain">
+      {/* Structured data so search engines can render this as a rich result
+          (composer, upload date, license) rather than a bare blue link. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'MusicComposition',
+            name: f.title,
+            composer: f.composer ? { '@type': 'Person', name: f.composer } : undefined,
+            lyricist: f.arranger ? { '@type': 'Person', name: f.arranger } : undefined,
+            musicCompositionForm: f.voice_parts || undefined,
+            genre: f.category || undefined,
+            keywords: f.tags?.length ? f.tags.join(', ') : undefined,
+            dateCreated: f.created_at,
+            url: `${BASE_URL}/view/${f.id}`,
+            provider: { '@type': 'Organization', name: 'FaithLibrary', url: BASE_URL },
+            creator: f.profiles?.full_name
+              ? { '@type': 'Person', name: f.profiles.full_name }
+              : undefined,
+          }),
+        }}
+      />
       <Navbar />
       <ViewTracker fileId={f.id} />
 

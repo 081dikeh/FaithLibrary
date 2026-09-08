@@ -10,7 +10,7 @@ export default function PrivacyPage() {
     <div className="min-h-screen grain bg-[#F5F5F5]">
       <Navbar />
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
+      <main id="main-content" className="max-w-3xl mx-auto px-4 sm:px-6 py-12">
         <Link href="/"
           className="inline-flex items-center gap-1.5 text-sm text-[#8D6E63]
                      hover:text-[#5D4037] transition-colors mb-8"
@@ -93,7 +93,7 @@ export default function PrivacyPage() {
             </Section>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

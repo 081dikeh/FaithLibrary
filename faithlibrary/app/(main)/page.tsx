@@ -509,7 +509,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
         </div>
       )}
 
-      <main id="library" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         {showHero && (
           <div className="flex items-center justify-between gap-4 mb-8">
             <h2 className="font-display text-lg font-semibold text-[#3E2723]">Latest Additions</h2>

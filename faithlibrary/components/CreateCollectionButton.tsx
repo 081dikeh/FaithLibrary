@@ -67,14 +67,15 @@ export function CreateCollectionButton() {
 
           {/* Panel */}
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md
-                          animate-scale-in overflow-hidden">
+                          animate-scale-in overflow-hidden"
+            role="dialog" aria-modal="true" aria-labelledby="new-collection-title">
             {/* Header */}
             <div className="px-6 py-4 border-b border-[#EFE9E7] flex items-center justify-between">
-              <h2 className="font-display text-lg font-semibold text-[#3E2723]">
+              <h2 id="new-collection-title" className="font-display text-lg font-semibold text-[#3E2723]">
                 New Collection
               </h2>
               <button onClick={() => setOpen(false)}
-                className="btn-icon text-[#8D6E63]" style={{ padding: '0.35rem' }}>
+                className="btn-icon text-[#8D6E63]" style={{ padding: '0.35rem' }} aria-label="Close">
                 <X size={16} />
               </button>
             </div>

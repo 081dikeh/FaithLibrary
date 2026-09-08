@@ -448,6 +448,7 @@ export function BulkUploadForm() {
                 {item.status !== 'uploading' && item.status !== 'done' && (
                   <button
                     onClick={() => setQueue(prev => prev.filter(i => i.id !== item.id))}
+                    aria-label={`Remove ${item.file.name} from queue`}
                     style={{
                       width: 24, height: 24, borderRadius: 6, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',

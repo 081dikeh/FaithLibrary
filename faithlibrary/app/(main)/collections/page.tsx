@@ -1,11 +1,21 @@
 // app/(main)/collections/page.tsx
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/Navbar'
 import { CollectionCard } from '@/components/CollectionCard'
 import { CreateCollectionButton } from '@/components/CreateCollectionButton'
 import { FolderOpen, Plus } from 'lucide-react'
+
+// This is the signed-in user's own collections list (redirects to /login for
+// anyone else), so there's nothing here worth a search engine indexing —
+// unlike an individual shared collection at /collections/[id], which can be
+// public and does get its own indexable metadata.
+export const metadata: Metadata = {
+  title: 'My Collections',
+  robots: { index: false, follow: true },
+}
 
 export default async function CollectionsPage() {
   const supabase = await createClient()

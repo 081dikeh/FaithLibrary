@@ -1,9 +1,15 @@
 // app/(main)/requests/page.tsx
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/Navbar'
 import { RequestList } from '@/components/RequestList'
 import { NewRequestButton } from '@/components/NewRequestButton'
 import { MessageSquarePlus } from 'lucide-react'
+
+export const metadata: Metadata = {
+  title: 'Score Requests',
+  description: 'Can\'t find a piece in the library? Browse open requests or ask the community to help track it down.',
+}
 
 export default async function RequestsPage() {
   const supabase = await createClient()

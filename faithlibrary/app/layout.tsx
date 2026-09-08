@@ -42,6 +42,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className="grain min-h-screen">
+        {/* Site-wide identity for search engines — separate from the
+            per-score MusicComposition data added on /view/[id]. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'FaithLibrary',
+              description:
+                'A free digital library for choral music, hymns, and sacred scores.',
+              url: BASE_URL,
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: `${BASE_URL}/browse?q={search_term_string}`,
+                'query-input': 'required name=search_term_string',
+              },
+            }),
+          }}
+        />
         <a href="#main-content" className="skip-link">Skip to content</a>
         {children}
         <MobileNav />

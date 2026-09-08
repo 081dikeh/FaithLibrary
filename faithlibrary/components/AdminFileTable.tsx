@@ -133,7 +133,8 @@ export function AdminFileTable({ files: initialFiles, isAdmin }: AdminFileTableP
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-1 justify-end">
                     <Link href={`/view/${file.id}`} target="_blank"
-                      className="btn-icon text-[#8D6E63]" style={{ padding: '0.3rem' }}>
+                      className="btn-icon text-[#8D6E63]" style={{ padding: '0.3rem' }}
+                      aria-label={`View "${file.title}"`}>
                       <ExternalLink size={13} />
                     </Link>
                     <button
@@ -141,6 +142,7 @@ export function AdminFileTable({ files: initialFiles, isAdmin }: AdminFileTableP
                       className={`btn-icon ${file.is_featured ? 'text-amber-400' : 'text-[#D7CCC8]'}`}
                       style={{ padding: '0.3rem' }}
                       title={file.is_featured ? 'Unfeature' : 'Feature'}
+                      aria-label={file.is_featured ? `Unfeature "${file.title}"` : `Feature "${file.title}"`}
                     >
                       {file.is_featured ? <Star size={13} fill="currentColor" /> : <StarOff size={13} />}
                     </button>
@@ -149,6 +151,7 @@ export function AdminFileTable({ files: initialFiles, isAdmin }: AdminFileTableP
                       className="btn-icon text-[#8D6E63]"
                       style={{ padding: '0.3rem' }}
                       title={file.is_public ? 'Make private' : 'Make public'}
+                      aria-label={file.is_public ? `Make "${file.title}" private` : `Make "${file.title}" public`}
                     >
                       {file.is_public ? <Eye size={13} /> : <EyeOff size={13} />}
                     </button>
@@ -158,6 +161,7 @@ export function AdminFileTable({ files: initialFiles, isAdmin }: AdminFileTableP
                         className="btn-icon text-red-400 hover:text-red-600"
                         style={{ padding: '0.3rem' }}
                         title="Delete permanently"
+                        aria-label={`Delete "${file.title}" permanently`}
                       >
                         <Trash2 size={13} />
                       </button>

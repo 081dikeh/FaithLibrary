@@ -123,7 +123,7 @@ export function CommandSearch() {
           />
           {query && (
             <button onClick={() => setQuery('')}
-              className="btn-icon text-[#D7CCC8]" style={{ padding: '0.2rem' }}>
+              className="btn-icon text-[#D7CCC8]" style={{ padding: '0.2rem' }} aria-label="Clear search">
               <X size={14} />
             </button>
           )}

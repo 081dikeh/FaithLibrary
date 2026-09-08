@@ -1,6 +1,7 @@
 // app/(main)/collections/[id]/page.tsx
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
@@ -13,6 +14,24 @@ const PAGE_SIZE = 10
 interface CollectionPageProps {
   params: Promise<{ id: string }>
   searchParams: Promise<{ page?: string }>
+}
+
+export async function generateMetadata({ params }: CollectionPageProps): Promise<Metadata> {
+  const { id } = await params
+  const supabase = await createClient()
+  const { data: collection } = await supabase
+    .from('collections').select('title, description').eq('id', id).single()
+
+  if (!collection) return { title: 'Collection' }
+
+  return {
+    title: collection.title,
+    description: collection.description || `A collection of scores on FaithLibrary: ${collection.title}.`,
+    openGraph: {
+      title: collection.title,
+      description: collection.description || `A collection of scores on FaithLibrary: ${collection.title}.`,
+    },
+  }
 }
 
 export default async function CollectionPage({ params, searchParams }: CollectionPageProps) {
@@ -118,4 +137,4 @@ export default async function CollectionPage({ params, searchParams }: Collectio
       <Footer />
     </div>
   )
-}               
+}

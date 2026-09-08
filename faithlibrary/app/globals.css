@@ -36,6 +36,45 @@ h1,h2,h3,h4  { font-family: var(--font-display); line-height: 1.2; }
 .logo-on-dark  { filter: brightness(0) invert(1); }
 .logo-on-light { filter: none; }
 
+/* ── Accessibility: skip link ──
+   Referenced from app/layout.tsx as `<a href="#main-content" className="skip-link">`
+   but had no matching styles, so it either rendered as an ugly permanent
+   link at the top of every page or (depending on the browser) was
+   invisible outright. Standard pattern: hidden off-screen until it
+   receives keyboard focus, then it becomes a visible, unmissable button. */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 1rem;
+  z-index: 100;
+  background: var(--roasted);
+  color: var(--bone);
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+.skip-link:focus {
+  top: 1rem;
+  outline: 2px solid var(--bone);
+  outline-offset: 2px;
+}
+
+/* ── Accessibility: visible keyboard focus ──
+   .btn/.btn-icon set outline:none for a cleaner mouse-click appearance but
+   never supplied a replacement, so keyboard users lost all focus feedback
+   on every button in the app (WCAG 2.4.7). :focus-visible keeps mouse
+   clicks unaffected and only shows the ring for keyboard/assistive nav. */
+.btn:focus-visible,
+.btn-icon:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--walnut);
+  outline-offset: 2px;
+}
+
 ::-webkit-scrollbar       { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--sand-light); }
 ::-webkit-scrollbar-thumb { background: var(--ochre); border-radius: 99px; }

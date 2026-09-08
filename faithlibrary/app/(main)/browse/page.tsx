@@ -1,6 +1,7 @@
 // app/(main)/browse/page.tsx
 import { Suspense } from 'react'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
@@ -9,6 +10,13 @@ import { BrowseControls } from '@/components/BrowseControls'
 import { Pagination } from '@/components/Pagination'
 import { Home, Sparkles } from 'lucide-react'
 import type { FileRecord } from '@/lib/types'
+
+export const metadata: Metadata = {
+  title: 'Browse Scores',
+  description:
+    'Search and filter the full FaithLibrary catalog of choral music, hymns, ' +
+    'and sacred scores by category, liturgical season, or voicing.',
+}
 
 interface BrowseProps {
   searchParams: Promise<{
@@ -165,7 +173,7 @@ export default async function BrowsePage({ searchParams }: BrowseProps) {
         </div>
       </div>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+      <main id="main-content" className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         <Suspense
           key={`${query ?? ''}-${category ?? ''}-${season ?? ''}-${voicing ?? ''}-${sort}-${page}`}
           fallback={

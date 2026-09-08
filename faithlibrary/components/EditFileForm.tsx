@@ -171,6 +171,7 @@ export function EditFileForm({ file }: EditFileFormProps) {
             <button
               type="button"
               onClick={() => setAudioFile(null)}
+              aria-label="Remove selected audio file"
               className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center bg-[#F2EDE9] border border-[#D7CCC8] text-[#8D6E63]"
             ><Trash2 size={13} /></button>
           </div>
@@ -189,7 +190,7 @@ export function EditFileForm({ file }: EditFileFormProps) {
               type="button"
               onClick={() => setRemoveAudio(true)}
               className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center bg-[#F2EDE9] border border-[#D7CCC8] text-[#8D6E63]"
-              title="Remove audio"
+              title="Remove audio" aria-label="Remove audio"
             ><Trash2 size={13} /></button>
           </div>
         ) : (

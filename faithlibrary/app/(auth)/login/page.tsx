@@ -53,7 +53,7 @@ export default function LoginPage() {
                       focus:border-[#5D4037]`
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex text-center">
+    <main id="main-content" className="min-h-screen bg-[#F5F5F5] flex text-center">
 
       {/* ── Left panel — branding ── */}
       <div className="hidden lg:flex lg:w-1/2 bg-[#3E2723] flex-col items-center
@@ -186,6 +186,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPass(v => !v)}
+                  aria-label={showPass ? 'Hide password' : 'Show password'}
                   className="absolute right-3 top-1/2 -translate-y-1/2
                              text-[#8D6E63] hover:text-[#5D4037] transition-colors"
                 >
@@ -217,6 +218,6 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   )
 }

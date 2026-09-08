@@ -56,7 +56,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center px-6 py-12">
+    <main id="main-content" className="min-h-screen bg-[#F5F5F5] flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-md">
 
         {/* Logo */}
@@ -114,6 +114,7 @@ export default function ResetPasswordPage() {
                       className="input pr-11"
                     />
                     <button type="button" onClick={() => setShowPass(v => !v)}
+                      aria-label={showPass ? 'Hide password' : 'Show password'}
                       className="absolute right-3 top-1/2 -translate-y-1/2
                                  text-[#8D6E63] hover:text-[#5D4037] transition-colors">
                       {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -175,6 +176,6 @@ export default function ResetPasswordPage() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   )
 }

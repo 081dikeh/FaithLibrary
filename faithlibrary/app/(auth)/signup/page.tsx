@@ -74,7 +74,7 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center px-6">
+      <main id="main-content" className="min-h-screen bg-[#F5F5F5] flex items-center justify-center px-6">
         <div className="w-full max-w-md text-center">
           <div className="w-20 h-20 rounded-full bg-green-50 border border-green-200
                           flex items-center justify-center mx-auto mb-6">
@@ -93,12 +93,12 @@ export default function SignupPage() {
             Back to login
           </Link>
         </div>
-      </div>
+      </main>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex">
+    <main id="main-content" className="min-h-screen bg-[#F5F5F5] flex">
 
       {/* ── Left panel ── */}
       <div className="hidden lg:flex lg:w-1/2 bg-[#3E2723] flex-col items-center
@@ -249,6 +249,7 @@ export default function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowPass(v => !v)}
+                  aria-label={showPass ? 'Hide password' : 'Show password'}
                   className="absolute right-3 top-1/2 -translate-y-1/2
                              text-[#8D6E63] hover:text-[#5D4037] transition-colors"
                 >
@@ -305,6 +306,6 @@ export default function SignupPage() {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   )
 }

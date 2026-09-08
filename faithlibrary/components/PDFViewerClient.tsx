@@ -148,7 +148,8 @@ export function PDFViewerClient({ url }: { url: string }) {
         <div className="flex items-center gap-1 border-r border-white/10 pr-2 mr-1">
           <button
             onClick={() => setScale(s => Math.max(0.4, +(s - 0.2).toFixed(1)))}
-            className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+            className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            aria-label="Zoom out">
             <ZoomOut size={13} />
           </button>
           <span className="text-xs font-mono w-12 text-center text-white/70">
@@ -156,13 +157,14 @@ export function PDFViewerClient({ url }: { url: string }) {
           </span>
           <button
             onClick={() => setScale(s => Math.min(3.0, +(s + 0.2).toFixed(1)))}
-            className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+            className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+            aria-label="Zoom in">
             <ZoomIn size={13} />
           </button>
           <button
             onClick={() => setScale(1.2)}
             className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center ml-0.5 transition-colors"
-            title="Reset zoom">
+            title="Reset zoom" aria-label="Reset zoom">
             <RotateCcw size={11} />
           </button>
         </div>
@@ -173,7 +175,8 @@ export function PDFViewerClient({ url }: { url: string }) {
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage <= 1}
-              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center disabled:opacity-30 transition-colors">
+              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center disabled:opacity-30 transition-colors"
+              aria-label="Previous page">
               <ChevronLeft size={13} />
             </button>
             <span className="text-xs text-white/70 font-mono px-1">
@@ -182,7 +185,8 @@ export function PDFViewerClient({ url }: { url: string }) {
             <button
               onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))}
               disabled={currentPage >= numPages}
-              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center disabled:opacity-30 transition-colors">
+              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center disabled:opacity-30 transition-colors"
+              aria-label="Next page">
               <ChevronRight size={13} />
             </button>
           </div>

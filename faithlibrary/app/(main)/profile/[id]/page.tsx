@@ -1,5 +1,6 @@
 // app/(main)/profile/[id]/page.tsx
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Footer } from '@/components/Footer'
 import { Navbar } from '@/components/Navbar'
@@ -13,6 +14,20 @@ const PAGE_SIZE = 10
 interface ProfilePageProps {
   params: Promise<{ id: string }>
   searchParams: Promise<{ page?: string }>
+}
+
+export async function generateMetadata({ params }: ProfilePageProps): Promise<Metadata> {
+  const { id } = await params
+  const supabase = await createClient()
+  const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', id).single()
+
+  if (!profile) return { title: 'Profile' }
+
+  const displayName = profile.full_name ?? 'Anonymous Musician'
+  return {
+    title: displayName,
+    description: `Browse public scores contributed by ${displayName} on FaithLibrary.`,
+  }
 }
 
 export default async function ProfilePage({ params, searchParams }: ProfilePageProps) {

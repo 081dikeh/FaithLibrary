@@ -20,6 +20,7 @@ export default async function SettingsPage() {
     return (
         <div style={{ minHeight: '100vh', background: '#F7F4F2' }} className="grain">
             <Navbar />
+            <main id="main-content">
 
             {/* ── Dark hero ── */}
             <div style={{ background: '#1C0E0A', position: 'relative', overflow: 'hidden' }}>
@@ -176,6 +177,7 @@ export default async function SettingsPage() {
                 </div>
 
             </div>
+            </main>
             <Footer />
             <style>{`
                 .settings-reset-link:hover { border-color: #5D4037; background: rgba(93,64,55,0.05); }

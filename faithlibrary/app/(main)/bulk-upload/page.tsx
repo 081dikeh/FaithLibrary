@@ -13,6 +13,7 @@ export default async function BulkUploadPage() {
   return (
     <div className="min-h-screen grain" style={{ background: '#F7F4F2' }}>
       <Navbar />
+      <main id="main-content">
 
       {/* ── Dark hero ── */}
       <div style={{ background: '#1C0E0A', position: 'relative', overflow: 'hidden' }}>
@@ -107,6 +108,7 @@ export default async function BulkUploadPage() {
           .bulk-sidebar { width: 100% !important; }
         }
       `}</style>
+      </main>
     </div>
   )
 }

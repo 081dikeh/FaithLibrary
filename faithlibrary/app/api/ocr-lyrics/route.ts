@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Look th file up ourselves rather than trusting a client-supplied
+    // Look the file up ourselves rather than trusting a client-supplied
     // fileUrl: without this, any caller — authenticated or not — could
     // point this route at an arbitrary URL and get it fetched and run
     // through (billed) Vision OCR, regardless of whether it's even a

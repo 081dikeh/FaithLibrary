@@ -51,14 +51,15 @@ export function NewRequestButton() {
             onClick={() => setOpen(false)} />
 
           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md
-                          animate-scale-in overflow-hidden">
+                          animate-scale-in overflow-hidden"
+            role="dialog" aria-modal="true" aria-labelledby="new-request-title">
             <div className="px-6 py-4 border-b border-[#EFE9E7] flex items-center justify-between">
               <div className="flex items-center gap-2 text-[#3E2723]">
                 <MessageSquarePlus size={16} className="text-[#5D4037]" />
-                <h2 className="font-display text-lg font-semibold">Request a Score</h2>
+                <h2 id="new-request-title" className="font-display text-lg font-semibold">Request a Score</h2>
               </div>
               <button onClick={() => setOpen(false)}
-                className="btn-icon text-[#8D6E63]" style={{ padding: '0.35rem' }}>
+                className="btn-icon text-[#8D6E63]" style={{ padding: '0.35rem' }} aria-label="Close">
                 <X size={16} />
               </button>
             </div>

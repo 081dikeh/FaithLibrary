@@ -195,6 +195,7 @@ export function UploadForm() {
             </div>
             <button
               onClick={e => { e.stopPropagation(); setFile(null) }}
+              aria-label="Remove selected file"
               style={{
                 position: 'absolute', top: 12, right: 12,
                 width: 28, height: 28, borderRadius: 8,
@@ -263,6 +264,7 @@ export function UploadForm() {
             </div>
             <button
               onClick={() => { setAudioFile(null); setAudioError('') }}
+              aria-label="Remove audio recording"
               style={{
                 width: 28, height: 28, borderRadius: 8, flexShrink: 0,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',

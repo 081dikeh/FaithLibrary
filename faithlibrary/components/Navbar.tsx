@@ -302,7 +302,7 @@ export function Navbar() {
                 color: '#F7F4F2', border: 'none', fontSize: '0.8125rem',
                 fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-ui)',
               }}>Search</button>
-              <button type="button" onClick={() => setSearchOpen(false)} style={{
+              <button type="button" onClick={() => setSearchOpen(false)} aria-label="Close search" style={{
                 width: 36, height: 36, borderRadius: 9, border: '1px solid rgba(255,255,255,0.08)',
                 background: 'rgba(255,255,255,0.05)', color: '#9C8579',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
