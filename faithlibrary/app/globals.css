@@ -171,6 +171,22 @@ a:focus-visible {
 .line-clamp-3 { overflow:hidden; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; }
 main { animation:fadeIn .25s ease; }
 
+
+.hero-photo-bg {
+  background-color: #FBF8F6;
+}
+@media (min-width: 1024px) {
+  .hero-photo-bg {
+    background-image:
+      linear-gradient(to right, #FBF8F6 0%, #FBF8F6 42%, rgba(251,248,246,0.55) 62%, rgba(62,39,35,0.35) 100%),
+      url('/images/hero-sheet-music.webp');
+    background-size: cover;
+    background-position: center right;
+    background-repeat: no-repeat;
+  }
+}
+
+
 /* ═══════════════════════════════════════════════════════
    SCORE GRID & SCORE CARD — used on dashboard + homepage
    ═══════════════════════════════════════════════════════ */

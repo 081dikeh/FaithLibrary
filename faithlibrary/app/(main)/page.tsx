@@ -323,8 +323,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
 
       {showHero && (
         <section
-          className="relative pt-[86px] pb-14 lg:min-h-screen lg:flex lg:items-center lg:pt-[58px] lg:pb-10 px-4 sm:px-6"
-          style={{ background: '#FBF8F6' }}
+          className="relative pt-[86px] pb-14 lg:min-h-screen lg:flex lg:items-center lg:pt-[58px] lg:pb-10 px-4 sm:px-6 hero-photo-bg"
         >
           <div className="max-w-6xl mx-auto lg:flex lg:items-center lg:gap-10 w-full">
             <div className="max-w-xl">
@@ -509,7 +508,7 @@ export default async function HomePage({ searchParams }: HomeProps) {
         </div>
       )}
 
-      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+      <main id="library" className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         {showHero && (
           <div className="flex items-center justify-between gap-4 mb-8">
             <h2 className="font-display text-lg font-semibold text-[#3E2723]">Latest Additions</h2>
