@@ -1,6 +1,7 @@
+// lib/hooks/useFiles.ts
 import { createClient } from '@/lib/supabase/client'
 import { useQuery } from '@tanstack/react-query'
-import { sanitizeOrFilterInput } from '@/lib/searchFilter'
+import { searchFilesRanked, sortByRank } from '@/lib/searchRank'
 
 export function useFiles(search?: string, category?: string) {
   const supabase = createClient()
@@ -12,11 +13,16 @@ export function useFiles(search?: string, category?: string) {
         .from('files')
         .select('*, profiles(full_name, avatar_url)')
         .eq('is_public', true)
-        .order('created_at', { ascending: false })
+
+      let rankById: Map<string, number> | null = null
 
       if (search) {
-        const safe = sanitizeOrFilterInput(search)
-        query = query.or(`title.ilike.%${safe}%,description.ilike.%${safe}%`)
+        const ranked = await searchFilesRanked(supabase, search)
+        if (!ranked || ranked.orderedIds.length === 0) return []
+        rankById = ranked.rankById
+        query = query.in('id', ranked.orderedIds)
+      } else {
+        query = query.order('created_at', { ascending: false })
       }
       if (category && category !== 'all') {
         query = query.eq('category', category)
@@ -24,7 +30,7 @@ export function useFiles(search?: string, category?: string) {
 
       const { data, error } = await query
       if (error) throw error
-      return data
+      return rankById && data ? sortByRank(data, rankById) : data
     }
   })
 }

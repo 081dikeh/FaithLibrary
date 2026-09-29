@@ -10,6 +10,7 @@ import { ScoreOfWeek } from '@/components/ScoreOfWeek'
 import { Footer } from '@/components/Footer'
 import { Pagination } from '@/components/Pagination'
 import { TAG_GROUPS, LITURGICAL_SEASONS } from '@/lib/categories'
+import { searchFilesRanked, sortByRank } from '@/lib/searchRank'
 import {
   ArrowRight, Upload, Search, BookOpen, SlidersHorizontal, Sparkles,
   DoorOpen, Gift, Coffee, ArrowRightCircle, Heart, Music2, Church,
@@ -46,30 +47,68 @@ async function ScoreGrid({
     .select('*, profiles(full_name)', { count: 'exact' })
     .eq('is_public', true)
 
+  // When there's a search query, relevance is the natural default sort —
+  // but if the person explicitly picked a sort order (most downloaded,
+  // A→Z), that choice should still win over relevance.
+  const useRelevanceOrder = !!query && sort === 'newest'
+  let rankById: Map<string, number> | null = null
+
   if (query) {
-    const safe = query.replace(/[,()]/g, ' ').replace(/[%_\\]/g, '\\$&').trim()
-    q = q.or(`title.ilike.%${safe}%,description.ilike.%${safe}%,composer.ilike.%${safe}%,arranger.ilike.%${safe}%,lyrics.ilike.%${safe}%`)
+    const ranked = await searchFilesRanked(supabase, query)
+    if (!ranked || ranked.orderedIds.length === 0) {
+      // No matches (or the search itself failed) — short-circuit rather
+      // than falling through to an unfiltered query.
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '96px 0', textAlign: 'center' }}>
+          <div style={{ width: 64, height: 64, borderRadius: 16, background: '#EFE9E7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Search size={26} style={{ color: '#8D6E63' }} />
+          </div>
+          <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', color: '#5D4037', fontWeight: 700 }}>No scores found</p>
+          <p style={{ color: '#9E8070', fontSize: '0.875rem', maxWidth: 280, lineHeight: 1.6, fontFamily: 'var(--font-ui)' }}>
+            No results for &quot;{query}&quot;. Try different keywords or clear filters.
+          </p>
+        </div>
+      )
+    }
+    rankById = ranked.rankById
+    q = q.in('id', ranked.orderedIds)
   }
   if (category) q = q.contains('tags', [category])
   if (season)   q = q.contains('tags', [season])
   if (voicing)  q = q.ilike('voice_parts', `%${voicing}%`)
 
-  switch (sort) {
-    case 'downloads': q = q.order('download_count', { ascending: false }); break
-    case 'az':        q = q.order('title',           { ascending: true });  break
-    case 'za':        q = q.order('title',           { ascending: false }); break
-    default:          q = q.order('created_at',      { ascending: false }); break
+  if (!useRelevanceOrder) {
+    switch (sort) {
+      case 'downloads': q = q.order('download_count', { ascending: false }); break
+      case 'az':        q = q.order('title',           { ascending: true });  break
+      case 'za':        q = q.order('title',           { ascending: false }); break
+      default:          q = q.order('created_at',      { ascending: false }); break
+    }
+    // Only safe to paginate server-side when sorting by a real column.
+    // Relevance order is computed client-side below (Postgres/PostgREST
+    // has no built-in way to order by an arbitrary id list), so pagination
+    // for a relevance-sorted result is sliced in JS after fetching all
+    // matches for this filter combination — fine at this catalog's scale;
+    // would need the ranking function itself to paginate if that changes.
+    q = q.range(from, to)
   }
 
-  q = q.range(from, to)
-
-  const { data: files, error, count } = await q
+  const { data: rawFiles, error, count: rawCount } = await q
 
   if (error) return (
     <p style={{ textAlign: 'center', padding: '80px 0', color: '#8D6E63', fontSize: '0.875rem' }}>
       Something went wrong. Please refresh.
     </p>
   )
+
+  let files = rawFiles
+  let count = rawCount
+
+  if (useRelevanceOrder && rankById && files) {
+    files = sortByRank(files, rankById)
+    count = files.length
+    files = files.slice(from, to + 1)
+  }
 
   if (!files || files.length === 0) return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '96px 0', textAlign: 'center' }}>

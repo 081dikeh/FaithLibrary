@@ -1,7 +1,6 @@
 // app/(main)/browse/page.tsx
 import { Suspense } from 'react'
 import Link from 'next/link'
-import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
@@ -10,13 +9,7 @@ import { BrowseControls } from '@/components/BrowseControls'
 import { Pagination } from '@/components/Pagination'
 import { Home, Sparkles } from 'lucide-react'
 import type { FileRecord } from '@/lib/types'
-
-export const metadata: Metadata = {
-  title: 'Browse Scores',
-  description:
-    'Search and filter the full FaithLibrary catalog of choral music, hymns, ' +
-    'and sacred scores by category, liturgical season, or voicing.',
-}
+import { searchFilesRanked, sortByRank } from '@/lib/searchRank'
 
 interface BrowseProps {
   searchParams: Promise<{
@@ -45,38 +38,63 @@ async function ScoreGrid({
     .select('*, profiles(full_name)', { count: 'exact' })
     .eq('is_public', true)
 
+  // When there's a search query, relevance is the natural default sort —
+  // but if the person explicitly picked a sort order, that choice wins.
+  const useRelevanceOrder = !!query && sort === 'newest'
+  let rankById: Map<string, number> | null = null
+
   if (query) {
-    // Raw user input is interpolated into a PostgREST filter string below.
-    // Commas/parens are structural in .or() syntax, and % / _ are ILIKE
-    // wildcards — all need escaping so search terms containing them (very
-    // likely here, since users are invited to paste lyric lines) can't
-    // break or reshape the query.
-    const safe = query.replace(/[,()]/g, ' ').replace(/[%_\\]/g, '\\$&').trim()
-    q = q.or(
-      `title.ilike.%${safe}%,description.ilike.%${safe}%,` +
-      `composer.ilike.%${safe}%,arranger.ilike.%${safe}%,lyrics.ilike.%${safe}%`
-    )
+    const ranked = await searchFilesRanked(supabase, query)
+    if (!ranked || ranked.orderedIds.length === 0) {
+      // No matches (or the search itself failed) — short-circuit rather
+      // than falling through to an unfiltered query.
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '72px 0', textAlign: 'center' }}>
+          <p style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', color: '#5D4037', fontWeight: 700 }}>
+            No scores found
+          </p>
+          <p style={{ fontSize: '0.875rem', color: '#9E8070', maxWidth: 280, fontFamily: 'var(--font-ui)' }}>
+            No results for &quot;{query}&quot;. Try adjusting your search or clearing filters.
+          </p>
+        </div>
+      )
+    }
+    rankById = ranked.rankById
+    q = q.in('id', ranked.orderedIds)
   }
   if (category) q = q.contains('tags', [category])
   if (season)   q = q.contains('tags', [season])
   if (voicing)  q = q.ilike('voice_parts', `%${voicing}%`)
 
-  switch (sort) {
-    case 'downloads': q = q.order('download_count', { ascending: false }); break
-    case 'az':        q = q.order('title',           { ascending: true });  break
-    case 'za':        q = q.order('title',           { ascending: false }); break
-    default:          q = q.order('created_at',      { ascending: false }); break
+  if (!useRelevanceOrder) {
+    switch (sort) {
+      case 'downloads': q = q.order('download_count', { ascending: false }); break
+      case 'az':        q = q.order('title',           { ascending: true });  break
+      case 'za':        q = q.order('title',           { ascending: false }); break
+      default:          q = q.order('created_at',      { ascending: false }); break
+    }
+    // See lib/searchRank.ts — relevance order can't be expressed as a
+    // PostgREST .order(), so a relevance-sorted result is paginated in JS
+    // below instead of via .range() here.
+    q = q.range(from, to)
   }
 
-  q = q.range(from, to)
-
-  const { data: files, error, count } = await q
+  const { data: rawFiles, error, count: rawCount } = await q
 
   if (error) return (
     <div style={{ textAlign: 'center', padding: '80px 0', color: '#8D6E63', fontSize: '0.875rem' }}>
       Something went wrong. Please refresh.
     </div>
   )
+
+  let files = rawFiles
+  let count = rawCount
+
+  if (useRelevanceOrder && rankById && files) {
+    files = sortByRank(files, rankById)
+    count = files.length
+    files = files.slice(from, to + 1)
+  }
 
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
 
@@ -173,7 +191,7 @@ export default async function BrowsePage({ searchParams }: BrowseProps) {
         </div>
       </div>
 
-      <main id="main-content" className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
         <Suspense
           key={`${query ?? ''}-${category ?? ''}-${season ?? ''}-${voicing ?? ''}-${sort}-${page}`}
           fallback={

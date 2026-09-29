@@ -11,7 +11,7 @@ const BASE_URL = SITE_URL
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default:  'FaithLibrary — Sacred Music & Choral Score Library',
+    default: 'FaithLibrary — Sacred Music & Choral Score Library',
     template: '%s — FaithLibrary',
   },
   description:
@@ -24,14 +24,14 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'FaithLibrary' }],
   openGraph: {
-    type:      'website',
-    siteName:  'FaithLibrary',
-    title:     'FaithLibrary — Sacred Music & Choral Score Library',
+    type: 'website',
+    siteName: 'FaithLibrary',
+    title: 'FaithLibrary — Sacred Music & Choral Score Library',
     description: 'A free library for choral music, hymns, and sacred scores.',
-    url:       BASE_URL,
+    url: BASE_URL,
   },
   twitter: {
-    card:  'summary_large_image',
+    card: 'summary_large_image',
     title: 'FaithLibrary — Sacred Music Library',
     description: 'Discover and share choral music, hymns, and sacred scores.',
   },

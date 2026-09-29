@@ -2,7 +2,7 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { sanitizeOrFilterInput } from '@/lib/searchFilter'
+import { searchFilesRanked, sortByRank } from '@/lib/searchRank'
 import { Star, Search, Loader2, CheckCircle2 } from 'lucide-react'
 
 export function SetScoreOfWeek() {
@@ -20,14 +20,19 @@ export function SetScoreOfWeek() {
   const search = async () => {
     if (!query.trim()) return
     setSearching(true)
-    const safe = sanitizeOrFilterInput(query)
+    const ranked = await searchFilesRanked(supabase, query)
+    if (!ranked || ranked.orderedIds.length === 0) {
+      setResults([])
+      setSearching(false)
+      return
+    }
+    const topIds = ranked.orderedIds.slice(0, 6)
     const { data } = await supabase
       .from('files')
       .select('id, title, composer, tags')
       .eq('is_public', true)
-      .or(`title.ilike.%${safe}%,composer.ilike.%${safe}%`)
-      .limit(6)
-    setResults(data ?? [])
+      .in('id', topIds)
+    setResults(data ? sortByRank(data, ranked.rankById) : [])
     setSearching(false)
   }
 

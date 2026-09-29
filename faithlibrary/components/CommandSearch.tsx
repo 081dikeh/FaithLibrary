@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Search, Music2, ArrowRight, X, Clock, Hash } from 'lucide-react'
 import { ALL_TAGS } from '@/lib/categories'
-import { sanitizeOrFilterInput } from '@/lib/searchFilter'
+import { searchFilesRanked, sortByRank } from '@/lib/searchRank'
 import Link from 'next/link'
 
 interface Result {
@@ -53,14 +53,19 @@ export function CommandSearch() {
     if (!query.trim()) { setResults([]); return }
     const timer = setTimeout(async () => {
       setLoading(true)
-      const safe = sanitizeOrFilterInput(query)
+      const ranked = await searchFilesRanked(supabase, query)
+      if (!ranked || ranked.orderedIds.length === 0) {
+        setResults([])
+        setLoading(false)
+        return
+      }
+      const topIds = ranked.orderedIds.slice(0, 6)
       const { data } = await supabase
         .from('files')
         .select('id, title, composer, tags')
         .eq('is_public', true)
-        .or(`title.ilike.%${safe}%,composer.ilike.%${safe}%,arranger.ilike.%${safe}%`)
-        .limit(6)
-      setResults(data ?? [])
+        .in('id', topIds)
+      setResults(data ? sortByRank(data, ranked.rankById) : [])
       setLoading(false)
     }, 220)
     return () => clearTimeout(timer)
@@ -123,7 +128,7 @@ export function CommandSearch() {
           />
           {query && (
             <button onClick={() => setQuery('')}
-              className="btn-icon text-[#D7CCC8]" style={{ padding: '0.2rem' }} aria-label="Clear search">
+              className="btn-icon text-[#D7CCC8]" style={{ padding: '0.2rem' }}>
               <X size={14} />
             </button>
           )}
