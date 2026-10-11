@@ -1,0 +1,59 @@
+name: CI
+
+# Runs the same checks I've been running by hand before delivering any
+# change: typecheck, lint, the Vitest suite, and a full production build.
+# Wiring these in means a broken change gets caught on the PR itself
+# instead of relying on someone remembering to check locally first.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        # continue-on-error: the existing codebase currently has ~78
+        # pre-existing lint errors (mostly `no-explicit-any` and a few
+        # unescaped-entity/purity rules) that predate this workflow.
+        # Since `npm run lint` scans the whole repo rather than just a
+        # PR's diff, making this blocking today would fail every future
+        # PR regardless of what it actually touches. Left visible (you'll
+        # still see the failure annotation) but non-blocking until that
+        # backlog is cleaned up — flip this to false once it's clean, or
+        # switch to a diff-aware lint step (e.g. only lint changed files)
+        # if you'd rather enforce it sooner without a full cleanup first.
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          # next build never actually calls Supabase during static
+          # generation (every Supabase-dependent route in this app is
+          # server-rendered on demand, not statically prerendered), so
+          # these only need to be *present and URL-shaped* for the build
+          # to succeed — they don't need to be real. If real project
+          # secrets are added under Settings → Secrets and variables →
+          # Actions with these exact names, they're used automatically
+          # instead of the placeholders; no workflow changes needed.
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key' }}
